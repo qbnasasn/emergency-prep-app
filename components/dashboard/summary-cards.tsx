@@ -1,11 +1,14 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, AlertTriangle, CheckCircle, Clock } from "lucide-react"
+import { useEffect, useState } from "react"
 
-const summaryData = [
+const initialSummaryData = [
   {
     title: "Inventory Items",
-    value: "247",
-    change: "+12 this week",
+    value: "...",
+    change: "Loading...",
     icon: Package,
     color: "text-blue-500",
   },
@@ -18,8 +21,8 @@ const summaryData = [
   },
   {
     title: "Emergency Kits",
-    value: "8",
-    change: "All locations ready",
+    value: "...",
+    change: "Loading...",
     icon: CheckCircle,
     color: "text-green-500",
   },
@@ -33,6 +36,44 @@ const summaryData = [
 ]
 
 export function SummaryCards() {
+  const [summaryData, setSummaryData] = useState(initialSummaryData)
+
+  useEffect(() => {
+    const fetchSummaryData = async () => {
+      try {
+        const inventoryRes = await fetch("/api/inventory")
+        const kitsRes = await fetch("/api/kits")
+
+        if (inventoryRes.ok) {
+          const inventoryData = await inventoryRes.json()
+          setSummaryData((prevData) =>
+            prevData.map((item) =>
+              item.title === "Inventory Items"
+                ? { ...item, value: inventoryData.length.toString(), change: `Total items` }
+                : item,
+            ),
+          )
+        }
+
+        if (kitsRes.ok) {
+          const kitsData = await kitsRes.json()
+          setSummaryData((prevData) =>
+            prevData.map((item) =>
+              item.title === "Emergency Kits"
+                ? { ...item, value: kitsData.length.toString(), change: `Total kits` }
+                : item,
+            ),
+          )
+        }
+      } catch (error) {
+        console.error("Failed to fetch summary data", error)
+        // You could set an error state here and display it in the UI
+      }
+    }
+
+    fetchSummaryData()
+  }, [])
+
   return (
     <div className="space-y-4">
       <h2 className="font-heading font-bold text-lg text-gray-900">Quick Overview</h2>
