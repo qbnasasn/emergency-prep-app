@@ -1,8 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+import { signIn } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,16 +17,11 @@ export function SignInForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const router = useRouter()
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
-    setError("")
-
-    // TODO: Implement Google OAuth
-    setTimeout(() => {
-      setIsLoading(false)
-      setError("Google OAuth integration coming soon")
-    }, 1000)
+    await signIn("google", { callbackUrl: "/dashboard" })
   }
 
   const handleEmailSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -37,21 +33,26 @@ export function SignInForm() {
     const email = formData.get("email") as string
     const password = formData.get("password") as string
 
-    // TODO: Implement email/password authentication
-    setTimeout(() => {
-      setIsLoading(false)
-      if (email && password) {
-        setSuccess("Sign in functionality will be implemented with backend integration")
-      } else {
-        setError("Please fill in all fields")
-      }
-    }, 1000)
+    const result = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+    })
+
+    if (result?.error) {
+      setError("Invalid email or password")
+    } else {
+      router.push("/dashboard")
+    }
+
+    setIsLoading(false)
   }
 
   const handleEmailSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
+    setSuccess("")
 
     const formData = new FormData(e.currentTarget)
     const name = formData.get("name") as string
@@ -65,17 +66,24 @@ export function SignInForm() {
       return
     }
 
-    // TODO: Implement email registration with verification
-    setTimeout(() => {
-      setIsLoading(false)
-      if (name && email && password) {
-        setSuccess(
-          "Registration functionality will be implemented with backend integration. Email verification will be required.",
-        )
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      })
+
+      if (response.ok) {
+        setSuccess("Account created successfully! You can now sign in.")
       } else {
-        setError("Please fill in all fields")
+        const data = await response.json()
+        setError(data.error || "Failed to create account")
       }
-    }, 1000)
+    } catch (err) {
+      setError("An unknown error occurred")
+    }
+
+    setIsLoading(false)
   }
 
   return (
