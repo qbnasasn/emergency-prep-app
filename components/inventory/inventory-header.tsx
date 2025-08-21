@@ -4,9 +4,26 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, Download, Upload } from "lucide-react"
 import { useState } from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { ItemForm } from "@/components/inventory/item-form"
 
 export function InventoryHeader() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  const handleFormSubmit = () => {
+    setIsDialogOpen(false);
+    // Here you would typically trigger a refresh of the inventory list
+    // For now, we just close the dialog. A simple way to refresh is to reload the page:
+    window.location.reload();
+  }
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
@@ -36,10 +53,23 @@ export function InventoryHeader() {
           Export
         </Button>
 
-        <Button className="font-body bg-gray-900 hover:bg-gray-800">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Item
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="font-body bg-gray-900 hover:bg-gray-800">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Item
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Add New Inventory Item</DialogTitle>
+              <DialogDescription>
+                Fill in the details of the new item you want to add to your inventory.
+              </DialogDescription>
+            </DialogHeader>
+            <ItemForm onFormSubmit={handleFormSubmit} />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
