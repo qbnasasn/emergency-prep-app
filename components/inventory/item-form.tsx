@@ -39,9 +39,15 @@ interface ItemFormProps {
 }
 
 export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
+  const formattedInitialData = initialData ? {
+    ...initialData,
+    purchase_date: initialData.purchase_date ? initialData.purchase_date.split('T')[0] : '',
+    expiry_date: initialData.expiry_date ? initialData.expiry_date.split('T')[0] : '',
+  } : undefined;
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
+    defaultValues: formattedInitialData || {
       name: "",
       description: "",
       quantity: 0,
