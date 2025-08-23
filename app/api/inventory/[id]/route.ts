@@ -14,22 +14,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
   try {
     const body = await req.json();
-    const {
-      name,
-      description,
-      quantity,
-      is_food_item,
-      expiry_date,
-      category,
-      location,
-      min_stock,
-      cost_per_unit,
-      purchase_date,
-      calories,
-      supplier,
-      upc,
-      image,
-    } = body;
 
     const client = await pool.connect();
     try {
@@ -41,21 +25,35 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
+        const fields = [
+            'name', 'description', 'quantity', 'is_food_item', 'expiry_date',
+            'category', 'location', 'min_stock', 'cost_per_unit', 'purchase_date',
+            'calories', 'supplier', 'upc', 'image'
+        ];
+
+        const setClauses: string[] = [];
+        const values: any[] = [];
+        let valueCount = 1;
+
+        fields.forEach(field => {
+            if (body[field] !== undefined) {
+                setClauses.push(`${field} = $${valueCount++}`);
+                values.push(body[field]);
+            }
+        });
+
+        if (setClauses.length === 0) {
+            return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+        }
+
+        values.push(itemId, userId);
+
         const updateQuery = `
           UPDATE inventory_items
-          SET
-            name = $1, description = $2, quantity = $3, is_food_item = $4, expiry_date = $5,
-            category = $6, location = $7, min_stock = $8, cost_per_unit = $9, purchase_date = $10,
-            calories = $11, supplier = $12, upc = $13, image = $14
-          WHERE id = $15 AND user_id = $16
+          SET ${setClauses.join(', ')}
+          WHERE id = $${valueCount++} AND user_id = $${valueCount++}
           RETURNING *;
         `;
-
-        const values = [
-          name, description, quantity, is_food_item, expiry_date, category, location,
-          min_stock, cost_per_unit, purchase_date, calories, supplier, upc, image,
-          itemId, userId
-        ];
 
         const result = await client.query(updateQuery, values);
         return NextResponse.json(result.rows[0]);

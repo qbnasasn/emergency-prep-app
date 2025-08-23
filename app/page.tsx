@@ -16,11 +16,6 @@ export default function HomePage() {
 
         <SignInForm />
 
-        <div className="mt-6 text-center">
-          <Button asChild variant="outline" className="w-full font-body bg-transparent">
-            <a href="/dashboard">View Dashboard Demo</a>
-          </Button>
-        </div>
 
         <div className="mt-8 text-center">
           <p className="font-body text-sm text-gray-500">
