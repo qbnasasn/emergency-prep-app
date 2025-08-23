@@ -8,8 +8,11 @@ import { MoreHorizontal, Edit, Trash2, Eye, AlertTriangle } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Image from "next/image"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { ItemForm } from "./item-form"
 
-interface InventoryItem {
+export interface InventoryItem {
   id: string
   name: string
   description: string | null
@@ -29,28 +32,67 @@ interface InventoryItem {
 export function InventoryTable() {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
+
+  const fetchItems = async () => {
+    try {
+      const response = await fetch("/api/inventory")
+      if (!response.ok) {
+        throw new Error("Failed to fetch inventory items")
+      }
+      const data = await response.json()
+      setItems(data)
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError("An unknown error occurred")
+      }
+      console.error(err)
+    }
+  }
 
   useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const response = await fetch("/api/inventory")
-        if (!response.ok) {
-          throw new Error("Failed to fetch inventory items")
-        }
-        const data = await response.json()
-        setItems(data)
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message)
-        } else {
-          setError("An unknown error occurred")
-        }
-        console.error(err)
-      }
-    }
-
     fetchItems()
   }, [])
+
+  const handleEdit = (item: InventoryItem) => {
+    setSelectedItem(item)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleDelete = (item: InventoryItem) => {
+    setSelectedItem(item)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!selectedItem) return;
+
+    try {
+      const response = await fetch(`/api/inventory/${selectedItem.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setIsDeleteDialogOpen(false)
+        setSelectedItem(null)
+        fetchItems(); // Refetch items after delete
+      } else {
+        console.error("Failed to delete item")
+      }
+    } catch (error) {
+      console.error("Error deleting item:", error)
+    }
+  }
+
+  const handleFormSubmit = () => {
+    setIsEditDialogOpen(false)
+    setSelectedItem(null)
+    fetchItems(); // Refetch items after add/edit
+  }
 
   const getStockStatus = (item: InventoryItem) => {
     const today = new Date()
@@ -86,106 +128,134 @@ export function InventoryTable() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-heading text-xl">Inventory Items</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {error && <p className="text-red-500">{error}</p>}
-        {!error && items.length === 0 && <p>No inventory items found.</p>}
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-body font-semibold">Item</TableHead>
-                <TableHead className="font-body font-semibold">Category</TableHead>
-                <TableHead className="font-body font-semibold">Location</TableHead>
-                <TableHead className="font-body font-semibold">Quantity</TableHead>
-                <TableHead className="font-body font-semibold">Status</TableHead>
-                <TableHead className="font-body font-semibold">Cost/Unit</TableHead>
-                <TableHead className="font-body font-semibold">Expires</TableHead>
-                <TableHead className="font-body font-semibold">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item) => {
-                const stockStatus = getStockStatus(item)
-                return (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                          {item.image ? (
-                            <Image
-                              src={item.image || "/placeholder.svg"}
-                              alt={item.name}
-                              width={40}
-                              height={40}
-                              className="rounded-lg"
-                            />
-                          ) : (
-                            <span className="text-gray-400 text-xs font-body">IMG</span>
-                          )}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-heading text-xl">Inventory Items</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {error && <p className="text-red-500">{error}</p>}
+          {!error && items.length === 0 && <p>No inventory items found.</p>}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-body font-semibold">Item</TableHead>
+                  <TableHead className="font-body font-semibold">Category</TableHead>
+                  <TableHead className="font-body font-semibold">Location</TableHead>
+                  <TableHead className="font-body font-semibold">Quantity</TableHead>
+                  <TableHead className="font-body font-semibold">Status</TableHead>
+                  <TableHead className="font-body font-semibold">Cost/Unit</TableHead>
+                  <TableHead className="font-body font-semibold">Expires</TableHead>
+                  <TableHead className="font-body font-semibold">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item) => {
+                  const stockStatus = getStockStatus(item)
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                            {item.image ? (
+                              <Image
+                                src={item.image || "/placeholder.svg"}
+                                alt={item.name}
+                                width={40}
+                                height={40}
+                                className="rounded-lg"
+                              />
+                            ) : (
+                              <span className="text-gray-400 text-xs font-body">IMG</span>
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-body font-medium text-gray-900">{item.name}</div>
+                            {item.upc && <div className="font-body text-xs text-gray-500">UPC: {item.upc}</div>}
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-body font-medium text-gray-900">{item.name}</div>
-                          {item.upc && <div className="font-body text-xs text-gray-500">UPC: {item.upc}</div>}
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-body text-sm text-gray-600">{item.category}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-body text-sm text-gray-600">{item.location}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-body font-medium">{item.quantity}</span>
+                          {(item.min_stock && item.quantity <= item.min_stock) ||
+                            (item.quantity === 0 && <AlertTriangle className="h-4 w-4 text-orange-500" />)}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-body text-sm text-gray-600">{item.category}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-body text-sm text-gray-600">{item.location}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-body font-medium">{item.quantity}</span>
-                        {(item.min_stock && item.quantity <= item.min_stock) ||
-                          (item.quantity === 0 && <AlertTriangle className="h-4 w-4 text-orange-500" />)}
-                      </div>
-                      <div className="font-body text-xs text-gray-500">Min: {item.min_stock}</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={stockStatus.color}>{stockStatus.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-body text-sm">{formatCurrency(item.cost_per_unit)}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-body text-sm">{formatDate(item.expiry_date)}</span>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="font-body">
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="font-body">
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Item
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="font-body text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Item
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+                        <div className="font-body text-xs text-gray-500">Min: {item.min_stock}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={stockStatus.color}>{stockStatus.status}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-body text-sm">{formatCurrency(item.cost_per_unit)}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-body text-sm">{formatDate(item.expiry_date)}</span>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem className="font-body" onClick={() => handleEdit(item)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Item
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="font-body text-red-600" onClick={() => handleDelete(item)}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Item
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Edit Inventory Item</DialogTitle>
+            <DialogDescription>
+              Update the details of the item.
+            </DialogDescription>
+          </DialogHeader>
+          <ItemForm onFormSubmit={handleFormSubmit} initialData={selectedItem} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the item
+              "{selectedItem?.name}" from your inventory.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSelectedItem(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
