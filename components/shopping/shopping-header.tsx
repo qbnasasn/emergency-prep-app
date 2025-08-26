@@ -2,19 +2,46 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, RefreshCw, Settings } from "lucide-react"
+import { Plus, Search, ListPlus, Settings } from "lucide-react"
 import { useState } from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { ShoppingItemForm } from "./shopping-item-form"
 
-export function ShoppingHeader() {
+interface ShoppingHeaderProps {
+  shoppingListId: string;
+  onListUpdate: () => void;
+}
+
+export function ShoppingHeader({ shoppingListId, onListUpdate }: ShoppingHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isPopulating, setIsPopulating] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const refreshShoppingList = () => {
-    setIsRefreshing(true)
-    // TODO: Refresh shopping list from inventory
-    setTimeout(() => {
-      setIsRefreshing(false)
-    }, 1000)
+  const populateFromInventory = async () => {
+    setIsPopulating(true);
+    try {
+      const response = await fetch('/api/shopping-lists/populate-from-inventory', {
+        method: 'POST',
+      });
+      // TODO: Show a toast with the message from the response
+      onListUpdate();
+    } catch (error) {
+      console.error("Failed to populate shopping list", error);
+    } finally {
+      setIsPopulating(false);
+    }
+  };
+
+  const handleFormSubmit = () => {
+    setIsDialogOpen(false);
+    onListUpdate();
   }
 
   return (
@@ -38,12 +65,12 @@ export function ShoppingHeader() {
         <Button
           variant="outline"
           size="sm"
-          onClick={refreshShoppingList}
-          disabled={isRefreshing}
+          onClick={populateFromInventory}
+          disabled={isPopulating}
           className="font-body bg-transparent"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-          Refresh
+          <ListPlus className={`h-4 w-4 mr-2 ${isPopulating ? "animate-spin" : ""}`} />
+          Check for Low Stock
         </Button>
 
         <Button variant="outline" size="sm" className="font-body bg-transparent">
@@ -51,10 +78,23 @@ export function ShoppingHeader() {
           Store Settings
         </Button>
 
-        <Button className="font-body bg-gray-900 hover:bg-gray-800">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Item
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="font-body bg-gray-900 hover:bg-gray-800">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Item
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add Item to Shopping List</DialogTitle>
+              <DialogDescription>
+                Enter the name and quantity of the item you want to add.
+              </DialogDescription>
+            </DialogHeader>
+            <ShoppingItemForm shoppingListId={shoppingListId} onFormSubmit={handleFormSubmit} />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

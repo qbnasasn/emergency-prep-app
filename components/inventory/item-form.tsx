@@ -14,7 +14,25 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { InventoryItem } from "@/components/inventory/inventory-table"
+
+const categories = [
+  "Water & Hydration",
+  "Food & Nutrition",
+  "First Aid & Medical",
+  "Communication & Information",
+  "Tools & Utilities",
+  "Clothing",
+  "Shelter & Warmth",
+  "Documents & Records",
+  "Energy & Power",
+  "Sanitation & Hygiene",
+  "Navigation",
+  "Vehicle Preparedness",
+  "Specialized Gear",
+  "Miscellaneous",
+]
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -114,9 +132,18 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Food & Water" {...field} />
-              </FormControl>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

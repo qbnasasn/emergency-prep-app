@@ -108,7 +108,11 @@ CREATE TABLE shopping_list_items (
     shopping_list_id UUID REFERENCES shopping_lists(id) ON DELETE CASCADE,
     item_name TEXT NOT NULL,
     quantity INTEGER DEFAULT 1,
-    is_purchased BOOLEAN DEFAULT false
+    is_purchased BOOLEAN DEFAULT false,
+    inventory_item_id UUID REFERENCES inventory_items(id) ON DELETE SET NULL,
+    category TEXT,
+    estimated_cost NUMERIC(10, 2),
+    preferred_store TEXT
 );
 
 -- Knowledge Base Tips Table
