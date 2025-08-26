@@ -4,17 +4,37 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, RefreshCw, Settings } from "lucide-react"
 import { useState } from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { AddToListForm } from "./add-to-list-form"
 
-export function ShoppingHeader() {
+interface ShoppingHeaderProps {
+  shoppingListId: string;
+  onListUpdate: () => void;
+}
+
+export function ShoppingHeader({ shoppingListId, onListUpdate }: ShoppingHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const refreshShoppingList = () => {
     setIsRefreshing(true)
-    // TODO: Refresh shopping list from inventory
+    onListUpdate();
     setTimeout(() => {
       setIsRefreshing(false)
     }, 1000)
+  }
+
+  const handleFormSubmit = () => {
+    setIsDialogOpen(false);
+    onListUpdate();
   }
 
   return (
@@ -51,10 +71,23 @@ export function ShoppingHeader() {
           Store Settings
         </Button>
 
-        <Button className="font-body bg-gray-900 hover:bg-gray-800">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Item
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="font-body bg-gray-900 hover:bg-gray-800">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Item
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add Item to Shopping List</DialogTitle>
+              <DialogDescription>
+                Enter the name and quantity of the item you want to add.
+              </DialogDescription>
+            </DialogHeader>
+            <AddToListForm shoppingListId={shoppingListId} onFormSubmit={handleFormSubmit} />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
