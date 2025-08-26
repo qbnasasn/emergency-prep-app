@@ -38,8 +38,18 @@ export async function POST(req: Request, { params }: { params: { listId: string 
 
       // Insert the new item
       const result = await client.query(
-        'INSERT INTO shopping_list_items (shopping_list_id, item_name, quantity, category, estimated_cost, preferred_store) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [listId, item_name, quantity, category, estimated_cost, preferred_store]
+        `INSERT INTO shopping_list_items
+         (shopping_list_id, item_name, quantity, category, estimated_cost, preferred_store, is_purchased)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [
+          listId,
+          item_name,
+          quantity,
+          category || null,
+          estimated_cost || null,
+          preferred_store || null,
+          false
+        ]
       );
 
       return NextResponse.json(result.rows[0], { status: 201 });

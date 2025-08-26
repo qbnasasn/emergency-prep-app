@@ -14,11 +14,6 @@ export async function PUT(req: Request, { params }: { params: { listId: string, 
 
   try {
     const body = await req.json();
-    const { is_purchased } = body;
-
-    if (is_purchased === undefined) {
-      return NextResponse.json({ error: 'Missing is_purchased field' }, { status: 400 });
-    }
 
     const client = await pool.connect();
     try {
@@ -36,11 +31,36 @@ export async function PUT(req: Request, { params }: { params: { listId: string, 
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
-      // Update the item
-      const result = await client.query(
-        'UPDATE shopping_list_items SET is_purchased = $1 WHERE id = $2 AND shopping_list_id = $3 RETURNING *',
-        [is_purchased, itemId, listId]
-      );
+      const fields = [
+        'item_name', 'quantity', 'is_purchased', 'category',
+        'estimated_cost', 'preferred_store'
+      ];
+
+      const setClauses: string[] = [];
+      const values: any[] = [];
+      let valueCount = 1;
+
+      fields.forEach(field => {
+          if (body[field] !== undefined) {
+              setClauses.push(`${field} = $${valueCount++}`);
+              values.push(body[field]);
+          }
+      });
+
+      if (setClauses.length === 0) {
+          return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+      }
+
+      values.push(itemId, listId);
+
+      const updateQuery = `
+        UPDATE shopping_list_items
+        SET ${setClauses.join(', ')}
+        WHERE id = $${valueCount++} AND shopping_list_id = $${valueCount++}
+        RETURNING *;
+      `;
+
+      const result = await client.query(updateQuery, values);
 
       if (result.rows.length === 0) {
         return NextResponse.json({ error: 'Shopping list item not found' }, { status: 404 });
