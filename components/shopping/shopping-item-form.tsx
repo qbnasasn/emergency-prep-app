@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type { ShoppingItem } from "./shopping-list"
 
 const categories = [
   "Water & Hydration",
@@ -40,15 +41,16 @@ const formSchema = z.object({
   preferred_store: z.string().optional(),
 })
 
-interface AddToListFormProps {
+interface ShoppingItemFormProps {
   shoppingListId: string;
   onFormSubmit: () => void;
+  initialData?: ShoppingItem;
 }
 
-export function AddToListForm({ shoppingListId, onFormSubmit }: AddToListFormProps) {
+export function ShoppingItemForm({ shoppingListId, onFormSubmit, initialData }: ShoppingItemFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: initialData || {
       item_name: "",
       quantity: 1,
       category: "",
@@ -57,10 +59,18 @@ export function AddToListForm({ shoppingListId, onFormSubmit }: AddToListFormPro
     },
   })
 
+  const isEditMode = !!initialData;
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const response = await fetch(`/api/shopping-lists/${shoppingListId}/items`, {
-        method: "POST",
+      const url = isEditMode
+        ? `/api/shopping-lists/${shoppingListId}/items/${initialData.id}`
+        : `/api/shopping-lists/${shoppingListId}/items`;
+
+      const method = isEditMode ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       })
@@ -68,7 +78,7 @@ export function AddToListForm({ shoppingListId, onFormSubmit }: AddToListFormPro
       if (response.ok) {
         onFormSubmit();
       } else {
-        console.error("Failed to add item to shopping list")
+        console.error(`Failed to ${isEditMode ? 'update' : 'add'} item`);
       }
     } catch (error) {
       console.error("Error submitting form:", error)
@@ -152,7 +162,7 @@ export function AddToListForm({ shoppingListId, onFormSubmit }: AddToListFormPro
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">Add to List</Button>
+        <Button type="submit" className="w-full">{isEditMode ? 'Save Changes' : 'Add to List'}</Button>
       </form>
     </Form>
   )

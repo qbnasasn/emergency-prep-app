@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { AddToListForm } from "./add-to-list-form"
+import { ShoppingItemForm } from "./shopping-item-form"
 
 interface ShoppingHeaderProps {
   shoppingListId: string;
@@ -92,7 +92,7 @@ export function ShoppingHeader({ shoppingListId, onListUpdate }: ShoppingHeaderP
                 Enter the name and quantity of the item you want to add.
               </DialogDescription>
             </DialogHeader>
-            <AddToListForm shoppingListId={shoppingListId} onFormSubmit={handleFormSubmit} />
+            <ShoppingItemForm shoppingListId={shoppingListId} onFormSubmit={handleFormSubmit} />
           </DialogContent>
         </Dialog>
       </div>
