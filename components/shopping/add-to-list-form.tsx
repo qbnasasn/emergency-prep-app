@@ -13,10 +13,31 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+const categories = [
+  "Water & Hydration",
+  "Food & Nutrition",
+  "First Aid & Medical",
+  "Communication & Information",
+  "Tools & Utilities",
+  "Clothing",
+  "Shelter & Warmth",
+  "Documents & Records",
+  "Energy & Power",
+  "Sanitation & Hygiene",
+  "Navigation",
+  "Vehicle Preparedness",
+  "Specialized Gear",
+  "Miscellaneous",
+]
 
 const formSchema = z.object({
   item_name: z.string().min(1, { message: "Item name is required" }),
   quantity: z.coerce.number().int().min(1, { message: "Quantity must be at least 1" }),
+  category: z.string().optional(),
+  estimated_cost: z.coerce.number().optional(),
+  preferred_store: z.string().optional(),
 })
 
 interface AddToListFormProps {
@@ -30,6 +51,9 @@ export function AddToListForm({ shoppingListId, onFormSubmit }: AddToListFormPro
     defaultValues: {
       item_name: "",
       quantity: 1,
+      category: "",
+      estimated_cost: 0,
+      preferred_store: "",
     },
   })
 
@@ -75,6 +99,54 @@ export function AddToListForm({ shoppingListId, onFormSubmit }: AddToListFormPro
               <FormLabel>Quantity</FormLabel>
               <FormControl>
                 <Input type="number" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="estimated_cost"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Estimated Cost (Total)</FormLabel>
+              <FormControl>
+                <Input type="number" step="0.01" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="preferred_store"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Preferred Store</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. Amazon" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

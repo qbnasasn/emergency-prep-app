@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { MoreHorizontal, Trash2, Plus, Check, ExternalLink } from "lucide-react"
+import { MoreHorizontal, Trash2, Plus, Check, ExternalLink, Repeat } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Image from "next/image"
@@ -16,14 +16,13 @@ export interface ShoppingItem {
   item_name: string;
   quantity: number;
   is_purchased: boolean;
-  // These fields are not in the db table, but are in the mock data.
-  // I will leave them in the interface for now.
+  inventory_item_id: string | null;
   category?: string;
-  reason?: "out-of-stock" | "low-stock" | "expiring" | "manual";
-  estimatedCost?: number;
-  preferredStore?: string;
+  estimated_cost?: number;
+  preferred_store?: string;
   upc?: string;
   image?: string;
+  reason?: string;
 }
 
 interface ShoppingListProps {
@@ -33,13 +32,11 @@ interface ShoppingListProps {
 }
 
 export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingListProps) {
-  // The reason is not in the DB, so I'm removing the logic for it for now.
-  // A more advanced implementation could determine the reason dynamically.
   const getReasonColor = (reason: string) => "bg-gray-100 text-gray-800"
   const getReasonText = (reason: string) => "Manual Add"
 
-
   const formatCurrency = (amount: number) => {
+    if (amount === null || amount === undefined) return "N/A"
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -73,7 +70,7 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
     }
   }
 
-  const addToInventory = async (itemId: string) => {
+  const handleMoveToInventory = async (itemId: string) => {
     try {
       await fetch(`/api/inventory/from-shopping-list`, {
         method: "POST",
@@ -82,7 +79,20 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
       });
       onListUpdate();
     } catch (error) {
-      console.error("Error adding item to inventory:", error);
+      console.error("Error moving item to inventory:", error);
+    }
+  }
+
+  const handleRestock = async (itemId: string) => {
+    try {
+      await fetch(`/api/inventory/restock`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shoppingListItemId: itemId }),
+      });
+      onListUpdate();
+    } catch (error) {
+      console.error("Error restocking item:", error);
     }
   }
 
@@ -146,7 +156,7 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
                       </div>
                       <div>
                         <div className="font-body font-medium text-gray-900">{item.item_name}</div>
-                        {item.upc && <div className="font-body text-xs text-gray-500">UPC: {item.upc}</div>}
+                        {item.inventory_item_id && <Badge variant="secondary">Restock</Badge>}
                       </div>
                     </div>
                   </TableCell>
@@ -168,10 +178,10 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="font-body text-sm font-medium">{formatCurrency(item.estimatedCost)}</span>
+                    <span className="font-body text-sm font-medium">{formatCurrency(item.estimated_cost)}</span>
                   </TableCell>
                   <TableCell>
-                    <span className="font-body text-sm text-gray-600">{item.preferredStore}</span>
+                    <span className="font-body text-sm text-gray-600">{item.preferred_store}</span>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
@@ -204,14 +214,25 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
                           </Button>
                         </>
                       ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => addToInventory(item.id)}
-                          className="font-body text-xs bg-green-600 hover:bg-green-700"
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          Add to Inventory
-                        </Button>
+                        item.inventory_item_id ? (
+                          <Button
+                            size="sm"
+                            onClick={() => handleRestock(item.id)}
+                            className="font-body text-xs bg-blue-600 hover:bg-blue-700"
+                          >
+                            <Repeat className="h-3 w-3 mr-1" />
+                            Restock Inventory
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => handleMoveToInventory(item.id)}
+                            className="font-body text-xs bg-green-600 hover:bg-green-700"
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Move to Inventory
+                          </Button>
+                        )
                       )}
 
                       <DropdownMenu>

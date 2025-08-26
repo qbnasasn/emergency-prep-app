@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, RefreshCw, Settings } from "lucide-react"
+import { Plus, Search, ListPlus, Settings } from "lucide-react"
 import { useState } from "react"
 import {
   Dialog,
@@ -21,16 +21,23 @@ interface ShoppingHeaderProps {
 
 export function ShoppingHeader({ shoppingListId, onListUpdate }: ShoppingHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isPopulating, setIsPopulating] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const refreshShoppingList = () => {
-    setIsRefreshing(true)
-    onListUpdate();
-    setTimeout(() => {
-      setIsRefreshing(false)
-    }, 1000)
-  }
+  const populateFromInventory = async () => {
+    setIsPopulating(true);
+    try {
+      const response = await fetch('/api/shopping-lists/populate-from-inventory', {
+        method: 'POST',
+      });
+      // TODO: Show a toast with the message from the response
+      onListUpdate();
+    } catch (error) {
+      console.error("Failed to populate shopping list", error);
+    } finally {
+      setIsPopulating(false);
+    }
+  };
 
   const handleFormSubmit = () => {
     setIsDialogOpen(false);
@@ -58,12 +65,12 @@ export function ShoppingHeader({ shoppingListId, onListUpdate }: ShoppingHeaderP
         <Button
           variant="outline"
           size="sm"
-          onClick={refreshShoppingList}
-          disabled={isRefreshing}
+          onClick={populateFromInventory}
+          disabled={isPopulating}
           className="font-body bg-transparent"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-          Refresh
+          <ListPlus className={`h-4 w-4 mr-2 ${isPopulating ? "animate-spin" : ""}`} />
+          Check for Low Stock
         </Button>
 
         <Button variant="outline" size="sm" className="font-body bg-transparent">

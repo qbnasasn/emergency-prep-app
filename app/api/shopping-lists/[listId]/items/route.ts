@@ -14,10 +14,10 @@ export async function POST(req: Request, { params }: { params: { listId: string 
 
   try {
     const body = await req.json();
-    const { item_name, quantity } = body;
+    const { item_name, quantity, category, estimated_cost, preferred_store } = body;
 
     if (!item_name || quantity === undefined) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing required fields: item_name and quantity' }, { status: 400 });
     }
 
     const client = await pool.connect();
@@ -38,8 +38,8 @@ export async function POST(req: Request, { params }: { params: { listId: string 
 
       // Insert the new item
       const result = await client.query(
-        'INSERT INTO shopping_list_items (shopping_list_id, item_name, quantity) VALUES ($1, $2, $3) RETURNING *',
-        [listId, item_name, quantity]
+        'INSERT INTO shopping_list_items (shopping_list_id, item_name, quantity, category, estimated_cost, preferred_store) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [listId, item_name, quantity, category, estimated_cost, preferred_store]
       );
 
       return NextResponse.json(result.rows[0], { status: 201 });
