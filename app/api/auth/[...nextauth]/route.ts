@@ -1,10 +1,14 @@
 import NextAuth from 'next-auth';
+import { Pool } from '@neondatabase/serverless';
+import { PgAdapter } from "@auth/pg-adapter"
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
-import pool from '@/lib/db';
 import bcrypt from 'bcrypt';
 
+const pool = new Pool({ connectionString: process.env.POSTGRES_URL });
+
 export const authOptions = {
+  adapter: PgAdapter(pool),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -23,10 +27,17 @@ export const authOptions = {
 
         const client = await pool.connect();
         try {
-          const result = await client.query('SELECT * FROM users WHERE email = $1', [credentials.email]);
+          const result = await client.query('SELECT id, full_name, email, password_hash FROM users WHERE email = $1', [credentials.email]);
           const user = result.rows[0];
 
-          if (user && bcrypt.compareSync(credentials.password, user.password_hash)) {
+          if (!user || !user.password_hash) {
+            // User might exist from Google sign-in but has no password
+            return null;
+          }
+
+          const passwordsMatch = await bcrypt.compare(credentials.password, user.password_hash);
+
+          if (passwordsMatch) {
             return { id: user.id, name: user.full_name, email: user.email };
           } else {
             return null;
