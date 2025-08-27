@@ -1,6 +1,6 @@
 import NextAuth from 'next-auth';
 import { Pool } from '@neondatabase/serverless';
-import { PgAdapter } from "@auth/pg-adapter"
+import PgAdapter from "@auth/pg-adapter"
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcrypt';
