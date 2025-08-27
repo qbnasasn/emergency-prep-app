@@ -3,7 +3,9 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     full_name TEXT,
     email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
+    "emailVerified" TIMESTAMPTZ,
+    image TEXT,
+    password_hash TEXT,
     subscription_plan TEXT DEFAULT 'free',
     created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -121,4 +123,39 @@ CREATE TABLE knowledge_base_tips (
     tip TEXT NOT NULL,
     category TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- NextAuth.js Tables
+
+CREATE TABLE accounts
+(
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "userId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  "providerAccountId" TEXT NOT NULL,
+  refresh_token TEXT,
+  access_token TEXT,
+  expires_at BIGINT,
+  id_token TEXT,
+  scope TEXT,
+  session_state TEXT,
+  token_type TEXT,
+  UNIQUE (provider, "providerAccountId")
+);
+
+CREATE TABLE sessions
+(
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "sessionToken" TEXT NOT NULL UNIQUE,
+  "userId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE verification_token
+(
+  identifier TEXT NOT NULL,
+  token TEXT NOT NULL,
+  expires TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY (identifier, token)
 );
