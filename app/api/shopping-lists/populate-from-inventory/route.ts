@@ -24,36 +24,46 @@ export async function POST(req: Request) {
     }
     const shoppingListId = shoppingListResult.rows[0].id;
 
-    // 2. Find low-stock inventory items
-    const lowStockItemsResult = await client.query(
-      'SELECT * FROM inventory_items WHERE user_id = $1 AND quantity <= min_stock',
-      [userId]
-    );
-    const lowStockItems = lowStockItemsResult.rows;
+    // 2. Find low-stock OR expiring inventory items
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-    if (lowStockItems.length === 0) {
+    const itemsToFlagResult = await client.query(
+      `SELECT * FROM inventory_items
+       WHERE user_id = $1 AND (quantity <= min_stock OR (expiry_date IS NOT NULL AND expiry_date <= $2))`,
+      [userId, thirtyDaysFromNow]
+    );
+    const itemsToFlag = itemsToFlagResult.rows;
+
+    if (itemsToFlag.length === 0) {
       await client.query('COMMIT');
-      return NextResponse.json({ message: 'No low-stock items found to add.' });
+      return NextResponse.json({ message: 'No items to add to your shopping list.' });
     }
 
     // 3. Get existing items on the shopping list to avoid duplicates
     const existingShoppingItemsResult = await client.query(
-      'SELECT inventory_item_id FROM shopping_list_items WHERE shopping_list_id = $1 AND inventory_item_id IS NOT NULL',
+      'SELECT inventory_item_id FROM shopping_list_items WHERE shopping_list_id = $1 AND inventory_item_id IS NOT NULL AND is_purchased = false',
       [shoppingListId]
     );
     const existingInventoryItemIds = new Set(existingShoppingItemsResult.rows.map(row => row.inventory_item_id));
 
     let itemsAddedCount = 0;
-    // 4. Add new low-stock items to the shopping list
-    for (const item of lowStockItems) {
+    // 4. Add new items to the shopping list with a reason
+    for (const item of itemsToFlag) {
       if (!existingInventoryItemIds.has(item.id)) {
-        // We can set a default quantity to re-order, e.g., up to the min_stock level
-        const quantityToOrder = item.min_stock - item.quantity > 0 ? item.min_stock - item.quantity : 1;
+        let reason = 'low-stock';
+        if (item.quantity <= 0) {
+          reason = 'out-of-stock';
+        } else if (item.expiry_date && new Date(item.expiry_date) <= thirtyDaysFromNow) {
+          reason = 'expiring';
+        }
+
+        const quantityToOrder = item.min_stock > item.quantity ? item.min_stock - item.quantity : 1;
 
         await client.query(
           `INSERT INTO shopping_list_items
-           (shopping_list_id, item_name, quantity, is_purchased, inventory_item_id, category, estimated_cost, preferred_store)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+           (shopping_list_id, item_name, quantity, is_purchased, inventory_item_id, category, estimated_cost, preferred_store, reason)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
           [
             shoppingListId,
             item.name,
@@ -61,8 +71,9 @@ export async function POST(req: Request) {
             false,
             item.id,
             item.category,
-            item.cost_per_unit * quantityToOrder, // Simple cost estimation
-            item.supplier, // Default to the last supplier
+            item.cost_per_unit ? item.cost_per_unit * quantityToOrder : null,
+            item.supplier,
+            reason
           ]
         );
         itemsAddedCount++;
@@ -71,7 +82,7 @@ export async function POST(req: Request) {
 
     await client.query('COMMIT');
 
-    return NextResponse.json({ message: `${itemsAddedCount} low-stock item(s) added to your shopping list.` });
+    return NextResponse.json({ message: `${itemsAddedCount} item(s) added to your shopping list.` });
 
   } catch (error) {
     await client.query('ROLLBACK');
