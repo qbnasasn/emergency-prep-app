@@ -114,7 +114,8 @@ CREATE TABLE shopping_list_items (
     inventory_item_id UUID REFERENCES inventory_items(id) ON DELETE SET NULL,
     category TEXT,
     estimated_cost NUMERIC(10, 2),
-    preferred_store TEXT
+    preferred_store TEXT,
+    reason TEXT
 );
 
 -- Knowledge Base Tips Table

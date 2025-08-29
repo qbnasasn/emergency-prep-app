@@ -69,10 +69,18 @@ export function ShoppingItemForm({ shoppingListId, onFormSubmit, initialData }: 
 
       const method = isEditMode ? "PUT" : "POST";
 
+      // Transform empty strings to null for optional fields
+      const processedValues = {
+        ...values,
+        category: values.category || null,
+        preferred_store: values.preferred_store || null,
+        estimated_cost: values.estimated_cost || null,
+      };
+
       const response = await fetch(url, {
         method: method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(processedValues),
       })
 
       if (response.ok) {

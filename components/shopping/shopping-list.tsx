@@ -49,8 +49,31 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
     onListUpdate();
   }
 
-  const getReasonColor = (reason: string) => "bg-gray-100 text-gray-800"
-  const getReasonText = (reason: string) => "Manual Add"
+  const getReasonColor = (reason: string | null) => {
+    switch (reason) {
+      case "out-of-stock":
+        return "bg-red-100 text-red-800"
+      case "low-stock":
+        return "bg-orange-100 text-orange-800"
+      case "expiring":
+        return "bg-yellow-100 text-yellow-800"
+      default:
+        return "bg-blue-100 text-blue-800"
+    }
+  }
+
+  const getReasonText = (reason: string | null) => {
+    switch (reason) {
+      case "out-of-stock":
+        return "Out of Stock"
+      case "low-stock":
+        return "Low Stock"
+      case "expiring":
+        return "Expiring Soon"
+      default:
+        return "Manual Add"
+    }
+  }
 
   const formatCurrency = (amount: number) => {
     if (amount === null || amount === undefined) return "N/A"
