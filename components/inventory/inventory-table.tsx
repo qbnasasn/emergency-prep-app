@@ -134,7 +134,7 @@ export function InventoryTable() {
           <CardTitle className="font-heading text-xl">Inventory Items</CardTitle>
         </CardHeader>
         <CardContent>
-          {error && <p className="text-sm text-destructive-foreground bg-destructive p-2 rounded-md">{error}</p>}
+          {error && <p className="text-red-500">{error}</p>}
           {!error && items.length === 0 && <p>No inventory items found.</p>}
           <div className="rounded-md border">
             <Table>
@@ -186,7 +186,7 @@ export function InventoryTable() {
                         <div className="flex items-center space-x-2">
                           <span className="font-body font-medium">{item.quantity}</span>
                           {(item.min_stock && item.quantity <= item.min_stock) ||
-                            (item.quantity === 0 && <AlertTriangle className="h-4 w-4 text-primary" />)}
+                            (item.quantity === 0 && <AlertTriangle className="h-4 w-4 text-orange-500" />)}
                         </div>
                         <div className="font-body text-xs text-muted-foreground">Min: {item.min_stock}</div>
                       </TableCell>
@@ -211,7 +211,7 @@ export function InventoryTable() {
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Item
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="font-body text-destructive" onClick={() => handleDelete(item)}>
+                            <DropdownMenuItem className="font-body text-red-600" onClick={() => handleDelete(item)}>
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete Item
                             </DropdownMenuItem>

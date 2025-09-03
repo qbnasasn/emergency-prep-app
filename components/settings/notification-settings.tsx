@@ -20,7 +20,7 @@ export function NotificationSettings() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="font-body font-medium">Weather Alerts</Label>
-              <p className="font-body text-sm text-gray-500">NOAA weather warnings and watches</p>
+              <p className="font-body text-sm text-muted-foreground">NOAA weather warnings and watches</p>
             </div>
             <Switch />
           </div>
@@ -28,7 +28,7 @@ export function NotificationSettings() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="font-body font-medium">Inventory Alerts</Label>
-              <p className="font-body text-sm text-gray-500">Low stock and expiration notifications</p>
+              <p className="font-body text-sm text-muted-foreground">Low stock and expiration notifications</p>
             </div>
             <Switch />
           </div>
@@ -36,7 +36,7 @@ export function NotificationSettings() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="font-body font-medium">Plan Reminders</Label>
-              <p className="font-body text-sm text-gray-500">Emergency plan review reminders</p>
+              <p className="font-body text-sm text-muted-foreground">Emergency plan review reminders</p>
             </div>
             <Switch />
           </div>
@@ -44,7 +44,7 @@ export function NotificationSettings() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="font-body font-medium">Shopping Updates</Label>
-              <p className="font-body text-sm text-gray-500">New items added to shopping list</p>
+              <p className="font-body text-sm text-muted-foreground">New items added to shopping list</p>
             </div>
             <Switch />
           </div>

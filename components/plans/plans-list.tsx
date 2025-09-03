@@ -89,13 +89,13 @@ export function PlansList() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "draft":
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
       case "complete":
         return "bg-green-100 text-green-800"
       case "active":
         return "bg-red-100 text-red-800"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -110,7 +110,7 @@ export function PlansList() {
       case "Infrastructure":
         return "bg-purple-100 text-purple-800"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -131,11 +131,11 @@ export function PlansList() {
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {plans.map((plan) => (
-            <Card key={plan.id} className="border border-gray-200">
+            <Card key={plan.id} className="border border-border">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <CardTitle className="font-body font-semibold text-lg text-gray-900">{plan.name}</CardTitle>
+                    <CardTitle className="font-body font-semibold text-lg text-foreground">{plan.name}</CardTitle>
                     <div className="flex items-center space-x-2">
                       <Badge className={getHazardColor(plan.hazardType)}>{plan.hazardType}</Badge>
                       <Badge className={getStatusColor(plan.status)}>{plan.status}</Badge>
@@ -168,22 +168,22 @@ export function PlansList() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                      <span className="font-body text-gray-600">{plan.locations} locations</span>
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-body text-muted-foreground">{plan.locations} locations</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Users className="h-4 w-4 text-gray-400" />
-                      <span className="font-body text-gray-600">{plan.familyMembers} members</span>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-body text-muted-foreground">{plan.familyMembers} members</span>
                     </div>
                   </div>
 
-                  <div className="text-sm font-body text-gray-600">
+                  <div className="text-sm font-body text-muted-foreground">
                     <div>Inventory items: {plan.inventoryItems}</div>
                     <div>Evacuation routes: {plan.routes}</div>
                     <div>Pets included: {plan.pets}</div>
                   </div>
 
-                  <div className="text-xs font-body text-gray-500">Last updated: {formatDate(plan.lastUpdated)}</div>
+                  <div className="text-xs font-body text-muted-foreground">Last updated: {formatDate(plan.lastUpdated)}</div>
 
                   <div className="flex space-x-2 pt-2">
                     {plan.status === "complete" && (

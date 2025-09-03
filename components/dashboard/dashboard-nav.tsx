@@ -51,9 +51,7 @@ export function DashboardNav() {
                   href={item.href}
                   className={cn(
                     "flex items-center px-3 py-2 text-sm font-body rounded-lg transition-colors",
-                    isActive
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                    isActive ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-gray-50 hover:text-foreground",
                   )}
                 >
                   <item.icon className={cn("flex-shrink-0 h-5 w-5", collapsed ? "mr-0" : "mr-3")} />

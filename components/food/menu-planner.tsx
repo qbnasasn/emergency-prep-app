@@ -51,7 +51,7 @@ export function MenuPlanner() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center space-x-2">
-          <UtensilsCrossed className="h-5 w-5 text-primary" />
+          <UtensilsCrossed className="h-5 w-5 text-green-500" />
           <CardTitle className="font-heading text-xl">Menu Planner</CardTitle>
         </div>
         <Button size="sm" className="font-body">
@@ -126,7 +126,7 @@ export function MenuPlanner() {
 
           <TabsContent value="recipes" className="space-y-4">
             <div className="flex items-center mb-4">
-              <ChefHat className="h-4 w-4 mr-2 text-primary" />
+              <ChefHat className="h-4 w-4 mr-2 text-orange-500" />
               <h3 className="font-body font-semibold text-foreground">Emergency Cooking Recipes</h3>
             </div>
 

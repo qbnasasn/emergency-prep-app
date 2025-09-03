@@ -41,7 +41,7 @@ export function KnowledgeTips() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center space-x-2">
-          <Lightbulb className="h-5 w-5 text-primary" />
+          <Lightbulb className="h-5 w-5 text-yellow-500" />
           <CardTitle className="font-heading text-lg">Knowledge Tips</CardTitle>
         </div>
         <Button variant="ghost" size="sm">
@@ -50,12 +50,10 @@ export function KnowledgeTips() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {error && (
-            <p className="text-sm text-destructive-foreground bg-destructive p-2 rounded-md">{error}</p>
-          )}
+          {error && <p className="text-red-500">{error}</p>}
           {!error && tips.length === 0 && <p>No tips available at the moment.</p>}
           {tips.map((tip) => (
-            <div key={tip.id} className="border-l-4 border-primary pl-4">
+            <div key={tip.id} className="border-l-4 border-blue-500 pl-4">
               <h3 className="font-body font-semibold text-foreground text-sm">{tip.category}</h3>
               <p className="font-body text-sm text-muted-foreground mt-1">{tip.tip}</p>
             </div>

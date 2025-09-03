@@ -55,7 +55,7 @@ export function InventoryHeader() {
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="font-body">
+            <Button className="font-body bg-gray-900 hover:bg-gray-800">
               <Plus className="h-4 w-4 mr-2" />
               Add Item
             </Button>

@@ -78,7 +78,7 @@ export function FoodInventoryAnalysis() {
       case "critical":
         return "bg-red-100 text-red-800"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -102,19 +102,19 @@ export function FoodInventoryAnalysis() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Package className="h-5 w-5 mr-2 text-primary" />
+          <Package className="h-5 w-5 mr-2 text-orange-500" />
           Food Inventory Analysis
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-muted rounded-lg">
-            <div className="text-2xl font-heading font-bold text-foreground">{totalItems}</div>
-            <div className="font-body text-sm text-muted-foreground">Total Food Items</div>
+          <div className="text-center p-3 bg-blue-50 rounded-lg">
+            <div className="text-2xl font-heading font-bold text-blue-900">{totalItems}</div>
+            <div className="font-body text-sm text-blue-700">Total Food Items</div>
           </div>
-          <div className="text-center p-3 bg-muted rounded-lg">
-            <div className="text-2xl font-heading font-bold text-foreground">{totalCalories.toLocaleString()}</div>
-            <div className="font-body text-sm text-muted-foreground">Total Calories</div>
+          <div className="text-center p-3 bg-green-50 rounded-lg">
+            <div className="text-2xl font-heading font-bold text-green-900">{totalCalories.toLocaleString()}</div>
+            <div className="font-body text-sm text-green-700">Total Calories</div>
           </div>
         </div>
 

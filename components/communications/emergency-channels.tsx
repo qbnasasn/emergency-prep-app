@@ -87,9 +87,9 @@ export function EmergencyChannels() {
       case "monitoring":
         return "bg-blue-100 text-blue-800"
       case "offline":
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -102,7 +102,7 @@ export function EmergencyChannels() {
       case "medium":
         return "bg-yellow-100 text-yellow-800"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -123,7 +123,7 @@ export function EmergencyChannels() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Radio className="h-5 w-5 mr-2 text-primary" />
+          <Radio className="h-5 w-5 mr-2 text-red-500" />
           Emergency Channels
         </CardTitle>
       </CardHeader>

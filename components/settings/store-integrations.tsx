@@ -262,14 +262,14 @@ export function StoreIntegrations() {
           const instructions = getInstructions(store.name)
 
           return (
-            <div key={store.name} className="border border-gray-200 rounded-lg p-6">
+            <div key={store.name} className="border border-border rounded-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
                   <span className="text-2xl">{store.icon}</span>
                   <div>
-                    <h3 className="font-body font-semibold text-gray-900 text-lg">{store.name} API</h3>
+                    <h3 className="font-body font-semibold text-foreground text-lg">{store.name} API</h3>
                     {store.connected && store.lastSync && (
-                      <p className="font-body text-xs text-gray-500">
+                      <p className="font-body text-xs text-muted-foreground">
                         Connected: {new Date(store.lastSync).toLocaleString()}
                       </p>
                     )}
@@ -282,7 +282,7 @@ export function StoreIntegrations() {
                       Connected
                     </Badge>
                   ) : (
-                    <Badge className="bg-gray-100 text-gray-800">
+                    <Badge className="bg-muted text-foreground">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       Not Connected
                     </Badge>
