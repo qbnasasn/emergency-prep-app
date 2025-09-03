@@ -103,7 +103,7 @@ export function KitBuilder() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
+                <MapPin className="h-5 w-5" />
                 Kit Location
               </CardTitle>
             </CardHeader>
@@ -141,7 +141,7 @@ export function KitBuilder() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-primary" />
+                <Package className="h-5 w-5" />
                 Kit Items
               </CardTitle>
             </CardHeader>
@@ -174,7 +174,7 @@ export function KitBuilder() {
                         }}
                       />
                       <div className="flex-1">
-                        <div className="font-medium text-foreground">{item.name}</div>
+                        <div className="font-medium">{item.name}</div>
                         <div className="text-sm text-muted-foreground">
                           {item.category} • Qty: {item.quantity} • {item.location}
                         </div>
@@ -199,7 +199,7 @@ export function KitBuilder() {
                             className="h-4 w-4 p-0 hover:bg-transparent"
                             onClick={() => setSelectedItems(selectedItems.filter((id) => id !== itemId))}
                           >
-                            <Trash2 className="h-3 w-3 text-destructive" />
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         </Badge>
                       ) : null
@@ -219,25 +219,25 @@ export function KitBuilder() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-foreground">Kit Name</Label>
+                  <Label className="text-sm font-medium">Kit Name</Label>
                   <p className="text-sm text-muted-foreground">Home 72-Hour Kit</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-foreground">Kit Type</Label>
+                  <Label className="text-sm font-medium">Kit Type</Label>
                   <p className="text-sm text-muted-foreground">Basic/72-Hour Kit</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-foreground">Location</Label>
+                  <Label className="text-sm font-medium">Location</Label>
                   <p className="text-sm text-muted-foreground">Main Bedroom Closet</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-foreground">GPS Coordinates</Label>
+                  <Label className="text-sm font-medium">GPS Coordinates</Label>
                   <p className="text-sm text-muted-foreground">40.7128, -74.0060</p>
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-foreground">Selected Items ({selectedItems.length})</Label>
+                <Label className="text-sm font-medium">Selected Items ({selectedItems.length})</Label>
                 <div className="mt-2 space-y-1">
                   {selectedItems.map((itemId) => {
                     const item = inventoryItems.find((i) => i.id === itemId)

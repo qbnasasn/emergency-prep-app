@@ -79,11 +79,11 @@ export function MeshtasticInterface() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center space-x-2">
-          <Wifi className="h-5 w-5 text-primary" />
+          <Wifi className="h-5 w-5 text-blue-500" />
           <CardTitle className="font-heading text-xl">Meshtastic Network</CardTitle>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge className={connected ? "bg-green-100 text-green-800" : "bg-muted text-muted-foreground"}>
+          <Badge className={connected ? "bg-green-100 text-green-800" : "bg-muted text-foreground"}>
             {connected ? "Connected" : "Disconnected"}
           </Badge>
           <Button size="sm" onClick={connectToMeshtastic} className="font-body">
@@ -107,7 +107,7 @@ export function MeshtasticInterface() {
                   >
                     <div className="flex items-center space-x-3">
                       <div
-                        className={`w-3 h-3 rounded-full ${node.status === "online" ? "bg-green-500" : "bg-muted"}`}
+                        className={`w-3 h-3 rounded-full ${node.status === "online" ? "bg-green-500" : "bg-gray-400"}`}
                       />
                       <div>
                         <div className="font-body font-medium text-foreground">{node.name}</div>

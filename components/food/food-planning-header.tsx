@@ -36,7 +36,7 @@ export function FoodPlanningHeader() {
           Export Plan
         </Button>
 
-        <Button className="font-body">
+        <Button className="font-body bg-gray-900 hover:bg-gray-800">
           <Plus className="h-4 w-4 mr-2" />
           New Menu
         </Button>

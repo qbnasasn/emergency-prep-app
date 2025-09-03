@@ -103,7 +103,7 @@ export function InventoryFilters() {
           </div>
         </div>
 
-        <Button className="w-full font-body">Apply Filters</Button>
+        <Button className="w-full font-body bg-gray-900 hover:bg-gray-800">Apply Filters</Button>
       </CardContent>
     </Card>
   )

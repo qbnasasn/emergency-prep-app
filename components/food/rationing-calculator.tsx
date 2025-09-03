@@ -117,14 +117,14 @@ export function RationingCalculator() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Calculator className="h-5 w-5 mr-2 text-primary" />
+          <Calculator className="h-5 w-5 mr-2 text-blue-500" />
           Rationing Calculator
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="font-body font-medium text-foreground">Total Calories Available</Label>
+            <Label className="font-body font-medium">Total Calories Available</Label>
             <Input
               type="number"
               value={totalCaloriesAvailable}
@@ -133,7 +133,7 @@ export function RationingCalculator() {
             />
           </div>
           <div className="space-y-2">
-            <Label className="font-body font-medium text-foreground">Rationing Level</Label>
+            <Label className="font-body font-medium">Rationing Level</Label>
             <Select value={rationingLevel} onValueChange={setRationingLevel}>
               <SelectTrigger className="font-body">
                 <SelectValue />
@@ -174,24 +174,24 @@ export function RationingCalculator() {
           </div>
         </div>
 
-        <div className="bg-muted rounded-lg p-4">
+        <div className="bg-blue-50 rounded-lg p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-2xl font-heading font-bold text-foreground">{calculatedDays}</div>
-              <div className="font-body text-sm text-muted-foreground flex items-center justify-center">
+              <div className="text-2xl font-heading font-bold text-blue-900">{calculatedDays}</div>
+              <div className="font-body text-sm text-blue-700 flex items-center justify-center">
                 <Calendar className="h-4 w-4 mr-1" />
                 Days of Food
               </div>
             </div>
             <div>
-              <div className="text-2xl font-heading font-bold text-foreground">
+              <div className="text-2xl font-heading font-bold text-blue-900">
                 {dailyCaloriesNeeded.toLocaleString()}
               </div>
-              <div className="font-body text-sm text-muted-foreground">Calories/Day Needed</div>
+              <div className="font-body text-sm text-blue-700">Calories/Day Needed</div>
             </div>
             <div>
-              <div className="text-2xl font-heading font-bold text-foreground">{familyMembers.length}</div>
-              <div className="font-body text-sm text-muted-foreground flex items-center justify-center">
+              <div className="text-2xl font-heading font-bold text-blue-900">{familyMembers.length}</div>
+              <div className="font-body text-sm text-blue-700 flex items-center justify-center">
                 <Users className="h-4 w-4 mr-1" />
                 People Fed
               </div>

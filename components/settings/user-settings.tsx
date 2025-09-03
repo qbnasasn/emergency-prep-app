@@ -17,13 +17,13 @@ export function UserSettings() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
-          <h3 className="font-body font-semibold text-gray-900 flex items-center">
+          <h3 className="font-body font-semibold text-foreground flex items-center">
             <Users className="h-4 w-4 mr-2" />
             Family Members (up to 5)
           </h3>
 
           <div className="space-y-3">
-            <div className="border border-gray-200 rounded-lg p-3">
+            <div className="border border-border rounded-lg p-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="font-body text-xs">Name</Label>
@@ -53,7 +53,7 @@ export function UserSettings() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="font-body font-semibold text-gray-900 flex items-center">
+          <h3 className="font-body font-semibold text-foreground flex items-center">
             <MapPin className="h-4 w-4 mr-2" />
             NOAA Alert Locations
           </h3>
@@ -74,7 +74,7 @@ export function UserSettings() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="font-body font-semibold text-gray-900">Subscription</h3>
+          <h3 className="font-body font-semibold text-foreground">Subscription</h3>
           <div className="p-3 bg-green-50 rounded-lg">
             <div className="flex items-center justify-between">
               <div>

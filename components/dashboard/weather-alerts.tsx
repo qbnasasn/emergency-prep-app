@@ -69,7 +69,7 @@ export function WeatherAlerts() {
       case "extreme":
         return "bg-red-100 text-red-800"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -77,7 +77,7 @@ export function WeatherAlerts() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center space-x-2">
-          <AlertTriangle className="h-5 w-5 text-primary" />
+          <AlertTriangle className="h-5 w-5 text-orange-500" />
           <CardTitle className="font-heading text-xl">Weather Alerts</CardTitle>
         </div>
         <Button variant="ghost" size="sm" onClick={refreshAlerts} disabled={loading}>
@@ -113,7 +113,7 @@ export function WeatherAlerts() {
           </div>
         ) : (
           <div className="text-center py-8">
-            <Sun className="h-12 w-12 text-primary mx-auto mb-4" />
+            <Sun className="h-12 w-12 text-green-500 mx-auto mb-4" />
             <p className="font-body text-muted-foreground">No active weather alerts in your area</p>
             <p className="font-body text-sm text-muted-foreground mt-1">Stay prepared and check back regularly</p>
           </div>

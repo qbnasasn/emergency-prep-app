@@ -45,7 +45,7 @@ export function PlanBuilder() {
             <FileText className="h-4 w-4 mr-2" />
             Save Draft
           </Button>
-          <Button className="font-body">
+          <Button className="font-body bg-gray-900 hover:bg-gray-800">
             <Save className="h-4 w-4 mr-2" />
             Save Plan
           </Button>
@@ -59,7 +59,7 @@ export function PlanBuilder() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="plan-name" className="font-body font-medium text-foreground">
+              <Label htmlFor="plan-name" className="font-body font-medium">
                 Plan Name
               </Label>
               <Input
@@ -71,7 +71,7 @@ export function PlanBuilder() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="hazard-type" className="font-body font-medium text-foreground">
+              <Label htmlFor="hazard-type" className="font-body font-medium">
                 Hazard Type
               </Label>
               <Select value={hazardType} onValueChange={setHazardType}>
@@ -90,7 +90,7 @@ export function PlanBuilder() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description" className="font-body font-medium text-foreground">
+            <Label htmlFor="description" className="font-body font-medium">
               Plan Description
             </Label>
             <Textarea
@@ -129,13 +129,13 @@ export function PlanBuilder() {
           <Card>
             <CardHeader>
               <CardTitle className="font-heading text-lg flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2 text-primary" />
+                <AlertTriangle className="h-5 w-5 mr-2 text-orange-500" />
                 Hazard Assessment
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label className="font-body font-medium text-foreground">Risk Level</Label>
+                <Label className="font-body font-medium">Risk Level</Label>
                 <Select>
                   <SelectTrigger className="font-body">
                     <SelectValue placeholder="Select risk level" />
@@ -149,7 +149,7 @@ export function PlanBuilder() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="font-body font-medium text-foreground">Seasonal Considerations</Label>
+                <Label className="font-body font-medium">Seasonal Considerations</Label>
                 <Textarea
                   placeholder="Describe seasonal factors that affect this hazard"
                   className="font-body"
@@ -157,7 +157,7 @@ export function PlanBuilder() {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="font-body font-medium text-foreground">Warning Signs</Label>
+                <Label className="font-body font-medium">Warning Signs</Label>
                 <Textarea placeholder="List early warning signs and indicators" className="font-body" rows={3} />
               </div>
             </CardContent>
@@ -168,7 +168,7 @@ export function PlanBuilder() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading text-lg flex items-center">
-                <MapPin className="h-5 w-5 mr-2 text-primary" />
+                <MapPin className="h-5 w-5 mr-2 text-blue-500" />
                 Key Locations
               </CardTitle>
               <Button size="sm" className="font-body">
@@ -180,7 +180,7 @@ export function PlanBuilder() {
               <div className="space-y-4">
                 <div className="border border-border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-body font-semibold text-foreground">Primary Residence</h3>
+                    <h3 className="font-body font-semibold">Primary Residence</h3>
                     <Badge className="bg-blue-100 text-blue-800">Home</Badge>
                   </div>
                   <div className="space-y-2">
@@ -195,7 +195,7 @@ export function PlanBuilder() {
 
                 <div className="border border-border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-body font-semibold text-foreground">Safe Meeting Point</h3>
+                    <h3 className="font-body font-semibold">Safe Meeting Point</h3>
                     <Badge className="bg-green-100 text-green-800">Safe Zone</Badge>
                   </div>
                   <div className="space-y-2">
@@ -217,7 +217,7 @@ export function PlanBuilder() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="font-heading text-lg flex items-center">
-                  <Users className="h-5 w-5 mr-2 text-primary" />
+                  <Users className="h-5 w-5 mr-2 text-green-500" />
                   Family Members
                 </CardTitle>
                 <Button size="sm" className="font-body">
@@ -242,7 +242,7 @@ export function PlanBuilder() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="font-heading text-lg flex items-center">
-                  <Heart className="h-5 w-5 mr-2 text-destructive" />
+                  <Heart className="h-5 w-5 mr-2 text-red-500" />
                   Pets & Animals
                 </CardTitle>
                 <Button size="sm" className="font-body">
@@ -268,7 +268,7 @@ export function PlanBuilder() {
           <Card>
             <CardHeader>
               <CardTitle className="font-heading text-lg flex items-center">
-                <Pill className="h-5 w-5 mr-2 text-primary" />
+                <Pill className="h-5 w-5 mr-2 text-purple-500" />
                 Medications & Medical Needs
               </CardTitle>
             </CardHeader>
@@ -299,7 +299,7 @@ export function PlanBuilder() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading text-lg flex items-center">
-                <Package className="h-5 w-5 mr-2 text-primary" />
+                <Package className="h-5 w-5 mr-2 text-orange-500" />
                 Required Inventory Items
               </CardTitle>
               <Button size="sm" className="font-body">
@@ -316,7 +316,7 @@ export function PlanBuilder() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="border border-border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-body font-semibold text-foreground">Water (1 gallon bottles)</h3>
+                      <h3 className="font-body font-semibold">Water (1 gallon bottles)</h3>
                       <Badge className="bg-blue-100 text-blue-800">Food & Water</Badge>
                     </div>
                     <div className="text-sm font-body text-muted-foreground">
@@ -328,7 +328,7 @@ export function PlanBuilder() {
 
                   <div className="border border-border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-body font-semibold text-foreground">First Aid Kit</h3>
+                      <h3 className="font-body font-semibold">First Aid Kit</h3>
                       <Badge className="bg-red-100 text-red-800">Medical</Badge>
                     </div>
                     <div className="text-sm font-body text-muted-foreground">
@@ -347,7 +347,7 @@ export function PlanBuilder() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading text-lg flex items-center">
-                <Route className="h-5 w-5 mr-2 text-primary" />
+                <Route className="h-5 w-5 mr-2 text-blue-500" />
                 Evacuation Routes
               </CardTitle>
               <Button size="sm" className="font-body">
@@ -362,7 +362,7 @@ export function PlanBuilder() {
 
               <div className="border border-border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-body font-semibold text-foreground">Primary Route</h3>
+                  <h3 className="font-body font-semibold">Primary Route</h3>
                   <Badge className="bg-green-100 text-green-800">Preferred</Badge>
                 </div>
                 <div className="space-y-2">
@@ -380,7 +380,7 @@ export function PlanBuilder() {
 
               <div className="border border-border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-body font-semibold text-foreground">Alternate Route</h3>
+                  <h3 className="font-body font-semibold">Alternate Route</h3>
                   <Badge className="bg-yellow-100 text-yellow-800">Backup</Badge>
                 </div>
                 <div className="space-y-2">
@@ -399,7 +399,7 @@ export function PlanBuilder() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading text-lg flex items-center">
-                <Phone className="h-5 w-5 mr-2 text-primary" />
+                <Phone className="h-5 w-5 mr-2 text-green-500" />
                 Emergency Contacts
               </CardTitle>
               <Button size="sm" className="font-body">
@@ -411,7 +411,7 @@ export function PlanBuilder() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border border-border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-body font-semibold text-foreground">Local Emergency Services</h3>
+                    <h3 className="font-body font-semibold">Local Emergency Services</h3>
                     <Badge className="bg-red-100 text-red-800">Critical</Badge>
                   </div>
                   <div className="space-y-2">
@@ -423,7 +423,7 @@ export function PlanBuilder() {
 
                 <div className="border border-border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-body font-semibold text-foreground">Out-of-State Contact</h3>
+                    <h3 className="font-body font-semibold">Out-of-State Contact</h3>
                     <Badge className="bg-blue-100 text-blue-800">Family</Badge>
                   </div>
                   <div className="space-y-2">

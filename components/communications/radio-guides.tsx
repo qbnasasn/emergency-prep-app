@@ -44,7 +44,7 @@ export function RadioGuides() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Radio className="h-5 w-5 mr-2 text-primary" />
+          <Radio className="h-5 w-5 mr-2 text-green-500" />
           Radio Frequency Guides
         </CardTitle>
       </CardHeader>
@@ -64,7 +64,7 @@ export function RadioGuides() {
 
           <TabsContent value="gmrs" className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
-              <Radio className="h-4 w-4 text-primary" />
+              <Radio className="h-4 w-4 text-blue-500" />
               <h3 className="font-body font-semibold text-foreground">GMRS Channels</h3>
             </div>
             <div className="space-y-2">
@@ -80,7 +80,7 @@ export function RadioGuides() {
                       <div className="font-body text-xs text-muted-foreground">{ch.notes}</div>
                     </div>
                   </div>
-                  <Badge className={ch.power === "50W" ? "bg-orange-100 text-orange-800" : "bg-muted text-muted-foreground"}>
+                  <Badge className={ch.power === "50W" ? "bg-orange-100 text-orange-800" : "bg-muted text-foreground"}>
                     {ch.power}
                   </Badge>
                 </div>
@@ -96,7 +96,7 @@ export function RadioGuides() {
 
           <TabsContent value="noaa" className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
-              <Satellite className="h-4 w-4 text-primary" />
+              <Satellite className="h-4 w-4 text-orange-500" />
               <h3 className="font-body font-semibold text-foreground">NOAA Weather Radio</h3>
             </div>
             <div className="space-y-2">
@@ -125,7 +125,7 @@ export function RadioGuides() {
 
           <TabsContent value="maritime" className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
-              <Ship className="h-4 w-4 text-primary" />
+              <Ship className="h-4 w-4 text-blue-500" />
               <h3 className="font-body font-semibold text-foreground">Maritime VHF Channels</h3>
             </div>
             <div className="space-y-2">
@@ -142,7 +142,7 @@ export function RadioGuides() {
                           ? "bg-red-100 text-red-800"
                           : ch.priority === "High"
                             ? "bg-orange-100 text-orange-800"
-                            : "bg-muted text-muted-foreground"
+                            : "bg-muted text-foreground"
                       }
                     >
                       {ch.priority}
