@@ -79,11 +79,11 @@ export function MeshtasticInterface() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center space-x-2">
-          <Wifi className="h-5 w-5 text-blue-500" />
+          <Wifi className="h-5 w-5 text-primary" />
           <CardTitle className="font-heading text-xl">Meshtastic Network</CardTitle>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge className={connected ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+          <Badge className={connected ? "bg-green-100 text-green-800" : "bg-muted text-muted-foreground"}>
             {connected ? "Connected" : "Disconnected"}
           </Badge>
           <Button size="sm" onClick={connectToMeshtastic} className="font-body">
@@ -95,7 +95,7 @@ export function MeshtasticInterface() {
         {connected ? (
           <>
             <div className="space-y-3">
-              <h3 className="font-body font-semibold text-gray-900 flex items-center">
+              <h3 className="font-body font-semibold text-foreground flex items-center">
                 <Users className="h-4 w-4 mr-2" />
                 Active Nodes ({nodes.length})
               </h3>
@@ -103,23 +103,23 @@ export function MeshtasticInterface() {
                 {nodes.map((node) => (
                   <div
                     key={node.id}
-                    className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                    className="flex items-center justify-between p-3 border border-border rounded-lg"
                   >
                     <div className="flex items-center space-x-3">
                       <div
-                        className={`w-3 h-3 rounded-full ${node.status === "online" ? "bg-green-500" : "bg-gray-400"}`}
+                        className={`w-3 h-3 rounded-full ${node.status === "online" ? "bg-green-500" : "bg-muted"}`}
                       />
                       <div>
-                        <div className="font-body font-medium text-gray-900">{node.name}</div>
-                        <div className="font-body text-xs text-gray-500">{node.id}</div>
+                        <div className="font-body font-medium text-foreground">{node.name}</div>
+                        <div className="font-body text-xs text-muted-foreground">{node.id}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-body text-sm text-gray-600 flex items-center">
+                      <div className="font-body text-sm text-muted-foreground flex items-center">
                         <MapPin className="h-3 w-3 mr-1" />
                         {formatDistance(node.distance)}
                       </div>
-                      <div className="font-body text-xs text-gray-500">
+                      <div className="font-body text-xs text-muted-foreground">
                         {node.battery}% • {formatLastSeen(node.lastSeen)}
                       </div>
                     </div>
@@ -129,7 +129,7 @@ export function MeshtasticInterface() {
             </div>
 
             <div className="space-y-3">
-              <h3 className="font-body font-semibold text-gray-900">Send Message</h3>
+              <h3 className="font-body font-semibold text-foreground">Send Message</h3>
               <div className="flex space-x-2">
                 <Input
                   placeholder="Type your message..."
@@ -146,9 +146,9 @@ export function MeshtasticInterface() {
           </>
         ) : (
           <div className="text-center py-8">
-            <Wifi className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="font-body text-gray-600 mb-4">Connect to Meshtastic network to access mesh communication</p>
-            <div className="text-sm font-body text-gray-500 space-y-1">
+            <Wifi className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="font-body text-muted-foreground mb-4">Connect to Meshtastic network to access mesh communication</p>
+            <div className="text-sm font-body text-muted-foreground space-y-1">
               <p>• Long-range, low-power mesh networking</p>
               <p>• Works without internet or cell towers</p>
               <p>• Perfect for emergency communications</p>

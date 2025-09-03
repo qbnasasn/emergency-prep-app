@@ -20,7 +20,7 @@ export function EmergencyMap() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center space-x-2">
-          <MapPin className="h-5 w-5 text-blue-500" />
+          <MapPin className="h-5 w-5 text-primary" />
           <CardTitle className="font-heading text-xl">Emergency Map</CardTitle>
         </div>
         <div className="flex space-x-2">
@@ -35,20 +35,20 @@ export function EmergencyMap() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="relative h-96 bg-gray-100 rounded-lg overflow-hidden">
+        <div className="relative h-96 bg-muted rounded-lg overflow-hidden">
           {!mapLoaded ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p className="font-body text-gray-600">Loading Google Maps...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="font-body text-muted-foreground">Loading Google Maps...</p>
               </div>
             </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50">
               <div className="text-center">
-                <MapPin className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-                <h3 className="font-heading font-bold text-lg text-gray-900 mb-2">Interactive Emergency Map</h3>
-                <p className="font-body text-gray-600 max-w-md">
+                <MapPin className="h-16 w-16 text-primary mx-auto mb-4" />
+                <h3 className="font-heading font-bold text-lg text-foreground mb-2">Interactive Emergency Map</h3>
+                <p className="font-body text-muted-foreground max-w-md">
                   Google Maps integration will display:
                   <br />• Emergency kit locations with GPS coordinates
                   <br />• Weather alert overlays
@@ -58,15 +58,15 @@ export function EmergencyMap() {
                 <div className="mt-4 space-y-2">
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span className="font-body text-sm text-gray-600">Emergency Kits</span>
+                    <span className="font-body text-sm text-muted-foreground">Emergency Kits</span>
                   </div>
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    <span className="font-body text-sm text-gray-600">Weather Alerts</span>
+                    <span className="font-body text-sm text-muted-foreground">Weather Alerts</span>
                   </div>
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <span className="font-body text-sm text-gray-600">Safe Locations</span>
+                    <span className="font-body text-sm text-muted-foreground">Safe Locations</span>
                   </div>
                 </div>
               </div>
