@@ -123,7 +123,7 @@ export function EmergencyChannels() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Radio className="h-5 w-5 mr-2 text-red-500" />
+          <Radio className="h-5 w-5 mr-2 text-primary" />
           Emergency Channels
         </CardTitle>
       </CardHeader>
@@ -132,13 +132,13 @@ export function EmergencyChannels() {
           {channels.map((channel) => {
             const IconComponent = getChannelIcon(channel.type)
             return (
-              <div key={channel.id} className="border border-gray-200 rounded-lg p-4">
+              <div key={channel.id} className="border border-border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
-                    <IconComponent className="h-4 w-4 text-gray-500" />
+                    <IconComponent className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <div className="font-body font-medium text-gray-900">{channel.name}</div>
-                      <div className="font-body text-sm text-gray-600">{channel.frequency}</div>
+                      <div className="font-body font-medium text-foreground">{channel.name}</div>
+                      <div className="font-body text-sm text-muted-foreground">{channel.frequency}</div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -148,7 +148,7 @@ export function EmergencyChannels() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="font-body text-xs text-gray-500">Last activity: {channel.lastActivity}</div>
+                  <div className="font-body text-xs text-muted-foreground">Last activity: {channel.lastActivity}</div>
                   <div className="flex space-x-2">
                     {channel.type !== "emergency" && (
                       <Button

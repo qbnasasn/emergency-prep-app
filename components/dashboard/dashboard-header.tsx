@@ -15,13 +15,13 @@ import { ModeToggle } from "@/components/ui/mode-toggle"
 
 export function DashboardHeader() {
   return (
-    <header className="border-b border-gray-200 px-6 py-4 bg-slate-50">
+    <header className="border-b border-border px-6 py-4 bg-card">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Image src="/images/safeprep-logo.png" alt="SafePrep" width={40} height={40} className="w-10 h-10" />
           <div>
-            <h1 className="font-heading font-bold text-xl text-gray-900">SafePrep</h1>
-            <p className="font-body text-sm text-gray-500">Emergency Preparedness Platform</p>
+            <h1 className="font-heading font-bold text-xl text-foreground">SafePrep</h1>
+            <p className="font-body text-sm text-muted-foreground">Emergency Preparedness Platform</p>
           </div>
         </div>
 
@@ -29,7 +29,7 @@ export function DashboardHeader() {
           <ModeToggle />
           <Button variant="ghost" size="sm" className="relative">
             <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
+            <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full"></span>
           </Button>
 
           <DropdownMenu>
@@ -37,7 +37,7 @@ export function DashboardHeader() {
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-                  <AvatarFallback className="bg-gray-200">
+                  <AvatarFallback className="bg-muted">
                     <User className="h-5 w-5" />
                   </AvatarFallback>
                 </Avatar>

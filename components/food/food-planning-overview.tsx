@@ -7,32 +7,32 @@ const stats = [
     value: "14.5",
     change: "For 4 people",
     icon: Calendar,
-    color: "text-green-500",
-    bgColor: "bg-green-50",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
   },
   {
     title: "Total Calories",
     value: "87,240",
     change: "Available in stock",
     icon: TrendingUp,
-    color: "text-blue-500",
-    bgColor: "bg-blue-50",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
   },
   {
     title: "Family Members",
     value: "4",
     change: "Planned for",
     icon: Users,
-    color: "text-purple-500",
-    bgColor: "bg-purple-50",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
   },
   {
     title: "Food Items",
     value: "127",
     change: "In food inventory",
     icon: UtensilsCrossed,
-    color: "text-orange-500",
-    bgColor: "bg-orange-50",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
   },
 ]
 
@@ -42,14 +42,14 @@ export function FoodPlanningOverview() {
       {stats.map((stat) => (
         <Card key={stat.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="font-body text-sm font-medium text-gray-600">{stat.title}</CardTitle>
+            <CardTitle className="font-body text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
             <div className={`p-2 rounded-lg ${stat.bgColor}`}>
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-heading font-bold text-gray-900">{stat.value}</div>
-            <p className="text-xs text-gray-500 font-body mt-1">{stat.change}</p>
+            <div className="text-2xl font-heading font-bold text-foreground">{stat.value}</div>
+            <p className="text-xs text-muted-foreground font-body mt-1">{stat.change}</p>
           </CardContent>
         </Card>
       ))}

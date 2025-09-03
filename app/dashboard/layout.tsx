@@ -17,11 +17,11 @@ export default function DashboardLayout({
       enableSystem
       disableTransitionOnChange
     >
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-background">
         <DashboardHeader />
         <div className="flex">
           <DashboardNav />
-          <main className="flex-1 p-6 bg-slate-50">
+          <main className="flex-1 p-6">
             <div className="max-w-7xl mx-auto">{children}</div>
           </main>
         </div>

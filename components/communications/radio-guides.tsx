@@ -44,7 +44,7 @@ export function RadioGuides() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Radio className="h-5 w-5 mr-2 text-green-500" />
+          <Radio className="h-5 w-5 mr-2 text-primary" />
           Radio Frequency Guides
         </CardTitle>
       </CardHeader>
@@ -64,23 +64,23 @@ export function RadioGuides() {
 
           <TabsContent value="gmrs" className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
-              <Radio className="h-4 w-4 text-blue-500" />
-              <h3 className="font-body font-semibold text-gray-900">GMRS Channels</h3>
+              <Radio className="h-4 w-4 text-primary" />
+              <h3 className="font-body font-semibold text-foreground">GMRS Channels</h3>
             </div>
             <div className="space-y-2">
               {gmrsChannels.map((ch) => (
                 <div
                   key={ch.channel}
-                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                  className="flex items-center justify-between p-3 border border-border rounded-lg"
                 >
                   <div className="flex items-center space-x-3">
                     <Badge className="bg-blue-100 text-blue-800 min-w-[3rem]">CH {ch.channel}</Badge>
                     <div>
-                      <div className="font-body font-medium text-gray-900">{ch.frequency} MHz</div>
-                      <div className="font-body text-xs text-gray-500">{ch.notes}</div>
+                      <div className="font-body font-medium text-foreground">{ch.frequency} MHz</div>
+                      <div className="font-body text-xs text-muted-foreground">{ch.notes}</div>
                     </div>
                   </div>
-                  <Badge className={ch.power === "50W" ? "bg-orange-100 text-orange-800" : "bg-gray-100 text-gray-800"}>
+                  <Badge className={ch.power === "50W" ? "bg-orange-100 text-orange-800" : "bg-muted text-muted-foreground"}>
                     {ch.power}
                   </Badge>
                 </div>
@@ -96,20 +96,20 @@ export function RadioGuides() {
 
           <TabsContent value="noaa" className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
-              <Satellite className="h-4 w-4 text-orange-500" />
-              <h3 className="font-body font-semibold text-gray-900">NOAA Weather Radio</h3>
+              <Satellite className="h-4 w-4 text-primary" />
+              <h3 className="font-body font-semibold text-foreground">NOAA Weather Radio</h3>
             </div>
             <div className="space-y-2">
               {noaaChannels.map((ch) => (
                 <div
                   key={ch.channel}
-                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                  className="flex items-center justify-between p-3 border border-border rounded-lg"
                 >
                   <div className="flex items-center space-x-3">
                     <Badge className="bg-orange-100 text-orange-800 min-w-[3rem]">{ch.channel}</Badge>
                     <div>
-                      <div className="font-body font-medium text-gray-900">{ch.frequency} MHz</div>
-                      <div className="font-body text-xs text-gray-500">{ch.location} Coverage</div>
+                      <div className="font-body font-medium text-foreground">{ch.frequency} MHz</div>
+                      <div className="font-body text-xs text-muted-foreground">{ch.location} Coverage</div>
                     </div>
                   </div>
                 </div>
@@ -125,16 +125,16 @@ export function RadioGuides() {
 
           <TabsContent value="maritime" className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
-              <Ship className="h-4 w-4 text-blue-500" />
-              <h3 className="font-body font-semibold text-gray-900">Maritime VHF Channels</h3>
+              <Ship className="h-4 w-4 text-primary" />
+              <h3 className="font-body font-semibold text-foreground">Maritime VHF Channels</h3>
             </div>
             <div className="space-y-2">
               {maritimeChannels.map((ch) => (
-                <div key={ch.channel} className="p-3 border border-gray-200 rounded-lg">
+                <div key={ch.channel} className="p-3 border border-border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-3">
                       <Badge className="bg-blue-100 text-blue-800 min-w-[3rem]">CH {ch.channel}</Badge>
-                      <div className="font-body font-medium text-gray-900">{ch.frequency} MHz</div>
+                      <div className="font-body font-medium text-foreground">{ch.frequency} MHz</div>
                     </div>
                     <Badge
                       className={
@@ -142,13 +142,13 @@ export function RadioGuides() {
                           ? "bg-red-100 text-red-800"
                           : ch.priority === "High"
                             ? "bg-orange-100 text-orange-800"
-                            : "bg-gray-100 text-gray-800"
+                            : "bg-muted text-muted-foreground"
                       }
                     >
                       {ch.priority}
                     </Badge>
                   </div>
-                  <div className="font-body text-sm text-gray-600">{ch.purpose}</div>
+                  <div className="font-body text-sm text-muted-foreground">{ch.purpose}</div>
                 </div>
               ))}
             </div>

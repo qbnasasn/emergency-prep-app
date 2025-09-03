@@ -36,7 +36,7 @@ export function DashboardNav() {
   const pathname = usePathname()
 
   return (
-    <nav className={cn("border-r border-gray-200 transition-all duration-300 bg-slate-50", collapsed ? "w-16" : "w-64")}>
+    <nav className={cn("border-r border-border transition-all duration-300 bg-card", collapsed ? "w-16" : "w-64")}>
       <div className="p-4">
         <Button variant="ghost" size="sm" onClick={() => setCollapsed(!collapsed)} className="w-full justify-end mb-4">
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -51,7 +51,9 @@ export function DashboardNav() {
                   href={item.href}
                   className={cn(
                     "flex items-center px-3 py-2 text-sm font-body rounded-lg transition-colors",
-                    isActive ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                    isActive
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                   )}
                 >
                   <item.icon className={cn("flex-shrink-0 h-5 w-5", collapsed ? "mr-0" : "mr-3")} />

@@ -102,24 +102,24 @@ export function FoodInventoryAnalysis() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Package className="h-5 w-5 mr-2 text-orange-500" />
+          <Package className="h-5 w-5 mr-2 text-primary" />
           Food Inventory Analysis
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-heading font-bold text-blue-900">{totalItems}</div>
-            <div className="font-body text-sm text-blue-700">Total Food Items</div>
+          <div className="text-center p-3 bg-muted rounded-lg">
+            <div className="text-2xl font-heading font-bold text-foreground">{totalItems}</div>
+            <div className="font-body text-sm text-muted-foreground">Total Food Items</div>
           </div>
-          <div className="text-center p-3 bg-green-50 rounded-lg">
-            <div className="text-2xl font-heading font-bold text-green-900">{totalCalories.toLocaleString()}</div>
-            <div className="font-body text-sm text-green-700">Total Calories</div>
+          <div className="text-center p-3 bg-muted rounded-lg">
+            <div className="text-2xl font-heading font-bold text-foreground">{totalCalories.toLocaleString()}</div>
+            <div className="font-body text-sm text-muted-foreground">Total Calories</div>
           </div>
         </div>
 
         <div className="space-y-4">
-          <h3 className="font-body font-semibold text-gray-900 flex items-center">
+          <h3 className="font-body font-semibold text-foreground flex items-center">
             <TrendingUp className="h-4 w-4 mr-2" />
             Food Categories
           </h3>
@@ -128,17 +128,17 @@ export function FoodInventoryAnalysis() {
               <div key={category.name} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="font-body font-medium text-gray-900">{category.name}</span>
+                    <span className="font-body font-medium text-foreground">{category.name}</span>
                     <Badge className={getStatusColor(category.status)}>{category.status}</Badge>
                   </div>
                   <div className="text-right">
-                    <div className="font-body text-sm font-medium text-gray-900">{category.items} items</div>
-                    <div className="font-body text-xs text-gray-500">{category.calories.toLocaleString()} cal</div>
+                    <div className="font-body text-sm font-medium text-foreground">{category.items} items</div>
+                    <div className="font-body text-xs text-muted-foreground">{category.calories.toLocaleString()} cal</div>
                   </div>
                 </div>
                 <div className="space-y-1">
                   <Progress value={category.percentage} className="h-2" />
-                  <div className="flex justify-between text-xs font-body text-gray-500">
+                  <div className="flex justify-between text-xs font-body text-muted-foreground">
                     <span>{category.percentage}% of total calories</span>
                   </div>
                 </div>
@@ -148,7 +148,7 @@ export function FoodInventoryAnalysis() {
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-body font-semibold text-gray-900 flex items-center">
+          <h3 className="font-body font-semibold text-foreground flex items-center">
             <AlertTriangle className="h-4 w-4 mr-2" />
             Nutritional Balance
           </h3>

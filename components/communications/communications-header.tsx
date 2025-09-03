@@ -11,8 +11,8 @@ export function CommunicationsHeader() {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
       <div>
-        <h1 className="font-heading font-black text-3xl text-gray-900">Communications Center</h1>
-        <p className="font-body text-gray-600 mt-1">Emergency command center for all communication systems</p>
+        <h1 className="font-heading font-black text-3xl text-foreground">Communications Center</h1>
+        <p className="font-body text-muted-foreground mt-1">Emergency command center for all communication systems</p>
       </div>
 
       <div className="flex items-center space-x-4">
