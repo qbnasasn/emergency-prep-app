@@ -113,7 +113,9 @@ export function WeatherAlerts() {
           </div>
         ) : (
           <div className="text-center py-8">
+        feat/family-members
             <Sun className="h-12 w-12 text-primary mx-auto mb-4" />
+        main
             <p className="font-body text-muted-foreground">No active weather alerts in your area</p>
             <p className="font-body text-sm text-muted-foreground mt-1">Stay prepared and check back regularly</p>
           </div>
