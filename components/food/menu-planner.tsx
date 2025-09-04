@@ -126,9 +126,7 @@ export function MenuPlanner() {
 
           <TabsContent value="recipes" className="space-y-4">
             <div className="flex items-center mb-4">
-        feat/family-members
               <ChefHat className="h-4 w-4 mr-2 text-primary" />
-        main
               <h3 className="font-body font-semibold text-foreground">Emergency Cooking Recipes</h3>
             </div>
 

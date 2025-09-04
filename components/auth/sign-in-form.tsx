@@ -89,8 +89,8 @@ export function SignInForm() {
   return (
     <Card className="w-full shadow-lg border-0 bg-white/80 backdrop-blur-sm">
       <CardHeader className="text-center pb-4">
-        <CardTitle className="font-heading text-2xl text-foreground">Welcome Back</CardTitle>
-        <CardDescription className="font-body text-muted-foreground">
+        <CardTitle className="font-heading text-2xl text-gray-900">Welcome Back</CardTitle>
+        <CardDescription className="font-body text-gray-600">
           Sign in to access your emergency preparedness dashboard
         </CardDescription>
       </CardHeader>
@@ -138,7 +138,7 @@ export function SignInForm() {
 
         <div className="relative mb-4">
           <Separator />
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-sm text-muted-foreground font-body">
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-sm text-gray-500 font-body">
             or
           </span>
         </div>
@@ -160,7 +160,7 @@ export function SignInForm() {
                   Email
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="email"
                     name="email"
@@ -177,7 +177,7 @@ export function SignInForm() {
                   Password
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="password"
                     name="password"
@@ -206,7 +206,7 @@ export function SignInForm() {
                   Full Name
                 </Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="name"
                     name="name"
@@ -223,7 +223,7 @@ export function SignInForm() {
                   Email
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="signup-email"
                     name="email"
@@ -240,7 +240,7 @@ export function SignInForm() {
                   Password
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="signup-password"
                     name="password"
@@ -257,7 +257,7 @@ export function SignInForm() {
                   Confirm Password
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="confirm-password"
                     name="confirmPassword"
@@ -277,7 +277,7 @@ export function SignInForm() {
                 {isLoading ? "Creating account..." : "Create Account"}
               </Button>
 
-              <p className="text-xs text-muted-foreground font-body text-center">
+              <p className="text-xs text-gray-500 font-body text-center">
                 Email verification will be required before account approval
               </p>
             </form>

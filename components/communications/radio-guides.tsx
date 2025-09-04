@@ -64,9 +64,7 @@ export function RadioGuides() {
 
           <TabsContent value="gmrs" className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
-         feat/family-members
               <Radio className="h-4 w-4 text-primary" />
-         main
               <h3 className="font-body font-semibold text-foreground">GMRS Channels</h3>
             </div>
             <div className="space-y-2">
@@ -98,9 +96,7 @@ export function RadioGuides() {
 
           <TabsContent value="noaa" className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
-      feat/family-members
               <Satellite className="h-4 w-4 text-primary" />
-      main
               <h3 className="font-body font-semibold text-foreground">NOAA Weather Radio</h3>
             </div>
             <div className="space-y-2">
@@ -129,7 +125,6 @@ export function RadioGuides() {
 
           <TabsContent value="maritime" className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
-        feat/family-members
               <Ship className="h-4 w-4 text-primary" />
               <h3 className="font-body font-semibold text-foreground">Maritime VHF Channels</h3>
             </div>
