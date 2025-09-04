@@ -134,7 +134,7 @@ export function InventoryTable() {
           <CardTitle className="font-heading text-xl">Inventory Items</CardTitle>
         </CardHeader>
         <CardContent>
-          {error && <p className="text-red-500">{error}</p>}
+          {error && <p className="text-destructive">{error}</p>}
           {!error && items.length === 0 && <p>No inventory items found.</p>}
           <div className="rounded-md border">
             <Table>
@@ -157,7 +157,7 @@ export function InventoryTable() {
                     <TableRow key={item.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                             {item.image ? (
                               <Image
                                 src={item.image || "/placeholder.svg"}
@@ -167,28 +167,28 @@ export function InventoryTable() {
                                 className="rounded-lg"
                               />
                             ) : (
-                              <span className="text-gray-400 text-xs font-body">IMG</span>
+                              <span className="text-muted-foreground text-xs font-body">IMG</span>
                             )}
                           </div>
                           <div>
-                            <div className="font-body font-medium text-gray-900">{item.name}</div>
-                            {item.upc && <div className="font-body text-xs text-gray-500">UPC: {item.upc}</div>}
+                            <div className="font-body font-medium text-foreground">{item.name}</div>
+                            {item.upc && <div className="font-body text-xs text-muted-foreground">UPC: {item.upc}</div>}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="font-body text-sm text-gray-600">{item.category}</span>
+                        <span className="font-body text-sm text-muted-foreground">{item.category}</span>
                       </TableCell>
                       <TableCell>
-                        <span className="font-body text-sm text-gray-600">{item.location}</span>
+                        <span className="font-body text-sm text-muted-foreground">{item.location}</span>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <span className="font-body font-medium">{item.quantity}</span>
                           {(item.min_stock && item.quantity <= item.min_stock) ||
-                            (item.quantity === 0 && <AlertTriangle className="h-4 w-4 text-orange-500" />)}
+                            (item.quantity === 0 && <AlertTriangle className="h-4 w-4 text-primary" />)}
                         </div>
-                        <div className="font-body text-xs text-gray-500">Min: {item.min_stock}</div>
+                        <div className="font-body text-xs text-muted-foreground">Min: {item.min_stock}</div>
                       </TableCell>
                       <TableCell>
                         <Badge className={stockStatus.color}>{stockStatus.status}</Badge>
@@ -211,7 +211,7 @@ export function InventoryTable() {
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Item
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="font-body text-red-600" onClick={() => handleDelete(item)}>
+                            <DropdownMenuItem className="font-body text-destructive" onClick={() => handleDelete(item)}>
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete Item
                             </DropdownMenuItem>

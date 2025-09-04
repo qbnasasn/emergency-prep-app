@@ -25,7 +25,7 @@ export function ShoppingFilters() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center space-x-2">
-          <Filter className="h-4 w-4 text-gray-500" />
+          <Filter className="h-4 w-4 text-muted-foreground" />
           <CardTitle className="font-heading text-lg">Filters</CardTitle>
         </div>
         <Button variant="ghost" size="sm">

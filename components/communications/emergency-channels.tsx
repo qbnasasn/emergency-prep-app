@@ -87,9 +87,9 @@ export function EmergencyChannels() {
       case "monitoring":
         return "bg-blue-100 text-blue-800"
       case "offline":
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -102,7 +102,7 @@ export function EmergencyChannels() {
       case "medium":
         return "bg-yellow-100 text-yellow-800"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -123,7 +123,7 @@ export function EmergencyChannels() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Radio className="h-5 w-5 mr-2 text-red-500" />
+          <Radio className="h-5 w-5 mr-2 text-destructive" />
           Emergency Channels
         </CardTitle>
       </CardHeader>
@@ -132,13 +132,13 @@ export function EmergencyChannels() {
           {channels.map((channel) => {
             const IconComponent = getChannelIcon(channel.type)
             return (
-              <div key={channel.id} className="border border-gray-200 rounded-lg p-4">
+              <div key={channel.id} className="border border-border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
-                    <IconComponent className="h-4 w-4 text-gray-500" />
+                    <IconComponent className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <div className="font-body font-medium text-gray-900">{channel.name}</div>
-                      <div className="font-body text-sm text-gray-600">{channel.frequency}</div>
+                      <div className="font-body font-medium text-foreground">{channel.name}</div>
+                      <div className="font-body text-sm text-muted-foreground">{channel.frequency}</div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -148,7 +148,7 @@ export function EmergencyChannels() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="font-body text-xs text-gray-500">Last activity: {channel.lastActivity}</div>
+                  <div className="font-body text-xs text-muted-foreground">Last activity: {channel.lastActivity}</div>
                   <div className="flex space-x-2">
                     {channel.type !== "emergency" && (
                       <Button
@@ -171,7 +171,7 @@ export function EmergencyChannels() {
                       </Button>
                     )}
                     {channel.type === "emergency" && (
-                      <Button size="sm" className="font-body bg-red-600 hover:bg-red-700">
+                      <Button size="sm" className="font-body bg-destructive hover:bg-red-700">
                         <Phone className="h-3 w-3 mr-1" />
                         Call
                       </Button>
@@ -183,7 +183,7 @@ export function EmergencyChannels() {
           })}
         </div>
 
-        <div className="p-3 bg-red-50 rounded-lg">
+        <div className="p-3 bg-destructive/10 rounded-lg">
           <p className="font-body text-sm text-red-800">
             <strong>Emergency Mode Active:</strong> All critical channels are being monitored. Emergency services can be
             contacted immediately via the buttons above.

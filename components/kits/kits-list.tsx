@@ -9,7 +9,7 @@ const kitTypes = {
   extended: { icon: Package, label: "Extended Kit", color: "bg-purple-100 text-purple-800" },
   vehicle: { icon: Car, label: "Vehicle Emergency Kit", color: "bg-orange-100 text-orange-800" },
   shelter: { icon: Home, label: "Shelter-in-Place Kit", color: "bg-green-100 text-green-800" },
-  office: { icon: Building, label: "Office Emergency Kit", color: "bg-gray-100 text-gray-800" },
+  office: { icon: Building, label: "Office Emergency Kit", color: "bg-muted text-foreground" },
   evacuation: { icon: Backpack, label: "Evacuation/Go Bag", color: "bg-red-100 text-red-800" },
   tactical: { icon: Shield, label: "Tactical Vest", color: "bg-black text-white" },
   specialized: { icon: Wrench, label: "Specialized Kit", color: "bg-yellow-100 text-yellow-800" },

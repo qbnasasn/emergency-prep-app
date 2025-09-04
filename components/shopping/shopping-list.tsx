@@ -179,10 +179,10 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow key={item.id} className={item.is_purchased ? "bg-green-50" : ""}>
+                  <TableRow key={item.id} className={item.is_purchased ? "bg-primary/10" : ""}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                           {item.image ? (
                             <Image
                               src={item.image || "/placeholder.svg"}
@@ -192,17 +192,17 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
                               className="rounded-lg"
                             />
                           ) : (
-                            <span className="text-gray-400 text-xs font-body">IMG</span>
+                            <span className="text-muted-foreground text-xs font-body">IMG</span>
                           )}
                         </div>
                         <div>
-                          <div className="font-body font-medium text-gray-900">{item.item_name}</div>
+                          <div className="font-body font-medium text-foreground">{item.item_name}</div>
                           {item.inventory_item_id && <Badge variant="secondary">Restock</Badge>}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="font-body text-sm text-gray-600">{item.category}</span>
+                      <span className="font-body text-sm text-muted-foreground">{item.category}</span>
                     </TableCell>
                     <TableCell>
                       <Badge className={getReasonColor(item.reason)}>{getReasonText(item.reason)}</Badge>
@@ -222,7 +222,7 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
                       <span className="font-body text-sm font-medium">{formatCurrency(item.estimated_cost)}</span>
                     </TableCell>
                     <TableCell>
-                      <span className="font-body text-sm text-gray-600">{item.preferred_store}</span>
+                      <span className="font-body text-sm text-muted-foreground">{item.preferred_store}</span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -231,7 +231,7 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
                             <Button
                               size="sm"
                               onClick={() => buyNowAmazon(item.item_name)}
-                              className="font-body text-xs bg-orange-500 hover:bg-orange-600"
+                              className="font-body text-xs bg-primary/100 hover:bg-orange-600"
                             >
                               <ExternalLink className="h-3 w-3 mr-1" />
                               Amazon
@@ -239,7 +239,7 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
                             <Button
                               size="sm"
                               onClick={() => buyNowWalmart(item.item_name)}
-                              className="font-body text-xs bg-blue-500 hover:bg-blue-600"
+                              className="font-body text-xs bg-primary/100 hover:bg-blue-600"
                             >
                               <ExternalLink className="h-3 w-3 mr-1" />
                               Walmart
@@ -287,7 +287,7 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Item
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="font-body text-red-600" onClick={() => removeItem(item.id)}>
+                            <DropdownMenuItem className="font-body text-destructive" onClick={() => removeItem(item.id)}>
                               <Trash2 className="mr-2 h-4 w-4" />
                               Remove Item
                             </DropdownMenuItem>
