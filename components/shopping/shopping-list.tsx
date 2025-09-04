@@ -179,7 +179,7 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow key={item.id} className={item.is_purchased ? "bg-green-50" : ""}>
+                  <TableRow key={item.id} className={item.is_purchased ? "bg-primary/10" : ""}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -231,7 +231,7 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
                             <Button
                               size="sm"
                               onClick={() => buyNowAmazon(item.item_name)}
-                              className="font-body text-xs bg-orange-500 hover:bg-orange-600"
+                              className="font-body text-xs bg-primary/100 hover:bg-orange-600"
                             >
                               <ExternalLink className="h-3 w-3 mr-1" />
                               Amazon
@@ -239,7 +239,7 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
                             <Button
                               size="sm"
                               onClick={() => buyNowWalmart(item.item_name)}
-                              className="font-body text-xs bg-blue-500 hover:bg-blue-600"
+                              className="font-body text-xs bg-primary/100 hover:bg-blue-600"
                             >
                               <ExternalLink className="h-3 w-3 mr-1" />
                               Walmart
@@ -287,7 +287,7 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Item
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="font-body text-red-600" onClick={() => removeItem(item.id)}>
+                            <DropdownMenuItem className="font-body text-destructive" onClick={() => removeItem(item.id)}>
                               <Trash2 className="mr-2 h-4 w-4" />
                               Remove Item
                             </DropdownMenuItem>

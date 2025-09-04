@@ -50,10 +50,12 @@ export function KnowledgeTips() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {error && <p className="text-red-500">{error}</p>}
+          {error && <p className="text-destructive">{error}</p>}
           {!error && tips.length === 0 && <p>No tips available at the moment.</p>}
           {tips.map((tip) => (
-            <div key={tip.id} className="border-l-4 border-blue-500 pl-4">
+        feat/family-members
+            <div key={tip.id} className="border-l-4 border-primary pl-4">
+        main
               <h3 className="font-body font-semibold text-foreground text-sm">{tip.category}</h3>
               <p className="font-body text-sm text-muted-foreground mt-1">{tip.tip}</p>
             </div>

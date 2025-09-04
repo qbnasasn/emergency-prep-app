@@ -123,7 +123,7 @@ export function EmergencyChannels() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Radio className="h-5 w-5 mr-2 text-red-500" />
+          <Radio className="h-5 w-5 mr-2 text-destructive" />
           Emergency Channels
         </CardTitle>
       </CardHeader>
@@ -171,7 +171,7 @@ export function EmergencyChannels() {
                       </Button>
                     )}
                     {channel.type === "emergency" && (
-                      <Button size="sm" className="font-body bg-red-600 hover:bg-red-700">
+                      <Button size="sm" className="font-body bg-destructive hover:bg-red-700">
                         <Phone className="h-3 w-3 mr-1" />
                         Call
                       </Button>
@@ -183,7 +183,7 @@ export function EmergencyChannels() {
           })}
         </div>
 
-        <div className="p-3 bg-red-50 rounded-lg">
+        <div className="p-3 bg-destructive/10 rounded-lg">
           <p className="font-body text-sm text-red-800">
             <strong>Emergency Mode Active:</strong> All critical channels are being monitored. Emergency services can be
             contacted immediately via the buttons above.

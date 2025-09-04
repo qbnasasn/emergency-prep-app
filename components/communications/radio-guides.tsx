@@ -44,7 +44,7 @@ export function RadioGuides() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Radio className="h-5 w-5 mr-2 text-green-500" />
+          <Radio className="h-5 w-5 mr-2 text-primary" />
           Radio Frequency Guides
         </CardTitle>
       </CardHeader>
@@ -64,7 +64,9 @@ export function RadioGuides() {
 
           <TabsContent value="gmrs" className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
-              <Radio className="h-4 w-4 text-blue-500" />
+         feat/family-members
+              <Radio className="h-4 w-4 text-primary" />
+         main
               <h3 className="font-body font-semibold text-foreground">GMRS Channels</h3>
             </div>
             <div className="space-y-2">
@@ -86,7 +88,7 @@ export function RadioGuides() {
                 </div>
               ))}
             </div>
-            <div className="p-3 bg-blue-50 rounded-lg">
+            <div className="p-3 bg-primary/10 rounded-lg">
               <p className="font-body text-sm text-blue-800">
                 <strong>GMRS License Required:</strong> FCC license needed for legal operation. Channels 15-22 are
                 repeater capable with higher power limits.
@@ -96,7 +98,9 @@ export function RadioGuides() {
 
           <TabsContent value="noaa" className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
-              <Satellite className="h-4 w-4 text-orange-500" />
+      feat/family-members
+              <Satellite className="h-4 w-4 text-primary" />
+      main
               <h3 className="font-body font-semibold text-foreground">NOAA Weather Radio</h3>
             </div>
             <div className="space-y-2">
@@ -115,7 +119,7 @@ export function RadioGuides() {
                 </div>
               ))}
             </div>
-            <div className="p-3 bg-orange-50 rounded-lg">
+            <div className="p-3 bg-primary/10 rounded-lg">
               <p className="font-body text-sm text-orange-800">
                 <strong>24/7 Weather Information:</strong> Continuous broadcasts of weather conditions, forecasts, and
                 emergency alerts. No license required for reception.
@@ -125,7 +129,8 @@ export function RadioGuides() {
 
           <TabsContent value="maritime" className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
-              <Ship className="h-4 w-4 text-blue-500" />
+        feat/family-members
+              <Ship className="h-4 w-4 text-primary" />
               <h3 className="font-body font-semibold text-foreground">Maritime VHF Channels</h3>
             </div>
             <div className="space-y-2">
@@ -152,9 +157,9 @@ export function RadioGuides() {
                 </div>
               ))}
             </div>
-            <div className="p-3 bg-red-50 rounded-lg">
+            <div className="p-3 bg-destructive/10 rounded-lg">
               <div className="flex items-start space-x-2">
-                <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5" />
+                <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
                 <p className="font-body text-sm text-red-800">
                   <strong>Channel 16 Emergency:</strong> International distress frequency. Monitor continuously when
                   possible. Marine radio license may be required.

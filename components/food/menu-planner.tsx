@@ -51,7 +51,7 @@ export function MenuPlanner() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center space-x-2">
-          <UtensilsCrossed className="h-5 w-5 text-green-500" />
+          <UtensilsCrossed className="h-5 w-5 text-primary" />
           <CardTitle className="font-heading text-xl">Menu Planner</CardTitle>
         </div>
         <Button size="sm" className="font-body">
@@ -116,7 +116,7 @@ export function MenuPlanner() {
               ))}
             </div>
 
-            <div className="p-3 bg-blue-50 rounded-lg">
+            <div className="p-3 bg-primary/10 rounded-lg">
               <p className="font-body text-sm text-blue-800">
                 <strong>Menu automatically generated</strong> based on your current food inventory. Adjust portions
                 based on family size and activity level.
@@ -126,7 +126,9 @@ export function MenuPlanner() {
 
           <TabsContent value="recipes" className="space-y-4">
             <div className="flex items-center mb-4">
-              <ChefHat className="h-4 w-4 mr-2 text-orange-500" />
+        feat/family-members
+              <ChefHat className="h-4 w-4 mr-2 text-primary" />
+        main
               <h3 className="font-body font-semibold text-foreground">Emergency Cooking Recipes</h3>
             </div>
 

@@ -30,7 +30,7 @@ export function CommunicationsHeader() {
 
         <Button
           onClick={() => setEmergencyMode(!emergencyMode)}
-          className={`font-body ${emergencyMode ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}
+          className={`font-body ${emergencyMode ? "bg-green-600 hover:bg-green-700" : "bg-destructive hover:bg-red-700"}`}
         >
           {emergencyMode ? (
             <>

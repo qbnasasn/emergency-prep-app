@@ -10,28 +10,28 @@ const initialSummaryData = [
     value: "...",
     change: "Loading...",
     icon: Package,
-    color: "text-blue-500",
+    color: "text-primary",
   },
   {
     title: "Active Alerts",
     value: "3",
     change: "2 weather, 1 supply",
     icon: AlertTriangle,
-    color: "text-orange-500",
+    color: "text-primary",
   },
   {
     title: "Emergency Kits",
     value: "...",
     change: "Loading...",
     icon: CheckCircle,
-    color: "text-green-500",
+    color: "text-primary",
   },
   {
     title: "Expiring Soon",
     value: "15",
     change: "Next 30 days",
     icon: Clock,
-    color: "text-red-500",
+    color: "text-destructive",
   },
 ]
 

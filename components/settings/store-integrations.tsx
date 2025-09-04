@@ -253,7 +253,7 @@ export function StoreIntegrations() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <ShoppingCart className="h-5 w-5 mr-2 text-blue-500" />
+          <ShoppingCart className="h-5 w-5 mr-2 text-primary" />
           Store API Integrations
         </CardTitle>
       </CardHeader>
@@ -292,7 +292,7 @@ export function StoreIntegrations() {
 
               {store.connected ? (
                 <div className="space-y-4">
-                  <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="p-4 bg-primary/10 rounded-lg">
                     <p className="font-body text-sm text-green-800">
                       ✅ {store.name} API is successfully connected and ready for use.
                     </p>
@@ -333,7 +333,7 @@ export function StoreIntegrations() {
                 </div>
               )}
 
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <div className="mt-6 p-4 bg-primary/10 rounded-lg">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <p className="font-body text-sm font-semibold text-blue-900 mb-2">{instructions.title}</p>

@@ -85,11 +85,11 @@ export function FoodInventoryAnalysis() {
   const getProgressColor = (status: string) => {
     switch (status) {
       case "good":
-        return "bg-green-500"
+        return "bg-primary/100"
       case "low":
         return "bg-yellow-500"
       case "critical":
-        return "bg-red-500"
+        return "bg-destructive"
       default:
         return "bg-gray-500"
     }
@@ -102,17 +102,17 @@ export function FoodInventoryAnalysis() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Package className="h-5 w-5 mr-2 text-orange-500" />
+          <Package className="h-5 w-5 mr-2 text-primary" />
           Food Inventory Analysis
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
+          <div className="text-center p-3 bg-primary/10 rounded-lg">
             <div className="text-2xl font-heading font-bold text-blue-900">{totalItems}</div>
             <div className="font-body text-sm text-blue-700">Total Food Items</div>
           </div>
-          <div className="text-center p-3 bg-green-50 rounded-lg">
+          <div className="text-center p-3 bg-primary/10 rounded-lg">
             <div className="text-2xl font-heading font-bold text-green-900">{totalCalories.toLocaleString()}</div>
             <div className="font-body text-sm text-green-700">Total Calories</div>
           </div>
@@ -153,7 +153,7 @@ export function FoodInventoryAnalysis() {
             Nutritional Balance
           </h3>
           <div className="space-y-2">
-            <div className="p-3 bg-green-50 rounded-lg">
+            <div className="p-3 bg-primary/10 rounded-lg">
               <div className="font-body text-sm text-green-800">
                 <strong>Well Stocked:</strong> Grains, proteins, and vegetables provide good foundation
               </div>
@@ -163,7 +163,7 @@ export function FoodInventoryAnalysis() {
                 <strong>Consider Adding:</strong> More fruits, dairy alternatives, and healthy fats
               </div>
             </div>
-            <div className="p-3 bg-red-50 rounded-lg">
+            <div className="p-3 bg-destructive/10 rounded-lg">
               <div className="font-body text-sm text-red-800">
                 <strong>Critical Need:</strong> Cooking oils and beverages are running low
               </div>

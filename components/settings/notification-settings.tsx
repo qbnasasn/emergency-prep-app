@@ -11,7 +11,7 @@ export function NotificationSettings() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Bell className="h-5 w-5 mr-2 text-orange-500" />
+          <Bell className="h-5 w-5 mr-2 text-primary" />
           Notification Settings
         </CardTitle>
       </CardHeader>

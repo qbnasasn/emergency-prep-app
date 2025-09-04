@@ -11,7 +11,7 @@ export function UserSettings() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <User className="h-5 w-5 mr-2 text-green-500" />
+          <User className="h-5 w-5 mr-2 text-primary" />
           User Settings
         </CardTitle>
       </CardHeader>
@@ -75,7 +75,9 @@ export function UserSettings() {
 
         <div className="space-y-4">
           <h3 className="font-body font-semibold text-foreground">Subscription</h3>
-          <div className="p-3 bg-green-50 rounded-lg">
+        feat/family-members
+          <div className="p-3 bg-primary/10 rounded-lg">
+        main
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-body font-medium text-green-800">Premium Plan</p>

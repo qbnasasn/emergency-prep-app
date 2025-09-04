@@ -129,7 +129,7 @@ export function PlanBuilder() {
           <Card>
             <CardHeader>
               <CardTitle className="font-heading text-lg flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2 text-orange-500" />
+                <AlertTriangle className="h-5 w-5 mr-2 text-primary" />
                 Hazard Assessment
               </CardTitle>
             </CardHeader>
@@ -168,7 +168,7 @@ export function PlanBuilder() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading text-lg flex items-center">
-                <MapPin className="h-5 w-5 mr-2 text-blue-500" />
+                <MapPin className="h-5 w-5 mr-2 text-primary" />
                 Key Locations
               </CardTitle>
               <Button size="sm" className="font-body">
@@ -217,7 +217,7 @@ export function PlanBuilder() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="font-heading text-lg flex items-center">
-                  <Users className="h-5 w-5 mr-2 text-green-500" />
+                  <Users className="h-5 w-5 mr-2 text-primary" />
                   Family Members
                 </CardTitle>
                 <Button size="sm" className="font-body">
@@ -242,7 +242,7 @@ export function PlanBuilder() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="font-heading text-lg flex items-center">
-                  <Heart className="h-5 w-5 mr-2 text-red-500" />
+                  <Heart className="h-5 w-5 mr-2 text-destructive" />
                   Pets & Animals
                 </CardTitle>
                 <Button size="sm" className="font-body">
@@ -268,7 +268,7 @@ export function PlanBuilder() {
           <Card>
             <CardHeader>
               <CardTitle className="font-heading text-lg flex items-center">
-                <Pill className="h-5 w-5 mr-2 text-purple-500" />
+                <Pill className="h-5 w-5 mr-2 text-primary" />
                 Medications & Medical Needs
               </CardTitle>
             </CardHeader>
@@ -299,7 +299,7 @@ export function PlanBuilder() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading text-lg flex items-center">
-                <Package className="h-5 w-5 mr-2 text-orange-500" />
+                <Package className="h-5 w-5 mr-2 text-primary" />
                 Required Inventory Items
               </CardTitle>
               <Button size="sm" className="font-body">
@@ -347,7 +347,7 @@ export function PlanBuilder() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading text-lg flex items-center">
-                <Route className="h-5 w-5 mr-2 text-blue-500" />
+                <Route className="h-5 w-5 mr-2 text-primary" />
                 Evacuation Routes
               </CardTitle>
               <Button size="sm" className="font-body">
@@ -399,7 +399,7 @@ export function PlanBuilder() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading text-lg flex items-center">
-                <Phone className="h-5 w-5 mr-2 text-green-500" />
+                <Phone className="h-5 w-5 mr-2 text-primary" />
                 Emergency Contacts
               </CardTitle>
               <Button size="sm" className="font-body">

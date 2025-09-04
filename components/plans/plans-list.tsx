@@ -156,7 +156,7 @@ export function PlansList() {
                         <Printer className="mr-2 h-4 w-4" />
                         Print Plan
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="font-body text-red-600">
+                      <DropdownMenuItem className="font-body text-destructive">
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete Plan
                       </DropdownMenuItem>
@@ -190,7 +190,7 @@ export function PlansList() {
                       <Button
                         size="sm"
                         onClick={() => activatePlan(plan.id)}
-                        className="flex-1 font-body bg-red-600 hover:bg-red-700"
+                        className="flex-1 font-body bg-destructive hover:bg-red-700"
                       >
                         <Play className="h-4 w-4 mr-2" />
                         Activate

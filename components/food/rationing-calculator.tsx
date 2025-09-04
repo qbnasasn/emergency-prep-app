@@ -117,7 +117,7 @@ export function RationingCalculator() {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-xl flex items-center">
-          <Calculator className="h-5 w-5 mr-2 text-blue-500" />
+          <Calculator className="h-5 w-5 mr-2 text-primary" />
           Rationing Calculator
         </CardTitle>
       </CardHeader>
@@ -174,7 +174,7 @@ export function RationingCalculator() {
           </div>
         </div>
 
-        <div className="bg-blue-50 rounded-lg p-4">
+        <div className="bg-primary/10 rounded-lg p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
             <div>
               <div className="text-2xl font-heading font-bold text-blue-900">{calculatedDays}</div>
@@ -199,7 +199,7 @@ export function RationingCalculator() {
           </div>
         </div>
 
-        <div className="p-3 bg-orange-50 rounded-lg">
+        <div className="p-3 bg-primary/10 rounded-lg">
           <p className="font-body text-sm text-orange-800">
             <strong>Rationing Recommendations:</strong>
             <br />• Normal: Maintain regular caloric intake for optimal health
