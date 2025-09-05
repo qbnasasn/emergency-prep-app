@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { User, Users, MapPin, Save } from "lucide-react"
+import { User, MapPin, Save } from "lucide-react"
+import { FamilyMembers } from "./family-members"
 
 export function UserSettings() {
   return (
@@ -16,42 +17,7 @@ export function UserSettings() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <h3 className="font-body font-semibold text-foreground flex items-center">
-            <Users className="h-4 w-4 mr-2" />
-            Family Members (up to 5)
-          </h3>
-
-          <div className="space-y-3">
-            <div className="border border-border rounded-lg p-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="font-body text-xs">Name</Label>
-                  <Input placeholder="Full name" className="font-body text-sm" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="font-body text-xs">Age</Label>
-                  <Input placeholder="Age" className="font-body text-sm" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 mt-3">
-                <div className="space-y-1">
-                  <Label className="font-body text-xs">Weight (lbs)</Label>
-                  <Input placeholder="Weight" className="font-body text-sm" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="font-body text-xs">Height (ft/in)</Label>
-                  <Input placeholder="5'8&quot;" className="font-body text-sm" />
-                </div>
-              </div>
-            </div>
-
-            <Button variant="outline" size="sm" className="font-body bg-transparent">
-              Add Family Member
-            </Button>
-          </div>
-        </div>
-
+        <FamilyMembers />
         <div className="space-y-4">
           <h3 className="font-body font-semibold text-foreground flex items-center">
             <MapPin className="h-4 w-4 mr-2" />
