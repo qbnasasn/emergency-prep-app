@@ -11,14 +11,24 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const { id } = params
   try {
     const body = await request.json()
-    const { first_name, last_name, weight_lbs, height_inches, birth_date, role, phone_number, email, call_sign } = body
+    const {
+      first_name, last_name, weight_lbs, height_inches, birth_date, role,
+      phone_number, email, call_sign, street_number, street_name, city, state, zip_code
+    } = body
 
     const updatedMember = await db.query(
       `UPDATE family_members
-       SET first_name = $1, last_name = $2, weight_lbs = $3, height_inches = $4, birth_date = $5, role = $6, phone_number = $7, email = $8, call_sign = $9
-       WHERE id = $10 AND user_id = $11
+       SET
+         first_name = $1, last_name = $2, weight_lbs = $3, height_inches = $4,
+         birth_date = $5, role = $6, phone_number = $7, email = $8, call_sign = $9,
+         street_number = $10, street_name = $11, city = $12, state = $13, zip_code = $14
+       WHERE id = $15 AND user_id = $16
        RETURNING *`,
-      [first_name, last_name, weight_lbs, height_inches, birth_date, role, phone_number, email, call_sign, id, session.user.id]
+      [
+        first_name, last_name, weight_lbs, height_inches, birth_date, role,
+        phone_number, email, call_sign, street_number, street_name, city, state, zip_code,
+        id, session.user.id
+      ]
     )
 
     if (updatedMember.rows.length === 0) {

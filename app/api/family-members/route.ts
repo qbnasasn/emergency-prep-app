@@ -25,13 +25,22 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { first_name, last_name, weight_lbs, height_inches, birth_date, role, phone_number, email, call_sign } = body
+    const {
+      first_name, last_name, weight_lbs, height_inches, birth_date, role,
+      phone_number, email, call_sign, street_number, street_name, city, state, zip_code
+    } = body
 
     const newMember = await db.query(
-      `INSERT INTO family_members (user_id, first_name, last_name, weight_lbs, height_inches, birth_date, role, phone_number, email, call_sign)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO family_members (
+         user_id, first_name, last_name, weight_lbs, height_inches, birth_date, role,
+         phone_number, email, call_sign, street_number, street_name, city, state, zip_code
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        RETURNING *`,
-      [session.user.id, first_name, last_name, weight_lbs, height_inches, birth_date, role, phone_number, email, call_sign]
+      [
+        session.user.id, first_name, last_name, weight_lbs, height_inches, birth_date, role,
+        phone_number, email, call_sign, street_number, street_name, city, state, zip_code
+      ]
     )
 
     return NextResponse.json(newMember.rows[0], { status: 201 })

@@ -18,6 +18,11 @@ const formSchema = z.object({
   phone_number: z.string().optional(),
   email: z.string().email('Invalid email address').optional(),
   call_sign: z.string().optional(),
+  street_number: z.string().optional(),
+  street_name: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip_code: z.string().optional(),
 })
 
 const roles = [
@@ -39,6 +44,11 @@ export function FamilyMemberForm({ onFormSubmit, initialData }) {
       phone_number: '',
       email: '',
       call_sign: '',
+      street_number: '',
+      street_name: '',
+      city: '',
+      state: '',
+      zip_code: '',
     },
   })
 
@@ -140,6 +150,77 @@ export function FamilyMemberForm({ onFormSubmit, initialData }) {
             </FormItem>
           )}
         />
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Address</h3>
+          <div className="grid grid-cols-12 gap-2">
+            <div className="col-span-4">
+              <FormField
+                control={form.control}
+                name="street_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input placeholder="Street Number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-8">
+              <FormField
+                control={form.control}
+                name="street_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input placeholder="Street Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input placeholder="City" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="state"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input placeholder="State" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="zip_code"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input placeholder="ZIP Code" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
