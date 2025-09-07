@@ -71,7 +71,7 @@ export function DashboardHeader() {
                 Request Help
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOut()} className="font-body cursor-pointer">
+              <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })} className="font-body cursor-pointer">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
               </DropdownMenuItem>
