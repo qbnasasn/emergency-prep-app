@@ -1,21 +1,26 @@
 "use client"
 
-"use client"
-
 import { Bell, Settings, User, LogOut, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Image from "next/image"
+import Link from "next/link"
+import { useSession, signOut } from "next-auth/react"
 import { ModeToggle } from "@/components/ui/mode-toggle"
 
 export function DashboardHeader() {
+  const { data: session } = useSession()
+  const user = session?.user
+  const initials = user?.name?.split(' ').map(n => n[0]).join('') ?? ''
+
   return (
     <header className="border-b border-border px-6 py-4 bg-card">
       <div className="flex items-center justify-between">
@@ -38,24 +43,35 @@ export function DashboardHeader() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
+                  <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? 'User'} />
                   <AvatarFallback className="bg-muted">
-                    <User className="h-5 w-5" />
+                    {initials || <User className="h-5 w-5" />}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuItem className="font-body">
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
+              <DropdownMenuLabel className="font-body">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user?.name}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild className="font-body cursor-pointer">
+                <Link href="/dashboard/settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="font-body">
+              <DropdownMenuItem className="font-body cursor-pointer">
                 <HelpCircle className="mr-2 h-4 w-4" />
                 Request Help
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="font-body">
+              <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })} className="font-body cursor-pointer">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
               </DropdownMenuItem>

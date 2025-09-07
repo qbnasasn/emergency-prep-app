@@ -15,9 +15,19 @@ export function FamilyMembers() {
   const [selectedMember, setSelectedMember] = useState(null)
 
   const fetchMembers = async () => {
-    const response = await fetch('/api/family-members')
-    const data = await response.json()
-    setMembers(data)
+    try {
+      const response = await fetch('/api/family-members')
+      if (response.ok) {
+        const data = await response.json()
+        setMembers(data)
+      } else {
+        console.error('Failed to fetch family members')
+        setMembers([])
+      }
+    } catch (error) {
+      console.error('Error fetching family members:', error)
+      setMembers([])
+    }
   }
 
   useEffect(() => {
