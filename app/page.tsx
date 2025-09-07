@@ -8,9 +8,9 @@ export default function HomePage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <Image src="/images/safeprep-logo.png" alt="SafePrep Logo" width={120} height={120} className="w-24 h-24" />
+            <Image src="/images/LOGO.png" alt="PreSafe Logo" width={120} height={120} className="w-24 h-24" />
           </div>
-          <h1 className="font-heading font-black text-3xl text-gray-900 mb-2">SafePrep</h1>
+          <h1 className="font-heading font-black text-3xl text-gray-900 mb-2">PreSafe</h1>
           <p className="font-body text-gray-600 text-lg">Your Safety, Our Priority: Prepare for Tomorrow, Today!</p>
         </div>
 

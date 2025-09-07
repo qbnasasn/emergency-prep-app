@@ -19,7 +19,7 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "SafePrep - Emergency Preparedness Made Simple",
+  title: "PreSafe - Emergency Preparedness Made Simple",
   description: "Your comprehensive emergency preparedness platform for individuals, families, and preppers.",
   generator: "v0.app",
 }
