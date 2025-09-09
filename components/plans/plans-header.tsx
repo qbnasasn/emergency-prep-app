@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, FileText, Printer } from "lucide-react"
@@ -36,10 +37,12 @@ export function PlansHeader() {
           Print All
         </Button>
 
-        <Button className="font-body bg-gray-900 hover:bg-gray-800">
-          <Plus className="h-4 w-4 mr-2" />
-          New Plan
-        </Button>
+        <Link href="/dashboard/plans/builder/new">
+          <Button className="font-body bg-gray-900 hover:bg-gray-800">
+            <Plus className="h-4 w-4 mr-2" />
+            New Plan
+          </Button>
+        </Link>
       </div>
     </div>
   )
