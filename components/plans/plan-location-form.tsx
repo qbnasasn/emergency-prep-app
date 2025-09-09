@@ -39,7 +39,10 @@ export function PlanLocationForm({ onFormSubmit, initialData }) {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.infer<typeof formSchema>, event?: React.BaseSyntheticEvent) {
+    if (event) {
+      event.preventDefault();
+    }
     onFormSubmit(values)
   }
 
