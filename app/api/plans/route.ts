@@ -20,3 +20,30 @@ export async function GET() {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export async function POST(req: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
+    try {
+        const { name, description, hazard_type, is_active } = await req.json();
+        if (!name || !hazard_type) {
+            return NextResponse.json({ error: 'Plan name and hazard type are required' }, { status: 400 });
+        }
+
+        const client = await pool.connect();
+        const result = await client.query(
+            'INSERT INTO plans (user_id, name, description, hazard_type, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [userId, name, description, hazard_type, is_active]
+        );
+        client.release();
+
+        return NextResponse.json(result.rows[0], { status: 201 });
+    } catch (error) {
+        console.error('Error creating plan:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
