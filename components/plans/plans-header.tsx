@@ -6,7 +6,11 @@ import { Input } from "@/components/ui/input"
 import { Plus, Search, FileText, Printer } from "lucide-react"
 import { useState } from "react"
 
-export function PlansHeader() {
+interface PlansHeaderProps {
+  onCreate: () => void;
+}
+
+export function PlansHeader({ onCreate }: PlansHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
 
   return (
@@ -37,12 +41,10 @@ export function PlansHeader() {
           Print All
         </Button>
 
-        <Link href="/dashboard/plans/builder/new">
-          <Button className="font-body bg-gray-900 hover:bg-gray-800">
-            <Plus className="h-4 w-4 mr-2" />
-            New Plan
-          </Button>
-        </Link>
+        <Button className="font-body bg-gray-900 hover:bg-gray-800" onClick={onCreate}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Plan
+        </Button>
       </div>
     </div>
   )
