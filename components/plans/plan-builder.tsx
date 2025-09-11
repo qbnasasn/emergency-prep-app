@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,10 +28,52 @@ const hazardTypes = [
   "Cyber Attack",
 ]
 
-export function PlanBuilder() {
+export function PlanBuilder({ planId }: { planId?: string }) {
+  const router = useRouter()
   const [planName, setPlanName] = useState("")
+  const [description, setDescription] = useState("")
   const [hazardType, setHazardType] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("basic")
+
+
+  const handleSavePlan = async (isActive: boolean) => {
+    setIsLoading(true)
+    setError(null)
+    if (!planName || !hazardType) {
+        toast.error("Plan Name and Hazard Type are required.");
+        setIsLoading(false);
+        return;
+    }
+
+    try {
+      const response = await fetch("/api/plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: planName,
+          description: description,
+          hazard_type: hazardType,
+          is_active: isActive,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to save plan")
+      }
+
+      const newPlan = await response.json()
+      toast.success(`Plan '${newPlan.name}' saved successfully!`)
+      router.push(`/dashboard/plans/builder/${newPlan.id}`)
+    } catch (err: any) {
+      setError(err.message)
+      toast.error(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -41,16 +85,18 @@ export function PlanBuilder() {
           </p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" className="font-body bg-transparent">
+          <Button variant="outline" className="font-body bg-transparent" onClick={() => handleSavePlan(false)} disabled={isLoading}>
             <FileText className="h-4 w-4 mr-2" />
             Save Draft
           </Button>
-          <Button className="font-body bg-gray-900 hover:bg-gray-800">
+          <Button className="font-body bg-gray-900 hover:bg-gray-800" onClick={() => handleSavePlan(true)} disabled={isLoading}>
             <Save className="h-4 w-4 mr-2" />
             Save Plan
           </Button>
         </div>
       </div>
+
+      {error && <p className="text-red-500">{error}</p>}
 
       <Card>
         <CardHeader>
@@ -98,6 +144,8 @@ export function PlanBuilder() {
               placeholder="Describe the purpose and scope of this emergency plan"
               className="font-body"
               rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
         </CardContent>
