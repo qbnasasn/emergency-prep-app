@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { EmergencyPlan } from "./plans-list"
+import { FamilyTab } from "./family-tab"
 
 const hazardTypes = [
   "Severe Weather", "Earthquake", "Wildfire", "Flood", "Hurricane", "Tornado",
@@ -35,6 +36,7 @@ export function PlanBuilder({ plan, onSave, onCancel }: PlanBuilderProps) {
       setPlanName(plan.name)
       setDescription(plan.description || "")
       setHazardType(plan.hazard_type)
+      setActiveTab("basic") // Reset to basic tab when plan changes
     } else {
       setPlanName(""); setDescription(""); setHazardType("")
     }
@@ -59,13 +61,9 @@ export function PlanBuilder({ plan, onSave, onCancel }: PlanBuilderProps) {
     let method = "POST";
 
     if (plan) {
-      // Editing an existing plan
       url = `/api/plans/${plan.id}`;
       method = "PUT";
-      // Note: We are not sending is_active, so it won't be changed by this operation.
-      // The PUT handler in the API needs to be updated to not require it.
     } else {
-      // Creating a new plan, it's a draft by default
       submissionData.is_active = false;
     }
 
@@ -97,8 +95,8 @@ export function PlanBuilder({ plan, onSave, onCancel }: PlanBuilderProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
+          <TabsTrigger value="family">Family & Pets</TabsTrigger>
           <TabsTrigger value="locations" disabled>Locations</TabsTrigger>
-          <TabsTrigger value="family" disabled>Family</TabsTrigger>
           <TabsTrigger value="inventory" disabled>Inventory</TabsTrigger>
           <TabsTrigger value="routes" disabled>Routes</TabsTrigger>
           <TabsTrigger value="contacts" disabled>Contacts</TabsTrigger>
@@ -133,9 +131,14 @@ export function PlanBuilder({ plan, onSave, onCancel }: PlanBuilderProps) {
           </Card>
         </TabsContent>
 
-        {/* Placeholder content for other tabs */}
+        <TabsContent value="family">
+            <Card>
+                <CardContent className="pt-6">
+                    {plan?.id ? <FamilyTab planId={plan.id} /> : <p className="text-center p-4 text-muted-foreground">Save the plan to add family members and pets.</p>}
+                </CardContent>
+            </Card>
+        </TabsContent>
         <TabsContent value="locations"><p className="text-center p-4 text-muted-foreground">Locations management coming soon.</p></TabsContent>
-        <TabsContent value="family"><p className="text-center p-4 text-muted-foreground">Family & Pets management coming soon.</p></TabsContent>
         <TabsContent value="inventory"><p className="text-center p-4 text-muted-foreground">Inventory management coming soon.</p></TabsContent>
         <TabsContent value="routes"><p className="text-center p-4 text-muted-foreground">Routes management coming soon.</p></TabsContent>
         <TabsContent value="contacts"><p className="text-center p-4 text-muted-foreground">Contacts management coming soon.</p></TabsContent>
