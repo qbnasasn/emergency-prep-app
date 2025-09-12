@@ -1,25 +1,26 @@
-import { Pool } from 'pg';
+import { Pool, neon, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+
+// Set the WebSocket proxy for Drizzle
+// neonConfig.wsProxy = (host) => `${host}:5432/ws-proxy`;
 
 let pool: Pool;
 
+// Ensure the connection string has the required sslmode
+const connectionString = `${process.env.POSTGRES_URL}?sslmode=require`;
+
 if (process.env.NODE_ENV === 'production') {
-  pool = new Pool({
-    connectionString: process.env.POSTGRES_URL,
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  });
+  pool = new Pool({ connectionString });
 } else {
-  // In development, you might want to use a local database
-  // or a different configuration.
-  // For now, we'll use the same logic as production,
-  // assuming the POSTGRES_URL is set in a .env file.
+  // In development, use a global variable to preserve the pool across hot-reloads
   if (!global.pool) {
-    global.pool = new Pool({
-      connectionString: process.env.POSTGRES_URL,
-    });
+    global.pool = new Pool({ connectionString });
   }
   pool = global.pool;
 }
 
 export default pool;
+
+// Also export a Drizzle instance if needed elsewhere
+// const db = drizzle(neon(connectionString));
+// export { db };

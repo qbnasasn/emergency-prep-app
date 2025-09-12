@@ -1,11 +1,9 @@
 import NextAuth from 'next-auth';
-import { Pool } from '@neondatabase/serverless';
+import pool from '@/lib/db';
 import PgAdapter from "@auth/pg-adapter"
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcrypt';
-
-const pool = new Pool({ connectionString: process.env.POSTGRES_URL });
 
 export const authOptions = {
   adapter: PgAdapter(pool),
