@@ -25,7 +25,7 @@ export function DashboardHeader() {
     <header className="border-b border-border px-6 py-4 bg-card">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Image src="/images/LOGO.png" alt="PreSafe" width={120} height={160} className="h-12 w-auto" />
+          <Image src="/images/LOGO.png" alt="PreSafe" width={150} height={190} className="h-12 w-auto" />
           <div>
             <h1 className="font-heading font-bold text-xl text-foreground">PreSafe</h1>
             <p className="font-body text-sm text-muted-foreground">Emergency Preparedness Platform</p>
