@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { toast } from "sonner"
-import { Loader2, AlertTriangle, User } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { User } from "lucide-react"
 
-interface FamilyMember {
+export interface FamilyMember {
     id: string;
     first_name: string;
     last_name: string;
@@ -12,74 +12,42 @@ interface FamilyMember {
 }
 
 interface FamilyTabProps {
-    planId: string;
+    allFamilyMembers: FamilyMember[];
+    selectedMemberIds: Set<string>;
+    onSelectionChange: (memberId: string) => void;
 }
 
-export function FamilyTab({ planId }: FamilyTabProps) {
-    const [contacts, setContacts] = useState<FamilyMember[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (!planId) return;
-
-        const fetchContacts = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const response = await fetch(`/api/plans/${planId}/contacts`);
-                if (!response.ok) {
-                    throw new Error("Failed to fetch plan contacts");
-                }
-                const data = await response.json();
-                setContacts(data);
-            } catch (err: any) {
-                setError(err.message);
-                toast.error(err.message);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchContacts();
-    }, [planId]);
-
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="flex flex-col justify-center items-center p-8 text-destructive">
-                <AlertTriangle className="h-8 w-8 mb-2" />
-                <p>{error}</p>
-            </div>
-        );
-    }
+export function FamilyTab({ allFamilyMembers, selectedMemberIds, onSelectionChange }: FamilyTabProps) {
 
     return (
         <div>
-            <h3 className="font-semibold mb-4">Family Members in this Plan</h3>
-            {contacts.length === 0 ? (
-                <p className="text-muted-foreground">No family members have been added to this plan yet.</p>
-            ) : (
-                <ul className="space-y-3">
-                    {contacts.map((contact) => (
-                        <li key={contact.id} className="flex items-center p-3 bg-muted rounded-md">
-                            <User className="h-5 w-5 mr-3 text-muted-foreground" />
-                            <div className="flex-grow">
-                                <p className="font-medium">{contact.first_name} {contact.last_name}</p>
-                                <p className="text-sm text-muted-foreground">{contact.role}</p>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            )}
-            {/* TODO: Add UI for selecting/deselecting family members and adding pets */}
+            <h3 className="font-semibold mb-4">Select Family Members for this Plan</h3>
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+                {allFamilyMembers.length === 0 ? (
+                    <p className="text-muted-foreground text-center p-4">No family members have been added in your account settings.</p>
+                ) : (
+                    allFamilyMembers.map((member) => (
+                        <div
+                            key={member.id}
+                            className="flex items-center p-3 rounded-md border has-[:checked]:bg-muted transition-colors"
+                        >
+                            <Checkbox
+                                id={`member-${member.id}`}
+                                checked={selectedMemberIds.has(member.id)}
+                                onCheckedChange={() => onSelectionChange(member.id)}
+                            />
+                            <Label htmlFor={`member-${member.id}`} className="ml-3 flex items-center cursor-pointer w-full">
+                                <User className="h-5 w-5 mr-3 text-muted-foreground" />
+                                <div className="flex-grow">
+                                    <p className="font-medium">{member.first_name} {member.last_name}</p>
+                                    <p className="text-sm text-muted-foreground">{member.role}</p>
+                                </div>
+                            </Label>
+                        </div>
+                    ))
+                )}
+            </div>
+            {/* TODO: Add UI for adding/selecting pets */}
         </div>
     );
 }
