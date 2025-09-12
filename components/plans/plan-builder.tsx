@@ -40,7 +40,7 @@ export function PlanBuilder({ plan, onSave, onCancel }: PlanBuilderProps) {
     }
   }, [plan])
 
-  const handleSavePlan = async (isActive: boolean) => {
+  const handleSavePlan = async () => {
     setIsLoading(true)
     setError(null)
     if (!planName || !hazardType) {
@@ -49,21 +49,31 @@ export function PlanBuilder({ plan, onSave, onCancel }: PlanBuilderProps) {
       return
     }
 
-    const planData = {
+    let submissionData: any = {
       name: planName,
       description: description,
       hazard_type: hazardType,
-      is_active: isActive,
+    };
+
+    let url = "/api/plans";
+    let method = "POST";
+
+    if (plan) {
+      // Editing an existing plan
+      url = `/api/plans/${plan.id}`;
+      method = "PUT";
+      // Note: We are not sending is_active, so it won't be changed by this operation.
+      // The PUT handler in the API needs to be updated to not require it.
+    } else {
+      // Creating a new plan, it's a draft by default
+      submissionData.is_active = false;
     }
 
     try {
-      const url = plan ? `/api/plans/${plan.id}` : "/api/plans"
-      const method = plan ? "PUT" : "POST"
-
       const response = await fetch(url, {
         method: method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(planData),
+        body: JSON.stringify(submissionData),
       })
 
       if (!response.ok) {
@@ -133,8 +143,7 @@ export function PlanBuilder({ plan, onSave, onCancel }: PlanBuilderProps) {
 
       <div className="flex justify-end space-x-2 pt-4">
         <Button variant="outline" onClick={onCancel} disabled={isLoading}>Cancel</Button>
-        <Button onClick={() => handleSavePlan(false)} disabled={isLoading}>Save Draft</Button>
-        <Button className="bg-primary hover:bg-primary/90" onClick={() => handleSavePlan(true)} disabled={isLoading}>Save and Activate</Button>
+        <Button className="bg-primary hover:bg-primary/90" onClick={handleSavePlan} disabled={isLoading}>Save</Button>
       </div>
     </div>
   )

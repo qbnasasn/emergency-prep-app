@@ -42,15 +42,16 @@ export async function PUT(req: Request, { params }: RouteParams) {
     const { id } = params;
 
     try {
-        const { name, description, hazard_type, is_active } = await req.json();
+        const { name, description, hazard_type } = await req.json();
         if (!name || !hazard_type) {
             return NextResponse.json({ error: 'Plan name and hazard type are required' }, { status: 400 });
         }
 
         const client = await pool.connect();
+        // Only update the fields that are sent for a PUT request
         const result = await client.query(
-            'UPDATE plans SET name = $1, description = $2, hazard_type = $3, is_active = $4 WHERE id = $5 AND user_id = $6 RETURNING *',
-            [name, description, hazard_type, is_active, id, userId]
+            'UPDATE plans SET name = $1, description = $2, hazard_type = $3 WHERE id = $4 AND user_id = $5 RETURNING *',
+            [name, description, hazard_type, id, userId]
         );
         client.release();
 
@@ -61,6 +62,39 @@ export async function PUT(req: Request, { params }: RouteParams) {
         return NextResponse.json(result.rows[0]);
     } catch (error) {
         console.error('Error updating plan:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
+
+export async function PATCH(req: Request, { params }: RouteParams) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+    const { id } = params;
+
+    try {
+        const { is_active } = await req.json();
+
+        if (typeof is_active !== 'boolean') {
+            return NextResponse.json({ error: 'Invalid `is_active` value' }, { status: 400 });
+        }
+
+        const client = await pool.connect();
+        const result = await client.query(
+            'UPDATE plans SET is_active = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
+            [is_active, id, userId]
+        );
+        client.release();
+
+        if (result.rows.length === 0) {
+            return NextResponse.json({ error: 'Plan not found or not authorized to update' }, { status: 404 });
+        }
+
+        return NextResponse.json(result.rows[0]);
+    } catch (error) {
+        console.error('Error updating plan status:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MoreHorizontal, Edit, Trash2, Play, Printer, Loader2, AlertTriangle } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { toast } from "sonner"
 
 export interface EmergencyPlan {
   id: string
@@ -20,19 +19,20 @@ interface PlansListProps {
   plans: EmergencyPlan[];
   onEdit: (plan: EmergencyPlan) => void;
   onDelete: (id: string) => void;
+  onActivate: (id: string) => void;
   isLoading: boolean;
   error: string | null;
   fetchPlans: () => void;
 }
 
-export function PlansList({ plans, onEdit, onDelete, isLoading, error, fetchPlans }: PlansListProps) {
+export function PlansList({ plans, onEdit, onDelete, onActivate, isLoading, error, fetchPlans }: PlansListProps) {
 
   const getStatus = (isActive: boolean) => {
     return isActive ? "Active" : "Draft"
   }
 
   const getStatusColor = (isActive: boolean) => {
-    return isActive ? "bg-red-100 text-red-800" : "bg-muted text-foreground"
+    return isActive ? "bg-green-100 text-green-800" : "bg-muted text-foreground"
   }
 
   const getHazardColor = (hazardType: string) => {
@@ -47,11 +47,6 @@ export function PlansList({ plans, onEdit, onDelete, isLoading, error, fetchPlan
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString()
-  }
-
-  const activatePlan = (planId: string) => {
-    console.log("Activating plan:", planId)
-    toast.info("Activation feature not yet implemented.")
   }
 
   if (isLoading) {
@@ -141,7 +136,7 @@ export function PlansList({ plans, onEdit, onDelete, isLoading, error, fetchPlan
                     {!plan.is_active && (
                       <Button
                         size="sm"
-                        onClick={() => activatePlan(plan.id)}
+                        onClick={() => onActivate(plan.id)}
                         className="flex-1 font-body bg-destructive hover:bg-red-700"
                       >
                         <Play className="h-4 w-4 mr-2" />
