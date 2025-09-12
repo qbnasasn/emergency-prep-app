@@ -86,6 +86,23 @@ export default function PlansPage() {
     }
   };
 
+  const handleDeactivate = async (planId: string) => {
+    try {
+        const response = await fetch(`/api/plans/${planId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_active: false }),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to deactivate plan');
+        }
+        toast.success('Plan deactivated successfully');
+        fetchPlans(); // Refresh the list
+    } catch (err: any) {
+        toast.error(err.message);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -96,6 +113,7 @@ export default function PlansPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onActivate={handleActivate}
+        onDeactivate={handleDeactivate}
         isLoading={isLoading}
         error={error}
         fetchPlans={fetchPlans}
