@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, Edit, Trash2, Play, Printer, Loader2, AlertTriangle } from "lucide-react"
+import { MoreHorizontal, Edit, Trash2, Play, Printer, Loader2, AlertTriangle, XCircle } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 export interface EmergencyPlan {
@@ -20,12 +20,13 @@ interface PlansListProps {
   onEdit: (plan: EmergencyPlan) => void;
   onDelete: (id: string) => void;
   onActivate: (id: string) => void;
+  onDeactivate: (id: string) => void;
   isLoading: boolean;
   error: string | null;
   fetchPlans: () => void;
 }
 
-export function PlansList({ plans, onEdit, onDelete, onActivate, isLoading, error, fetchPlans }: PlansListProps) {
+export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, isLoading, error, fetchPlans }: PlansListProps) {
 
   const getStatus = (isActive: boolean) => {
     return isActive ? "Active" : "Draft"
@@ -133,11 +134,21 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, isLoading, erro
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </Button>
-                    {!plan.is_active && (
+                    {plan.is_active ? (
+                       <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => onDeactivate(plan.id)}
+                        className="flex-1 font-body"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Deactivate
+                      </Button>
+                    ) : (
                       <Button
                         size="sm"
                         onClick={() => onActivate(plan.id)}
-                        className="flex-1 font-body bg-destructive hover:bg-red-700"
+                        className="flex-1 font-body bg-green-600 hover:bg-green-700"
                       >
                         <Play className="h-4 w-4 mr-2" />
                         Activate

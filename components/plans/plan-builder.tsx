@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent } from "@/components/ui/card"
 import { EmergencyPlan } from "./plans-list"
+import { FamilyTab, FamilyMember } from "./family-tab"
+import { Loader2 } from "lucide-react"
 
 const hazardTypes = [
   "Severe Weather", "Earthquake", "Wildfire", "Flood", "Hurricane", "Tornado",
@@ -18,78 +20,94 @@ const hazardTypes = [
 
 interface PlanBuilderProps {
   plan?: EmergencyPlan | null
-  onSave: (plan: EmergencyPlan) => void
+  onSave: (planData: any, contactIds: string[]) => Promise<void>
   onCancel: () => void
+  isSaving: boolean
 }
 
-export function PlanBuilder({ plan, onSave, onCancel }: PlanBuilderProps) {
+export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderProps) {
+  // Form state
   const [planName, setPlanName] = useState("")
   const [description, setDescription] = useState("")
   const [hazardType, setHazardType] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+
+  // Tab-specific state
+  const [allFamilyMembers, setAllFamilyMembers] = useState<FamilyMember[]>([])
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set())
+
+  // Component state
+  const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("basic")
 
   useEffect(() => {
-    if (plan) {
-      setPlanName(plan.name)
-      setDescription(plan.description || "")
-      setHazardType(plan.hazard_type)
-    } else {
-      setPlanName(""); setDescription(""); setHazardType("")
-    }
+    const fetchInitialData = async () => {
+        setIsLoading(true);
+        try {
+            const membersResponse = await fetch('/api/family-members');
+            if (!membersResponse.ok) throw new Error('Failed to fetch family members');
+            const membersData = await membersResponse.json();
+            setAllFamilyMembers(membersData);
+
+            if (plan) {
+                setPlanName(plan.name);
+                setDescription(plan.description || "");
+                setHazardType(plan.hazard_type);
+
+                const contactsResponse = await fetch(`/api/plans/${plan.id}/contacts`);
+                if (!contactsResponse.ok) throw new Error('Failed to fetch plan contacts');
+                const contactsData: FamilyMember[] = await contactsResponse.json();
+                setSelectedMemberIds(new Set(contactsData.map(m => m.id)));
+            } else {
+                // This case may no longer be hit if we pre-create plans, but good for safety
+                setPlanName("");
+                setDescription("");
+                setHazardType("");
+                setSelectedMemberIds(new Set());
+            }
+        } catch (err: any) {
+            toast.error(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    fetchInitialData();
+    setActiveTab("basic");
   }, [plan])
 
-  const handleSavePlan = async () => {
-    setIsLoading(true)
-    setError(null)
+  const handleFamilySelectionChange = (memberId: string) => {
+    setSelectedMemberIds(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(memberId)) {
+            newSet.delete(memberId);
+        } else {
+            newSet.add(memberId);
+        }
+        return newSet;
+    });
+  };
+
+  const handleSave = () => {
     if (!planName || !hazardType) {
-      toast.error("Plan Name and Hazard Type are required.")
-      setIsLoading(false)
-      return
+      toast.error("Plan Name and Hazard Type are required.");
+      return;
     }
 
-    let submissionData: any = {
+    const planData = {
       name: planName,
       description: description,
       hazard_type: hazardType,
     };
 
-    let url = "/api/plans";
-    let method = "POST";
+    onSave(planData, Array.from(selectedMemberIds));
+  }
 
-    if (plan) {
-      // Editing an existing plan
-      url = `/api/plans/${plan.id}`;
-      method = "PUT";
-      // Note: We are not sending is_active, so it won't be changed by this operation.
-      // The PUT handler in the API needs to be updated to not require it.
-    } else {
-      // Creating a new plan, it's a draft by default
-      submissionData.is_active = false;
-    }
-
-    try {
-      const response = await fetch(url, {
-        method: method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(submissionData),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `Failed to ${plan ? 'update' : 'save'} plan`)
-      }
-
-      const savedPlan = await response.json()
-      toast.success(`Plan '${savedPlan.name}' ${plan ? 'updated' : 'saved'} successfully!`)
-      onSave(savedPlan)
-    } catch (err: any) {
-      setError(err.message)
-      toast.error(err.message)
-    } finally {
-      setIsLoading(false)
-    }
+  if (isLoading) {
+    return (
+        <div className="flex justify-center items-center p-8 h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
   }
 
   return (
@@ -97,8 +115,8 @@ export function PlanBuilder({ plan, onSave, onCancel }: PlanBuilderProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
+          <TabsTrigger value="family">Family & Pets</TabsTrigger>
           <TabsTrigger value="locations" disabled>Locations</TabsTrigger>
-          <TabsTrigger value="family" disabled>Family</TabsTrigger>
           <TabsTrigger value="inventory" disabled>Inventory</TabsTrigger>
           <TabsTrigger value="routes" disabled>Routes</TabsTrigger>
           <TabsTrigger value="contacts" disabled>Contacts</TabsTrigger>
@@ -107,7 +125,6 @@ export function PlanBuilder({ plan, onSave, onCancel }: PlanBuilderProps) {
         <TabsContent value="basic">
           <Card>
             <CardContent className="space-y-6 pt-6">
-              {error && <p className="text-red-500">{error}</p>}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="plan-name" className="font-body font-medium">Plan Name</Label>
@@ -133,17 +150,29 @@ export function PlanBuilder({ plan, onSave, onCancel }: PlanBuilderProps) {
           </Card>
         </TabsContent>
 
-        {/* Placeholder content for other tabs */}
+        <TabsContent value="family">
+            <Card>
+                <CardContent className="pt-6">
+                    <FamilyTab
+                        allFamilyMembers={allFamilyMembers}
+                        selectedMemberIds={selectedMemberIds}
+                        onSelectionChange={handleFamilySelectionChange}
+                    />
+                </CardContent>
+            </Card>
+        </TabsContent>
         <TabsContent value="locations"><p className="text-center p-4 text-muted-foreground">Locations management coming soon.</p></TabsContent>
-        <TabsContent value="family"><p className="text-center p-4 text-muted-foreground">Family & Pets management coming soon.</p></TabsContent>
         <TabsContent value="inventory"><p className="text-center p-4 text-muted-foreground">Inventory management coming soon.</p></TabsContent>
         <TabsContent value="routes"><p className="text-center p-4 text-muted-foreground">Routes management coming soon.</p></TabsContent>
         <TabsContent value="contacts"><p className="text-center p-4 text-muted-foreground">Contacts management coming soon.</p></TabsContent>
       </Tabs>
 
       <div className="flex justify-end space-x-2 pt-4">
-        <Button variant="outline" onClick={onCancel} disabled={isLoading}>Cancel</Button>
-        <Button className="bg-primary hover:bg-primary/90" onClick={handleSavePlan} disabled={isLoading}>Save</Button>
+        <Button variant="outline" onClick={onCancel} disabled={isSaving}>Cancel</Button>
+        <Button className="bg-primary hover:bg-primary/90" onClick={handleSave} disabled={isSaving}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save
+        </Button>
       </div>
     </div>
   )

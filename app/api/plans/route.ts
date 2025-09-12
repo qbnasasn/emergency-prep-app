@@ -13,7 +13,7 @@ export async function GET() {
 
   try {
     const client = await pool.connect();
-    const result = await client.query('SELECT * FROM plans WHERE user_id = $1', [userId]);
+    const result = await client.query('SELECT * FROM plans WHERE user_id = $1 ORDER BY is_active DESC, created_at DESC', [userId]);
     client.release();
     return NextResponse.json(result.rows);
   } catch (error) {

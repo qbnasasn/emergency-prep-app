@@ -14,6 +14,7 @@ export default function PlansPage() {
   const [error, setError] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<EmergencyPlan | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   const fetchPlans = async () => {
     setIsLoading(true)
@@ -36,9 +37,29 @@ export default function PlansPage() {
     fetchPlans()
   }, [])
 
-  const handleCreate = () => {
-    setSelectedPlan(null)
-    setIsModalOpen(true)
+  const handleCreate = async () => {
+    try {
+        const planPayload = {
+            name: 'New Untitled Plan',
+            description: 'Describe your plan here.',
+            hazard_type: 'severe-weather', // Default value
+            is_active: false
+        };
+        const planResponse = await fetch('/api/plans', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(planPayload),
+        });
+        if (!planResponse.ok) throw new Error('Failed to create new draft plan.');
+        const newPlan = await planResponse.json();
+
+        toast.info("New draft plan created. You can now edit the details.");
+        fetchPlans(); // Refresh list to show the new draft
+        setSelectedPlan(newPlan);
+        setIsModalOpen(true);
+    } catch (err: any) {
+        toast.error(err.message);
+    }
   }
 
   const handleEdit = (plan: EmergencyPlan) => {
@@ -51,9 +72,40 @@ export default function PlansPage() {
     setSelectedPlan(null)
   }
 
-  const handleSave = (savedPlan: EmergencyPlan) => {
-    fetchPlans() // Refresh the list
-    handleCloseModal()
+  const handleSave = async (planData: any, contactIds: string[]) => {
+    if (!selectedPlan) {
+        toast.error("Cannot save, no plan is selected.");
+        return;
+    }
+
+    setIsSaving(true);
+    try {
+        // Step 1: Update the plan details
+        const planResponse = await fetch(`/api/plans/${selectedPlan.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(planData),
+        });
+        if (!planResponse.ok) throw new Error('Failed to update plan details.');
+        const updatedPlan = await planResponse.json();
+
+        // Step 2: Update the plan contacts
+        const contactsResponse = await fetch(`/api/plans/${selectedPlan.id}/contacts`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contactIds }),
+        });
+        if (!contactsResponse.ok) throw new Error('Failed to update plan contacts.');
+
+        toast.success(`Plan '${updatedPlan.name}' saved successfully!`);
+        handleCloseModal();
+        fetchPlans();
+
+    } catch (err: any) {
+        toast.error(err.message);
+    } finally {
+        setIsSaving(false);
+    }
   }
 
   const handleDelete = async (planId: string) => {
@@ -86,6 +138,23 @@ export default function PlansPage() {
     }
   };
 
+  const handleDeactivate = async (planId: string) => {
+    try {
+        const response = await fetch(`/api/plans/${planId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_active: false }),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to deactivate plan');
+        }
+        toast.success('Plan deactivated successfully');
+        fetchPlans(); // Refresh the list
+    } catch (err: any) {
+        toast.error(err.message);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -96,6 +165,7 @@ export default function PlansPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onActivate={handleActivate}
+        onDeactivate={handleDeactivate}
         isLoading={isLoading}
         error={error}
         fetchPlans={fetchPlans}
@@ -110,6 +180,7 @@ export default function PlansPage() {
             plan={selectedPlan}
             onSave={handleSave}
             onCancel={handleCloseModal}
+            isSaving={isSaving}
           />
         </DialogContent>
       </Dialog>
