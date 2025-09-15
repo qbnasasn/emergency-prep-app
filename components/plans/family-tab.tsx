@@ -2,7 +2,8 @@
 
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { User } from "lucide-react"
+import { User, PawPrint } from "lucide-react"
+import { Pet } from "./plan-builder"
 
 export interface FamilyMember {
     id: string;
@@ -15,12 +16,15 @@ interface FamilyTabProps {
     allFamilyMembers: FamilyMember[];
     selectedMemberIds: Set<string>;
     onSelectionChange: (memberId: string) => void;
+    allPets: Pet[];
+    selectedPetIds: Set<string>;
+    onPetSelectionChange: (petId: string) => void;
 }
 
-export function FamilyTab({ allFamilyMembers, selectedMemberIds, onSelectionChange }: FamilyTabProps) {
+export function FamilyTab({ allFamilyMembers, selectedMemberIds, onSelectionChange, allPets, selectedPetIds, onPetSelectionChange }: FamilyTabProps) {
 
     return (
-        <div>
+        <div className="space-y-6">
             <h3 className="font-semibold mb-4">Select Family Members for this Plan</h3>
             <div className="space-y-3 max-h-64 overflow-y-auto">
                 {allFamilyMembers.length === 0 ? (
@@ -47,7 +51,33 @@ export function FamilyTab({ allFamilyMembers, selectedMemberIds, onSelectionChan
                     ))
                 )}
             </div>
-            {/* TODO: Add UI for adding/selecting pets */}
+
+            <h3 className="font-semibold mb-4 pt-4 border-t">Select Pets for this Plan</h3>
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+                {allPets.length === 0 ? (
+                    <p className="text-muted-foreground text-center p-4">No pets have been added in your account settings.</p>
+                ) : (
+                    allPets.map((pet) => (
+                        <div
+                            key={pet.id}
+                            className="flex items-center p-3 rounded-md border has-[:checked]:bg-muted transition-colors"
+                        >
+                            <Checkbox
+                                id={`pet-${pet.id}`}
+                                checked={selectedPetIds.has(pet.id)}
+                                onCheckedChange={() => onPetSelectionChange(pet.id)}
+                            />
+                            <Label htmlFor={`pet-${pet.id}`} className="ml-3 flex items-center cursor-pointer w-full">
+                                <PawPrint className="h-5 w-5 mr-3 text-muted-foreground" />
+                                <div className="flex-grow">
+                                    <p className="font-medium">{pet.name}</p>
+                                    <p className="text-sm text-muted-foreground">{pet.species} - {pet.breed}</p>
+                                </div>
+                            </Label>
+                        </div>
+                    ))
+                )}
+            </div>
         </div>
     );
 }

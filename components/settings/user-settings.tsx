@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { User, MapPin, Save } from "lucide-react"
 import { FamilyMembers } from "./family-members"
+import { Pets } from "./pets"
 
 export function UserSettings() {
   return (
@@ -18,6 +19,7 @@ export function UserSettings() {
       </CardHeader>
       <CardContent className="space-y-6">
         <FamilyMembers />
+        <Pets />
         <div className="space-y-4">
           <h3 className="font-body font-semibold text-foreground flex items-center">
             <MapPin className="h-4 w-4 mr-2" />

@@ -13,6 +13,13 @@ import { EmergencyPlan } from "./plans-list"
 import { FamilyTab, FamilyMember } from "./family-tab"
 import { Loader2 } from "lucide-react"
 
+export interface Pet {
+  id: string;
+  name: string;
+  species: string;
+  breed: string;
+}
+
 const hazardTypes = [
   "Severe Weather", "Earthquake", "Wildfire", "Flood", "Hurricane", "Tornado",
   "Winter Storm", "Power Outage", "Chemical Spill", "Terrorism", "Pandemic", "Cyber Attack",
@@ -20,7 +27,7 @@ const hazardTypes = [
 
 interface PlanBuilderProps {
   plan?: EmergencyPlan | null
-  onSave: (planData: any, contactIds: string[]) => Promise<void>
+  onSave: (planData: any, contactIds: string[], petIds: string[]) => Promise<void>
   onCancel: () => void
   isSaving: boolean
 }
@@ -34,6 +41,8 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
   // Tab-specific state
   const [allFamilyMembers, setAllFamilyMembers] = useState<FamilyMember[]>([])
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set())
+  const [allPets, setAllPets] = useState<any[]>([]) // Define a proper Pet type later
+  const [selectedPetIds, setSelectedPetIds] = useState<Set<string>>(new Set())
 
   // Component state
   const [isLoading, setIsLoading] = useState(true)
@@ -48,6 +57,11 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
             const membersData = await membersResponse.json();
             setAllFamilyMembers(membersData);
 
+            const petsResponse = await fetch('/api/pets');
+            if (!petsResponse.ok) throw new Error('Failed to fetch pets');
+            const petsData = await petsResponse.json();
+            setAllPets(petsData);
+
             if (plan) {
                 setPlanName(plan.name);
                 setDescription(plan.description || "");
@@ -57,12 +71,19 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 if (!contactsResponse.ok) throw new Error('Failed to fetch plan contacts');
                 const contactsData: FamilyMember[] = await contactsResponse.json();
                 setSelectedMemberIds(new Set(contactsData.map(m => m.id)));
+
+                const planPetsResponse = await fetch(`/api/plans/${plan.id}/pets`);
+                if (!planPetsResponse.ok) throw new Error('Failed to fetch plan pets');
+                const planPetsData: Pet[] = await planPetsResponse.json();
+                setSelectedPetIds(new Set(planPetsData.map(p => p.id)));
+
             } else {
                 // This case may no longer be hit if we pre-create plans, but good for safety
                 setPlanName("");
                 setDescription("");
                 setHazardType("");
                 setSelectedMemberIds(new Set());
+                setSelectedPetIds(new Set());
             }
         } catch (err: any) {
             toast.error(err.message);
@@ -87,6 +108,18 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
     });
   };
 
+  const handlePetSelectionChange = (petId: string) => {
+    setSelectedPetIds(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(petId)) {
+            newSet.delete(petId);
+        } else {
+            newSet.add(petId);
+        }
+        return newSet;
+    });
+  };
+
   const handleSave = () => {
     if (!planName || !hazardType) {
       toast.error("Plan Name and Hazard Type are required.");
@@ -99,7 +132,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
       hazard_type: hazardType,
     };
 
-    onSave(planData, Array.from(selectedMemberIds));
+    onSave(planData, Array.from(selectedMemberIds), Array.from(selectedPetIds));
   }
 
   if (isLoading) {
@@ -157,6 +190,9 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                         allFamilyMembers={allFamilyMembers}
                         selectedMemberIds={selectedMemberIds}
                         onSelectionChange={handleFamilySelectionChange}
+                        allPets={allPets}
+                        selectedPetIds={selectedPetIds}
+                        onPetSelectionChange={handlePetSelectionChange}
                     />
                 </CardContent>
             </Card>
