@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { EmergencyPlan } from "./plans-list"
 import { FamilyTab, FamilyMember } from "./family-tab"
+import { LocationsTab } from "./locations-tab"
 import { Loader2 } from "lucide-react"
 
 export interface Pet {
@@ -149,7 +150,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="family">Family & Pets</TabsTrigger>
-          <TabsTrigger value="locations" disabled>Locations</TabsTrigger>
+          <TabsTrigger value="locations">Locations</TabsTrigger>
           <TabsTrigger value="inventory" disabled>Inventory</TabsTrigger>
           <TabsTrigger value="routes" disabled>Routes</TabsTrigger>
           <TabsTrigger value="contacts" disabled>Contacts</TabsTrigger>
@@ -197,7 +198,13 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 </CardContent>
             </Card>
         </TabsContent>
-        <TabsContent value="locations"><p className="text-center p-4 text-muted-foreground">Locations management coming soon.</p></TabsContent>
+        <TabsContent value="locations">
+            <Card>
+                <CardContent className="pt-6">
+                    <LocationsTab planId={plan?.id} />
+                </CardContent>
+            </Card>
+        </TabsContent>
         <TabsContent value="inventory"><p className="text-center p-4 text-muted-foreground">Inventory management coming soon.</p></TabsContent>
         <TabsContent value="routes"><p className="text-center p-4 text-muted-foreground">Routes management coming soon.</p></TabsContent>
         <TabsContent value="contacts"><p className="text-center p-4 text-muted-foreground">Contacts management coming soon.</p></TabsContent>
