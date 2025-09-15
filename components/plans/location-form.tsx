@@ -21,7 +21,7 @@ const formSchema = z.object({
 })
 
 const locationTypes = [
-    "Home", "Work", "School", "Rally Point", "Evacuation Shelter",
+    "Home", "Work", "School", "Bug-Out Location", "Rally Point", "Evacuation Shelter",
     "Family/Friend's House", "Hospital/Medical Center", "Emergency Cache"
 ];
 
