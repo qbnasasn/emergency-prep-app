@@ -15,6 +15,7 @@ export default function PlansPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<EmergencyPlan | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isNewPlan, setIsNewPlan] = useState(false)
 
   const fetchPlans = async () => {
     setIsLoading(true)
@@ -56,6 +57,7 @@ export default function PlansPage() {
         toast.info("New draft plan created. You can now edit the details.");
         fetchPlans(); // Refresh list to show the new draft
         setSelectedPlan(newPlan);
+        setIsNewPlan(true); // Mark this as a new plan
         setIsModalOpen(true);
     } catch (err: any) {
         toast.error(err.message);
@@ -64,12 +66,18 @@ export default function PlansPage() {
 
   const handleEdit = (plan: EmergencyPlan) => {
     setSelectedPlan(plan)
+    setIsNewPlan(false); // This is an existing plan
     setIsModalOpen(true)
   }
 
   const handleCloseModal = () => {
+    if (isNewPlan && selectedPlan) {
+        handleDelete(selectedPlan.id);
+        toast.info("New plan creation cancelled.");
+    }
     setIsModalOpen(false)
     setSelectedPlan(null)
+    setIsNewPlan(false);
   }
 
   const handleSave = async (planData: any, contactIds: string[], petIds: string[]) => {
@@ -107,6 +115,7 @@ export default function PlansPage() {
 
 
         toast.success(`Plan '${updatedPlan.name}' saved successfully!`);
+        setIsNewPlan(false); // The plan is no longer "new" after a successful save
         handleCloseModal();
         fetchPlans();
 
