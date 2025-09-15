@@ -72,7 +72,7 @@ export default function PlansPage() {
     setSelectedPlan(null)
   }
 
-  const handleSave = async (planData: any, contactIds: string[]) => {
+  const handleSave = async (planData: any, contactIds: string[], petIds: string[]) => {
     if (!selectedPlan) {
         toast.error("Cannot save, no plan is selected.");
         return;
@@ -96,6 +96,15 @@ export default function PlansPage() {
             body: JSON.stringify({ contactIds }),
         });
         if (!contactsResponse.ok) throw new Error('Failed to update plan contacts.');
+
+        // Step 3: Update the plan pets
+        const petsResponse = await fetch(`/api/plans/${selectedPlan.id}/pets`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ petIds }),
+        });
+        if (!petsResponse.ok) throw new Error('Failed to update plan pets.');
+
 
         toast.success(`Plan '${updatedPlan.name}' saved successfully!`);
         handleCloseModal();
