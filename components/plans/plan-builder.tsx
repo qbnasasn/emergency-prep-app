@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { EmergencyPlan } from "./plans-list"
 import { FamilyTab, FamilyMember } from "./family-tab"
 import { LocationsTab } from "./locations-tab"
+import { InventoryTab } from "./inventory-tab"
 import { Loader2 } from "lucide-react"
 
 export interface Pet {
@@ -28,7 +29,7 @@ const hazardTypes = [
 
 interface PlanBuilderProps {
   plan?: EmergencyPlan | null
-  onSave: (planData: any, contactIds: string[], petIds: string[]) => Promise<void>
+  onSave: (planData: any, contactIds: string[], petIds: string[], itemIds: string[], kitIds: string[]) => Promise<void>
   onCancel: () => void
   isSaving: boolean
 }
@@ -42,8 +43,10 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
   // Tab-specific state
   const [allFamilyMembers, setAllFamilyMembers] = useState<FamilyMember[]>([])
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set())
-  const [allPets, setAllPets] = useState<any[]>([]) // Define a proper Pet type later
+  const [allPets, setAllPets] = useState<any[]>([])
   const [selectedPetIds, setSelectedPetIds] = useState<Set<string>>(new Set())
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set())
+  const [selectedKitIds, setSelectedKitIds] = useState<Set<string>>(new Set())
 
   // Component state
   const [isLoading, setIsLoading] = useState(true)
@@ -53,38 +56,39 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
     const fetchInitialData = async () => {
         setIsLoading(true);
         try {
-            const membersResponse = await fetch('/api/family-members');
-            if (!membersResponse.ok) throw new Error('Failed to fetch family members');
-            const membersData = await membersResponse.json();
-            setAllFamilyMembers(membersData);
+            // Fetch static data
+            const membersPromise = fetch('/api/family-members').then(res => res.json());
+            const petsPromise = fetch('/api/pets').then(res => res.json());
 
-            const petsResponse = await fetch('/api/pets');
-            if (!petsResponse.ok) throw new Error('Failed to fetch pets');
-            const petsData = await petsResponse.json();
+            const [membersData, petsData] = await Promise.all([membersPromise, petsPromise]);
+            setAllFamilyMembers(membersData);
             setAllPets(petsData);
 
+            // Fetch plan-specific data
             if (plan) {
                 setPlanName(plan.name);
                 setDescription(plan.description || "");
                 setHazardType(plan.hazard_type);
 
-                const contactsResponse = await fetch(`/api/plans/${plan.id}/contacts`);
-                if (!contactsResponse.ok) throw new Error('Failed to fetch plan contacts');
-                const contactsData: FamilyMember[] = await contactsResponse.json();
-                setSelectedMemberIds(new Set(contactsData.map(m => m.id)));
+                const contactsPromise = fetch(`/api/plans/${plan.id}/contacts`).then(res => res.json());
+                const petsPromise = fetch(`/api/plans/${plan.id}/pets`).then(res => res.json());
+                const inventoryPromise = fetch(`/api/plans/${plan.id}/inventory`).then(res => res.json());
 
-                const planPetsResponse = await fetch(`/api/plans/${plan.id}/pets`);
-                if (!planPetsResponse.ok) throw new Error('Failed to fetch plan pets');
-                const planPetsData: Pet[] = await planPetsResponse.json();
-                setSelectedPetIds(new Set(planPetsData.map(p => p.id)));
+                const [contactsData, planPetsData, inventoryData] = await Promise.all([contactsPromise, petsPromise, inventoryPromise]);
+
+                setSelectedMemberIds(new Set(contactsData.map((m: FamilyMember) => m.id)));
+                setSelectedPetIds(new Set(planPetsData.map((p: Pet) => p.id)));
+                setSelectedItemIds(new Set(inventoryData.items.map((i: any) => i.id)));
+                setSelectedKitIds(new Set(inventoryData.kits.map((k: any) => k.id)));
 
             } else {
-                // This case may no longer be hit if we pre-create plans, but good for safety
                 setPlanName("");
                 setDescription("");
                 setHazardType("");
                 setSelectedMemberIds(new Set());
                 setSelectedPetIds(new Set());
+                setSelectedItemIds(new Set());
+                setSelectedKitIds(new Set());
             }
         } catch (err: any) {
             toast.error(err.message);
@@ -100,11 +104,8 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
   const handleFamilySelectionChange = (memberId: string) => {
     setSelectedMemberIds(prev => {
         const newSet = new Set(prev);
-        if (newSet.has(memberId)) {
-            newSet.delete(memberId);
-        } else {
-            newSet.add(memberId);
-        }
+        if (newSet.has(memberId)) newSet.delete(memberId);
+        else newSet.add(memberId);
         return newSet;
     });
   };
@@ -112,11 +113,26 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
   const handlePetSelectionChange = (petId: string) => {
     setSelectedPetIds(prev => {
         const newSet = new Set(prev);
-        if (newSet.has(petId)) {
-            newSet.delete(petId);
-        } else {
-            newSet.add(petId);
-        }
+        if (newSet.has(petId)) newSet.delete(petId);
+        else newSet.add(petId);
+        return newSet;
+    });
+  };
+
+  const handleItemSelectionChange = (itemId: string) => {
+    setSelectedItemIds(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(itemId)) newSet.delete(itemId);
+        else newSet.add(itemId);
+        return newSet;
+    });
+  };
+
+  const handleKitSelectionChange = (kitId: string) => {
+    setSelectedKitIds(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(kitId)) newSet.delete(kitId);
+        else newSet.add(kitId);
         return newSet;
     });
   };
@@ -133,7 +149,13 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
       hazard_type: hazardType,
     };
 
-    onSave(planData, Array.from(selectedMemberIds), Array.from(selectedPetIds));
+    onSave(
+      planData,
+      Array.from(selectedMemberIds),
+      Array.from(selectedPetIds),
+      Array.from(selectedItemIds),
+      Array.from(selectedKitIds)
+    );
   }
 
   if (isLoading) {
@@ -151,7 +173,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="family">Family & Pets</TabsTrigger>
           <TabsTrigger value="locations">Locations</TabsTrigger>
-          <TabsTrigger value="inventory" disabled>Inventory</TabsTrigger>
+          <TabsTrigger value="inventory">Inventory</TabsTrigger>
           <TabsTrigger value="routes" disabled>Routes</TabsTrigger>
           <TabsTrigger value="contacts" disabled>Contacts</TabsTrigger>
         </TabsList>
@@ -205,7 +227,19 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 </CardContent>
             </Card>
         </TabsContent>
-        <TabsContent value="inventory"><p className="text-center p-4 text-muted-foreground">Inventory management coming soon.</p></TabsContent>
+        <TabsContent value="inventory">
+            <Card>
+                <CardContent className="pt-6">
+                    <InventoryTab
+                        planId={plan?.id}
+                        selectedItemIds={selectedItemIds}
+                        onItemSelectionChange={handleItemSelectionChange}
+                        selectedKitIds={selectedKitIds}
+                        onKitSelectionChange={handleKitSelectionChange}
+                    />
+                </CardContent>
+            </Card>
+        </TabsContent>
         <TabsContent value="routes"><p className="text-center p-4 text-muted-foreground">Routes management coming soon.</p></TabsContent>
         <TabsContent value="contacts"><p className="text-center p-4 text-muted-foreground">Contacts management coming soon.</p></TabsContent>
       </Tabs>
