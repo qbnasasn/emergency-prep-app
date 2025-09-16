@@ -80,7 +80,13 @@ export default function PlansPage() {
     setIsNewPlan(false);
   }
 
-  const handleSave = async (planData: any, contactIds: string[], petIds: string[]) => {
+  const handleSave = async (
+    planData: any,
+    contactIds: string[],
+    petIds: string[],
+    selectedItemIds: string[],
+    selectedKitIds: string[]
+  ) => {
     if (!selectedPlan) {
         toast.error("Cannot save, no plan is selected.");
         return;
@@ -88,7 +94,7 @@ export default function PlansPage() {
 
     setIsSaving(true);
     try {
-        // Step 1: Update the plan details
+        // Step 1: Update the plan details (must be done first)
         const planResponse = await fetch(`/api/plans/${selectedPlan.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -97,22 +103,33 @@ export default function PlansPage() {
         if (!planResponse.ok) throw new Error('Failed to update plan details.');
         const updatedPlan = await planResponse.json();
 
-        // Step 2: Update the plan contacts
-        const contactsResponse = await fetch(`/api/plans/${selectedPlan.id}/contacts`, {
+        // Step 2: Update related items in parallel
+        const contactsPromise = fetch(`/api/plans/${selectedPlan.id}/contacts`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contactIds }),
         });
-        if (!contactsResponse.ok) throw new Error('Failed to update plan contacts.');
 
-        // Step 3: Update the plan pets
-        const petsResponse = await fetch(`/api/plans/${selectedPlan.id}/pets`, {
+        const petsPromise = fetch(`/api/plans/${selectedPlan.id}/pets`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ petIds }),
         });
-        if (!petsResponse.ok) throw new Error('Failed to update plan pets.');
 
+        const inventoryPromise = fetch(`/api/plans/${selectedPlan.id}/inventory`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ selectedItemIds, selectedKitIds }),
+        });
+
+        const results = await Promise.all([contactsPromise, petsPromise, inventoryPromise]);
+
+        for (const response of results) {
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
+                throw new Error(`Failed to update plan components: ${errorData.message || response.statusText}`);
+            }
+        }
 
         toast.success(`Plan '${updatedPlan.name}' saved successfully!`);
         setIsNewPlan(false); // The plan is no longer "new" after a successful save
