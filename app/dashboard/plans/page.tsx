@@ -85,7 +85,8 @@ export default function PlansPage() {
     contactIds: string[],
     petIds: string[],
     selectedItemIds: string[],
-    selectedKitIds: string[]
+    selectedKitIds: string[],
+    routes: any[]
   ) => {
     if (!selectedPlan) {
         toast.error("Cannot save, no plan is selected.");
@@ -122,7 +123,13 @@ export default function PlansPage() {
             body: JSON.stringify({ selectedItemIds, selectedKitIds }),
         });
 
-        const results = await Promise.all([contactsPromise, petsPromise, inventoryPromise]);
+        const routesPromise = fetch(`/api/plans/${selectedPlan.id}/routes`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ routes }),
+        });
+
+        const results = await Promise.all([contactsPromise, petsPromise, inventoryPromise, routesPromise]);
 
         for (const response of results) {
             if (!response.ok) {
