@@ -13,6 +13,7 @@ import { EmergencyPlan } from "./plans-list"
 import { FamilyTab, FamilyMember } from "./family-tab"
 import { LocationsTab } from "./locations-tab"
 import { InventoryTab } from "./inventory-tab"
+import { RoutesTab, Route } from "./routes-tab"
 import { Loader2 } from "lucide-react"
 
 export interface Pet {
@@ -29,7 +30,7 @@ const hazardTypes = [
 
 interface PlanBuilderProps {
   plan?: EmergencyPlan | null
-  onSave: (planData: any, contactIds: string[], petIds: string[], itemIds: string[], kitIds: string[]) => Promise<void>
+  onSave: (planData: any, contactIds: string[], petIds: string[], itemIds: string[], kitIds: string[], routes: Route[]) => Promise<void>
   onCancel: () => void
   isSaving: boolean
 }
@@ -47,6 +48,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
   const [selectedPetIds, setSelectedPetIds] = useState<Set<string>>(new Set())
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set())
   const [selectedKitIds, setSelectedKitIds] = useState<Set<string>>(new Set())
+  const [routes, setRoutes] = useState<Route[]>([])
 
   // Component state
   const [isLoading, setIsLoading] = useState(true)
@@ -73,13 +75,15 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 const contactsPromise = fetch(`/api/plans/${plan.id}/contacts`).then(res => res.json());
                 const petsPromise = fetch(`/api/plans/${plan.id}/pets`).then(res => res.json());
                 const inventoryPromise = fetch(`/api/plans/${plan.id}/inventory`).then(res => res.json());
+                const routesPromise = fetch(`/api/plans/${plan.id}/routes`).then(res => res.json());
 
-                const [contactsData, planPetsData, inventoryData] = await Promise.all([contactsPromise, petsPromise, inventoryPromise]);
+                const [contactsData, planPetsData, inventoryData, routesData] = await Promise.all([contactsPromise, petsPromise, inventoryPromise, routesPromise]);
 
                 setSelectedMemberIds(new Set(contactsData.map((m: FamilyMember) => m.id)));
                 setSelectedPetIds(new Set(planPetsData.map((p: Pet) => p.id)));
                 setSelectedItemIds(new Set(inventoryData.items.map((i: any) => i.id)));
                 setSelectedKitIds(new Set(inventoryData.kits.map((k: any) => k.id)));
+                setRoutes(routesData);
 
             } else {
                 setPlanName("");
@@ -89,6 +93,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 setSelectedPetIds(new Set());
                 setSelectedItemIds(new Set());
                 setSelectedKitIds(new Set());
+                setRoutes([]);
             }
         } catch (err: any) {
             toast.error(err.message);
@@ -154,7 +159,8 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
       Array.from(selectedMemberIds),
       Array.from(selectedPetIds),
       Array.from(selectedItemIds),
-      Array.from(selectedKitIds)
+      Array.from(selectedKitIds),
+      routes
     );
   }
 
@@ -174,7 +180,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
           <TabsTrigger value="family">Family & Pets</TabsTrigger>
           <TabsTrigger value="locations">Locations</TabsTrigger>
           <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="routes" disabled>Routes</TabsTrigger>
+          <TabsTrigger value="routes">Routes</TabsTrigger>
           <TabsTrigger value="contacts" disabled>Contacts</TabsTrigger>
         </TabsList>
 
@@ -240,7 +246,17 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 </CardContent>
             </Card>
         </TabsContent>
-        <TabsContent value="routes"><p className="text-center p-4 text-muted-foreground">Routes management coming soon.</p></TabsContent>
+        <TabsContent value="routes">
+            <Card>
+                <CardContent className="pt-6">
+                    <RoutesTab
+                        planId={plan?.id}
+                        routes={routes}
+                        onRoutesChange={setRoutes}
+                    />
+                </CardContent>
+            </Card>
+        </TabsContent>
         <TabsContent value="contacts"><p className="text-center p-4 text-muted-foreground">Contacts management coming soon.</p></TabsContent>
       </Tabs>
 
