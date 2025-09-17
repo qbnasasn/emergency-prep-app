@@ -23,6 +23,18 @@ export interface Pet {
   breed: string;
 }
 
+export interface Location {
+  id: string;
+  name: string;
+  type: string;
+  street_number: string;
+  street_name: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  notes: string;
+}
+
 const hazardTypes = [
   "Severe Weather", "Earthquake", "Wildfire", "Flood", "Hurricane", "Tornado",
   "Winter Storm", "Power Outage", "Chemical Spill", "Terrorism", "Pandemic", "Cyber Attack",
@@ -49,6 +61,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set())
   const [selectedKitIds, setSelectedKitIds] = useState<Set<string>>(new Set())
   const [routes, setRoutes] = useState<Route[]>([])
+  const [locations, setLocations] = useState<Location[]>([])
 
   // Component state
   const [isLoading, setIsLoading] = useState(true)
@@ -76,14 +89,16 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 const petsPromise = fetch(`/api/plans/${plan.id}/pets`).then(res => res.json());
                 const inventoryPromise = fetch(`/api/plans/${plan.id}/inventory`).then(res => res.json());
                 const routesPromise = fetch(`/api/plans/${plan.id}/routes`).then(res => res.json());
+                const locationsPromise = fetch(`/api/plans/${plan.id}/locations`).then(res => res.json());
 
-                const [contactsData, planPetsData, inventoryData, routesData] = await Promise.all([contactsPromise, petsPromise, inventoryPromise, routesPromise]);
+                const [contactsData, planPetsData, inventoryData, routesData, locationsData] = await Promise.all([contactsPromise, petsPromise, inventoryPromise, routesPromise, locationsPromise]);
 
                 setSelectedMemberIds(new Set(contactsData.map((m: FamilyMember) => m.id)));
                 setSelectedPetIds(new Set(planPetsData.map((p: Pet) => p.id)));
                 setSelectedItemIds(new Set(inventoryData.items.map((i: any) => i.id)));
                 setSelectedKitIds(new Set(inventoryData.kits.map((k: any) => k.id)));
                 setRoutes(routesData);
+                setLocations(locationsData);
 
             } else {
                 setPlanName("");
@@ -94,6 +109,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 setSelectedItemIds(new Set());
                 setSelectedKitIds(new Set());
                 setRoutes([]);
+                setLocations([]);
             }
         } catch (err: any) {
             toast.error(err.message);
@@ -229,7 +245,17 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
         <TabsContent value="locations">
             <Card>
                 <CardContent className="pt-6">
-                    <LocationsTab planId={plan?.id} />
+                    <LocationsTab
+                        planId={plan?.id}
+                        locations={locations}
+                        fetchLocations={() => {
+                            if (plan?.id) {
+                                fetch(`/api/plans/${plan.id}/locations`)
+                                    .then(res => res.json())
+                                    .then(data => setLocations(data));
+                            }
+                        }}
+                    />
                 </CardContent>
             </Card>
         </TabsContent>
@@ -253,6 +279,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                         planId={plan?.id}
                         routes={routes}
                         onRoutesChange={setRoutes}
+                        locations={locations}
                     />
                 </CardContent>
             </Card>

@@ -8,36 +8,10 @@ import { LocationForm } from './location-form'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { toast } from 'sonner'
 
-export function LocationsTab({ planId }) {
-  const [locations, setLocations] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+export function LocationsTab({ planId, locations, fetchLocations }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState(null)
-
-  const fetchLocations = async () => {
-    if (!planId) return;
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/plans/${planId}/locations`)
-      if (response.ok) {
-        const data = await response.json()
-        setLocations(data)
-      } else {
-        toast.error('Failed to fetch locations')
-        setLocations([])
-      }
-    } catch (error) {
-      toast.error('Error fetching locations')
-      setLocations([])
-    } finally {
-        setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchLocations()
-  }, [planId])
 
   const handleAdd = () => {
     setSelectedLocation(null)
@@ -104,9 +78,7 @@ export function LocationsTab({ planId }) {
         </Button>
       </div>
       <div className="space-y-4">
-        {isLoading ? (
-            <div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-        ) : locations.length === 0 ? (
+        {locations.length === 0 ? (
             <p className="text-muted-foreground text-center p-4">No locations have been added to this plan yet.</p>
         ) : (
             locations.map((location) => (

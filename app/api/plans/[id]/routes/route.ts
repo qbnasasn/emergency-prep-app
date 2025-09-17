@@ -68,16 +68,14 @@ export async function PUT(req: Request, { params }: RouteParams) {
       // Insert new routes
       if (routes.length > 0) {
         const insertQuery = `
-          INSERT INTO routes (plan_id, name, start_location, end_location, waypoints)
-          SELECT $1, unnested($2::text[]), unnested($3::text[]), unnested($4::text[]), unnested($5::jsonb[])
+          INSERT INTO routes (plan_id, name, waypoints)
+          SELECT $1, unnested($2::text[]), unnested($3::jsonb[])
           RETURNING *;
         `;
         const names = routes.map(r => r.name);
-        const startLocations = routes.map(r => r.start_location);
-        const endLocations = routes.map(r => r.end_location);
         const waypoints = routes.map(r => JSON.stringify(r.waypoints || []));
 
-        await client.query(insertQuery, [planId, names, startLocations, endLocations, waypoints]);
+        await client.query(insertQuery, [planId, names, waypoints]);
       }
 
       await client.query('COMMIT');
