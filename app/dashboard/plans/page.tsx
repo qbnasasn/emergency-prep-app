@@ -144,7 +144,7 @@ export default function PlansPage() {
         fetchPlans();
 
     } catch (err: any) {
-        toast.error(err.message);
+        toast.error(err?.message || 'An unknown error occurred while saving the plan.');
     } finally {
         setIsSaving(false);
     }
