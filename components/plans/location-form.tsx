@@ -8,16 +8,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import AddressAutocomplete from '../ui/address-autocomplete'
 
 const formSchema = z.object({
   name: z.string().min(1, 'Location name is required'),
   type: z.string().min(1, 'Location type is required'),
+  full_address: z.string().optional(),
   street_number: z.string().optional(),
   street_name: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   zip_code: z.string().optional(),
   notes: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 })
 
 const locationTypes = [
@@ -31,17 +35,41 @@ export function LocationForm({ onFormSubmit, initialData }) {
     defaultValues: initialData || {
       name: '',
       type: '',
+      full_address: '',
       street_number: '',
       street_name: '',
       city: '',
       state: '',
       zip_code: '',
       notes: '',
+      latitude: undefined,
+      longitude: undefined,
     },
   })
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     onFormSubmit(values)
+  }
+
+  const handleAddressSelect = (place: google.maps.places.PlaceResult) => {
+    if (place.address_components) {
+      const streetNumber = place.address_components.find(c => c.types.includes('street_number'))?.long_name || ''
+      const streetName = place.address_components.find(c => c.types.includes('route'))?.long_name || ''
+      const city = place.address_components.find(c => c.types.includes('locality'))?.long_name || ''
+      const state = place.address_components.find(c => c.types.includes('administrative_area_level_1'))?.short_name || ''
+      const zipCode = place.address_components.find(c => c.types.includes('postal_code'))?.long_name || ''
+
+      form.setValue('street_number', streetNumber)
+      form.setValue('street_name', streetName)
+      form.setValue('city', city)
+      form.setValue('state', state)
+      form.setValue('zip_code', zipCode)
+
+      if (place.geometry?.location) {
+        form.setValue('latitude', place.geometry.location.lat())
+        form.setValue('longitude', place.geometry.location.lng())
+      }
+    }
   }
 
   return (
@@ -87,74 +115,30 @@ export function LocationForm({ onFormSubmit, initialData }) {
 
         <div className="space-y-2">
           <h3 className="text-sm font-medium">Address</h3>
-          <div className="grid grid-cols-12 gap-2">
-            <div className="col-span-4">
-              <FormField
-                control={form.control}
-                name="street_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input placeholder="Street Number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="col-span-8">
-              <FormField
-                control={form.control}
-                name="street_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input placeholder="Street Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input placeholder="City" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="state"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input placeholder="State" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="zip_code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input placeholder="ZIP Code" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="full_address"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <AddressAutocomplete
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onAddressSelect={handleAddressSelect}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {/* Hidden fields to store address components */}
+          <FormField control={form.control} name="street_number" render={({ field }) => <Input {...field} type="hidden" />} />
+          <FormField control={form.control} name="street_name" render={({ field }) => <Input {...field} type="hidden" />} />
+          <FormField control={form.control} name="city" render={({ field }) => <Input {...field} type="hidden" />} />
+          <FormField control={form.control} name="state" render={({ field }) => <Input {...field} type="hidden" />} />
+          <FormField control={form.control} name="zip_code" render={({ field }) => <Input {...field} type="hidden" />} />
+          <FormField control={form.control} name="latitude" render={({ field }) => <Input {...field} type="hidden" />} />
+          <FormField control={form.control} name="longitude" render={({ field }) => <Input {...field} type="hidden" />} />
         </div>
 
         <FormField
