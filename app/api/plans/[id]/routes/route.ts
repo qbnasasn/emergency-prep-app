@@ -69,7 +69,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
       if (routes.length > 0) {
         const insertQuery = `
           INSERT INTO routes (plan_id, name, waypoints)
-          SELECT $1, unnested($2::text[]), unnested($3::jsonb[])
+          SELECT $1, unnest($2::text[]), unnest($3::jsonb[])
           RETURNING *;
         `;
         const names = routes.map(r => r.name);
