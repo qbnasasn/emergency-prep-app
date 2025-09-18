@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { Loader } from '@googlemaps/js-api-loader'
 import { Input } from '@/components/ui/input'
+import { mapsLoader } from '@/lib/maps-loader'
 
 interface AddressAutocompleteProps {
   value: string;
@@ -22,13 +22,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
   // Effect to initialize the Google Maps Autocomplete
   useEffect(() => {
-    const loader = new Loader({
-      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-      version: 'weekly',
-      libraries: ['places'],
-    })
-
-    loader.load().then(() => {
+    mapsLoader.load().then(() => {
       if (inputRef.current) {
         const autocompleteInstance = new google.maps.places.Autocomplete(inputRef.current, {
           types: ['address'],

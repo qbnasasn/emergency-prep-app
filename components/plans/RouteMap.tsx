@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
+import { mapsLoader } from '@/lib/maps-loader';
 import { Location } from './plan-builder'; // Assuming Location type is exported from here
 
 interface RouteMapProps {
@@ -12,13 +12,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ waypoints }) => {
   const mapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const loader = new Loader({
-      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-      version: 'weekly',
-      libraries: ['marker', 'routes'], // Use new 'routes' library
-    });
-
-    loader.importLibrary('maps').then(async ({ Map }) => {
+    mapsLoader.importLibrary('maps').then(async ({ Map }) => {
       const { DirectionsService, DirectionsRenderer } = await google.maps.importLibrary('routes') as google.maps.RoutesLibrary;
 
       if (!mapRef.current) return;
