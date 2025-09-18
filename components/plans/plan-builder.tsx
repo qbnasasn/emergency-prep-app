@@ -33,6 +33,8 @@ export interface Location {
   state: string;
   zip_code: string;
   notes: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 const hazardTypes = [

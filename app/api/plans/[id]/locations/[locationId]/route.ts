@@ -19,7 +19,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
   try {
     const body = await req.json();
-    const { name, type, street_number, street_name, city, state, zip_code, notes } = body;
+    const { name, type, street_number, street_name, city, state, zip_code, notes, latitude, longitude } = body;
 
     if (!name || !type) {
       return NextResponse.json({ error: 'Name and type are required fields.' }, { status: 400 });
@@ -34,11 +34,11 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
       const updateQuery = `
         UPDATE plan_locations
-        SET name = $1, type = $2, street_number = $3, street_name = $4, city = $5, state = $6, zip_code = $7, notes = $8
-        WHERE id = $9 AND plan_id = $10
+        SET name = $1, type = $2, street_number = $3, street_name = $4, city = $5, state = $6, zip_code = $7, notes = $8, latitude = $9, longitude = $10
+        WHERE id = $11 AND plan_id = $12
         RETURNING *;
       `;
-      const values = [name, type, street_number, street_name, city, state, zip_code, notes, locationId, planId];
+      const values = [name, type, street_number, street_name, city, state, zip_code, notes, latitude, longitude, locationId, planId];
 
       const result = await client.query(updateQuery, values);
       if (result.rows.length === 0) {

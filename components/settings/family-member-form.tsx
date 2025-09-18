@@ -8,7 +8,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import AddressAutocomplete from '@/components/ui/address-autocomplete'
-import { useState } from 'react'
 
 const formSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
@@ -20,12 +19,12 @@ const formSchema = z.object({
   phone_number: z.string().optional(),
   email: z.string().email('Invalid email address').optional(),
   call_sign: z.string().optional(),
+  full_address: z.string().optional(),
   street_number: z.string().optional(),
   street_name: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   zip_code: z.string().optional(),
-  full_address: z.string().optional(),
 })
 
 const roles = [
@@ -47,12 +46,12 @@ export function FamilyMemberForm({ onFormSubmit, initialData }) {
       phone_number: '',
       email: '',
       call_sign: '',
+      full_address: '',
       street_number: '',
       street_name: '',
       city: '',
       state: '',
       zip_code: '',
-      full_address: '',
     },
   })
 
@@ -73,7 +72,6 @@ export function FamilyMemberForm({ onFormSubmit, initialData }) {
       form.setValue('city', city)
       form.setValue('state', state)
       form.setValue('zip_code', zipCode)
-      form.setValue('full_address', place.formatted_address)
     }
   }
 
@@ -173,26 +171,28 @@ export function FamilyMemberForm({ onFormSubmit, initialData }) {
         />
         <div className="space-y-2">
           <h3 className="text-sm font-medium">Address</h3>
-          <AddressAutocomplete onAddressSelect={handleAddressSelect} />
+           <FormField
+            control={form.control}
+            name="full_address"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <AddressAutocomplete
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onAddressSelect={handleAddressSelect}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           {/* Hidden fields to store address components */}
           <FormField control={form.control} name="street_number" render={({ field }) => <Input {...field} type="hidden" />} />
           <FormField control={form.control} name="street_name" render={({ field }) => <Input {...field} type="hidden" />} />
           <FormField control={form.control} name="city" render={({ field }) => <Input {...field} type="hidden" />} />
           <FormField control={form.control} name="state" render={({ field }) => <Input {...field} type="hidden" />} />
           <FormField control={form.control} name="zip_code" render={({ field }) => <Input {...field} type="hidden" />} />
-
-          <FormField
-            control={form.control}
-            name="full_address"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input placeholder="Selected Address" {...field} readOnly />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <FormField

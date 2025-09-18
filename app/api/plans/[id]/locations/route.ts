@@ -48,7 +48,7 @@ export async function POST(req: Request, { params }: RouteParams) {
 
   try {
     const body = await req.json();
-    const { name, type, street_number, street_name, city, state, zip_code, notes } = body;
+    const { name, type, street_number, street_name, city, state, zip_code, notes, latitude, longitude } = body;
 
     if (!name || !type) {
       return NextResponse.json({ error: 'Name and type are required fields.' }, { status: 400 });
@@ -62,11 +62,11 @@ export async function POST(req: Request, { params }: RouteParams) {
       }
 
       const insertQuery = `
-        INSERT INTO plan_locations (plan_id, name, type, street_number, street_name, city, state, zip_code, notes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO plan_locations (plan_id, name, type, street_number, street_name, city, state, zip_code, notes, latitude, longitude)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *;
       `;
-      const values = [planId, name, type, street_number, street_name, city, state, zip_code, notes];
+      const values = [planId, name, type, street_number, street_name, city, state, zip_code, notes, latitude, longitude];
 
       const result = await client.query(insertQuery, values);
       return NextResponse.json(result.rows[0], { status: 201 });
