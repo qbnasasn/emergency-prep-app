@@ -191,13 +191,12 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="family">Family & Pets</TabsTrigger>
+          <TabsTrigger value="family">Contacts & Pets</TabsTrigger>
           <TabsTrigger value="locations">Locations</TabsTrigger>
           <TabsTrigger value="inventory">Inventory</TabsTrigger>
           <TabsTrigger value="routes">Routes</TabsTrigger>
-          <TabsTrigger value="contacts" disabled>Contacts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic">
@@ -284,7 +283,6 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 </CardContent>
             </Card>
         </TabsContent>
-        <TabsContent value="contacts"><p className="text-center p-4 text-muted-foreground">Contacts management coming soon.</p></TabsContent>
       </Tabs>
 
       <div className="flex justify-end space-x-2 pt-4">
