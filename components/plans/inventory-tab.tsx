@@ -133,7 +133,7 @@ export function InventoryTab({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <h3 className="font-heading text-lg mb-4">Available Inventory Items</h3>
+          <h3 className="font-semibold text-lg mb-4">Available Inventory Items</h3>
           <ScrollArea className="h-72 rounded-md border p-4">
             {Object.keys(groupedItems).length > 0 ? (
               Object.entries(groupedItems).map(([category, items]) => (
@@ -161,7 +161,7 @@ export function InventoryTab({
           </ScrollArea>
         </div>
         <div>
-          <h3 className="font-heading text-lg mb-4">Available Kits</h3>
+          <h3 className="font-semibold text-lg mb-4">Available Kits</h3>
           <ScrollArea className="h-72 rounded-md border p-4">
             {filteredKits.length > 0 ? (
               filteredKits.map((kit) => (
