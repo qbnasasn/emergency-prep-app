@@ -104,12 +104,12 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
         )}
         {routes.map(route => (
           <Card key={route.id} className="bg-muted/30">
-            <CardHeader className="flex-row items-center justify-between py-3">
+<CardHeader className="flex flex-row items-center justify-between py-3">
                 <Input
                   value={route.name}
                   onChange={e => handleRouteNameChange(route.id, e.target.value)}
                   placeholder="Enter route name"
-                  className="font-semibold text-lg w-full"
+                  className="font-semibold text-lg flex-grow bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
                 <Button variant="ghost" size="icon" onClick={() => handleDeleteRoute(route.id)}>
                     <Trash2 className="h-5 w-5 text-destructive" />
