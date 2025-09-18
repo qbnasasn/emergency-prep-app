@@ -104,7 +104,7 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
         )}
         {routes.map(route => (
           <Card key={route.id} className="bg-muted/30">
-<CardHeader className="flex flex-row items-center justify-between py-3">
+            <CardHeader className="flex flex-row items-center justify-between py-3">
                 <Input
                   value={route.name}
                   onChange={e => handleRouteNameChange(route.id, e.target.value)}
