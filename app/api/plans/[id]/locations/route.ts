@@ -48,6 +48,7 @@ export async function POST(req: Request, { params }: RouteParams) {
 
   try {
     const body = await req.json();
+    console.log('Received body for plan location:', JSON.stringify(body, null, 2));
     const { name, type, street_number, street_name, city, state, zip_code, notes, latitude, longitude } = body;
 
     if (!name || !type) {

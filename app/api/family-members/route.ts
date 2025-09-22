@@ -29,6 +29,7 @@ export async function POST(request: Request) {
   const client = await pool.connect();
   try {
     const body = await request.json()
+    console.log('Received body for family member:', JSON.stringify(body, null, 2));
     const {
       first_name, last_name, weight_lbs, height_inches, birth_date, role,
       phone_number, email, call_sign, street_number, street_name, city, state, zip_code

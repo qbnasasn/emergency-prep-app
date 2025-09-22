@@ -67,11 +67,13 @@ export function FamilyMemberForm({ onFormSubmit, initialData }) {
       const state = place.address_components.find(c => c.types.includes('administrative_area_level_1'))?.short_name || ''
       const zipCode = place.address_components.find(c => c.types.includes('postal_code'))?.long_name || ''
 
-      form.setValue('street_number', streetNumber)
-      form.setValue('street_name', streetName)
-      form.setValue('city', city)
-      form.setValue('state', state)
-      form.setValue('zip_code', zipCode)
+      // Consolidate all state updates in this one function
+      form.setValue('full_address', place.formatted_address || '');
+      form.setValue('street_number', streetNumber);
+      form.setValue('street_name', streetName);
+      form.setValue('city', city);
+      form.setValue('state', state);
+      form.setValue('zip_code', zipCode);
     }
   }
 
