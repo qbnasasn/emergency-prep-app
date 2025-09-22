@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import pool from '@/lib/db'
+import db from '@/lib/db'
 import { auth } from '@/lib/auth'
 
 export async function GET() {
@@ -8,15 +8,12 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const client = await pool.connect();
   try {
-    const familyMembers = await client.query('SELECT * FROM family_members WHERE user_id = $1 ORDER BY created_at ASC', [session.user.id])
+    const familyMembers = await db.query('SELECT * FROM family_members WHERE user_id = $1 ORDER BY created_at ASC', [session.user.id])
     return NextResponse.json(familyMembers.rows)
   } catch (error) {
     console.error('Error fetching family members:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
-  } finally {
-    client.release();
   }
 }
 
@@ -26,16 +23,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const client = await pool.connect();
   try {
     const body = await request.json()
-    console.log('Received body for family member:', JSON.stringify(body, null, 2));
     const {
       first_name, last_name, weight_lbs, height_inches, birth_date, role,
       phone_number, email, call_sign, street_number, street_name, city, state, zip_code
     } = body
 
-    const newMember = await client.query(
+    const newMember = await db.query(
       `INSERT INTO family_members (
          user_id, first_name, last_name, weight_lbs, height_inches, birth_date, role,
          phone_number, email, call_sign, street_number, street_name, city, state, zip_code
@@ -52,7 +47,5 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error creating family member:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
-  } finally {
-    client.release();
   }
 }

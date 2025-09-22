@@ -59,17 +59,15 @@ export function LocationForm({ onFormSubmit, initialData }) {
       const state = place.address_components.find(c => c.types.includes('administrative_area_level_1'))?.short_name || ''
       const zipCode = place.address_components.find(c => c.types.includes('postal_code'))?.long_name || ''
 
-      // Consolidate all state updates in this one function
-      form.setValue('full_address', place.formatted_address || '');
-      form.setValue('street_number', streetNumber);
-      form.setValue('street_name', streetName);
-      form.setValue('city', city);
-      form.setValue('state', state);
-      form.setValue('zip_code', zipCode);
+      form.setValue('street_number', streetNumber)
+      form.setValue('street_name', streetName)
+      form.setValue('city', city)
+      form.setValue('state', state)
+      form.setValue('zip_code', zipCode)
 
       if (place.geometry?.location) {
-        form.setValue('latitude', place.geometry.location.lat());
-        form.setValue('longitude', place.geometry.location.lng());
+        form.setValue('latitude', place.geometry.location.lat())
+        form.setValue('longitude', place.geometry.location.lng())
       }
     }
   }
@@ -133,12 +131,79 @@ export function LocationForm({ onFormSubmit, initialData }) {
               </FormItem>
             )}
           />
-          {/* Hidden fields to store address components */}
-          <FormField control={form.control} name="street_number" render={({ field }) => <Input {...field} type="hidden" />} />
-          <FormField control={form.control} name="street_name" render={({ field }) => <Input {...field} type="hidden" />} />
-          <FormField control={form.control} name="city" render={({ field }) => <Input {...field} type="hidden" />} />
-          <FormField control={form.control} name="state" render={({ field }) => <Input {...field} type="hidden" />} />
-          <FormField control={form.control} name="zip_code" render={({ field }) => <Input {...field} type="hidden" />} />
+          <div className="grid grid-cols-6 gap-4 mt-2">
+            <div className="col-span-2">
+              <FormField
+                control={form.control}
+                name="street_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Street No.</FormLabel>
+                    <FormControl>
+                      <Input placeholder="123" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-4">
+              <FormField
+                control={form.control}
+                name="street_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Street Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Main St" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-3">
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Anytown" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-1">
+              <FormField
+                control={form.control}
+                name="state"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>State</FormLabel>
+                    <FormControl>
+                      <Input placeholder="CA" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-2">
+              <FormField
+                control={form.control}
+                name="zip_code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Zip Code</FormLabel>
+                    <FormControl>
+                      <Input placeholder="12345" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+          {/* Hidden fields for lat/lng */}
           <FormField control={form.control} name="latitude" render={({ field }) => <Input {...field} type="hidden" />} />
           <FormField control={form.control} name="longitude" render={({ field }) => <Input {...field} type="hidden" />} />
         </div>

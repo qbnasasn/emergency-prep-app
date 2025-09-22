@@ -38,18 +38,17 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   useEffect(() => {
     if (autocomplete) {
       const listener = autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        // Ensure the place has address components before calling the handler.
-        // This prevents errors if a user selects an option that isn't a detailed address.
-        if (place && place.address_components) {
-          onAddressSelect(place); // Pass the full place object for parsing
+        const place = autocomplete.getPlace()
+        if (place.formatted_address) {
+          onChange(place.formatted_address) // Update the form state with the full address string
+          onAddressSelect(place) // Pass the full place object for parsing
         }
-      });
+      })
       return () => {
-        google.maps.event.removeListener(listener);
-      };
+        google.maps.event.removeListener(listener)
+      }
     }
-  }, [autocomplete, onAddressSelect]);
+  }, [autocomplete, onChange, onAddressSelect])
 
   return <Input ref={inputRef} value={value} onChange={(e) => onChange(e.target.value)} type="text" placeholder={placeholder} />
 }
