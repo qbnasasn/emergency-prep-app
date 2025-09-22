@@ -1,6 +1,7 @@
 'use client'
 
 import { useForm } from 'react-hook-form'
+import { useCallback } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
@@ -59,7 +60,7 @@ export function FamilyMemberForm({ onFormSubmit, initialData }) {
     onFormSubmit(values)
   }
 
-  const handleAddressSelect = (place: google.maps.places.PlaceResult) => {
+  const handleAddressSelect = useCallback((place: google.maps.places.PlaceResult) => {
     if (place.address_components) {
       const streetNumber = place.address_components.find(c => c.types.includes('street_number'))?.long_name || ''
       const streetName = place.address_components.find(c => c.types.includes('route'))?.long_name || ''
@@ -73,7 +74,7 @@ export function FamilyMemberForm({ onFormSubmit, initialData }) {
       form.setValue('state', state)
       form.setValue('zip_code', zipCode)
     }
-  }
+  }, [form])
 
   return (
     <Form {...form}>

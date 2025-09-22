@@ -1,6 +1,7 @@
 'use client'
 
 import { useForm } from 'react-hook-form'
+import { useCallback } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
@@ -51,7 +52,7 @@ export function LocationForm({ onFormSubmit, initialData }) {
     onFormSubmit(values)
   }
 
-  const handleAddressSelect = (place: google.maps.places.PlaceResult) => {
+  const handleAddressSelect = useCallback((place: google.maps.places.PlaceResult) => {
     if (place.address_components) {
       const streetNumber = place.address_components.find(c => c.types.includes('street_number'))?.long_name || ''
       const streetName = place.address_components.find(c => c.types.includes('route'))?.long_name || ''
@@ -70,7 +71,7 @@ export function LocationForm({ onFormSubmit, initialData }) {
         form.setValue('longitude', place.geometry.location.lng())
       }
     }
-  }
+  }, [form])
 
   return (
     <Form {...form}>
