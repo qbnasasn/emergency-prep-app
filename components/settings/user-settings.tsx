@@ -49,20 +49,50 @@ function LocationDialog({ isOpen, onClose, onSave, location }) {
           <DialogTitle>{location ? 'Edit' : 'Add'} NOAA Alert Location</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-            <Input {...register('name', { required: 'Location name is required' })} placeholder="Location Name (e.g. Home)" />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message as string}</p>}
+            <div>
+              <label>Location Name</label>
+              <Input {...register('name', { required: 'Location name is required' })} placeholder="e.g. Home" />
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message as string}</p>}
+            </div>
 
-            <Controller
-              name="full_address"
-              control={control}
-              render={({ field }) => (
-                <AddressAutocomplete
-                  value={field.value}
-                  onChange={field.onChange}
-                  onAddressSelect={handleAddressSelect}
+            <div>
+                <label>Address</label>
+                <Controller
+                  name="full_address"
+                  control={control}
+                  render={({ field }) => (
+                    <AddressAutocomplete
+                      value={field.value}
+                      onChange={field.onChange}
+                      onAddressSelect={handleAddressSelect}
+                    />
+                  )}
                 />
-              )}
-            />
+            </div>
+
+            <div className="grid grid-cols-6 gap-4 pt-2">
+                <div className="col-span-2">
+                    <label>Street No.</label>
+                    <Input placeholder="123" {...register('street_number')} />
+                </div>
+                <div className="col-span-4">
+                    <label>Street Name</label>
+                    <Input placeholder="Main St" {...register('street_name')} />
+                </div>
+                <div className="col-span-3">
+                    <label>City</label>
+                    <Input placeholder="Anytown" {...register('city')} />
+                </div>
+                <div className="col-span-1">
+                    <label>State</label>
+                    <Input placeholder="CA" {...register('state')} />
+                </div>
+                <div className="col-span-2">
+                    <label>Zip Code</label>
+                    <Input placeholder="12345" {...register('zip_code')} />
+                </div>
+            </div>
+
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
             <Button type="submit">Save</Button>
