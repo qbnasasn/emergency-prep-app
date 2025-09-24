@@ -3,178 +3,200 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { User, MapPin, Save, Plus, Trash2, Loader2 } from "lucide-react"
+import { User, MapPin, Save, Plus, Trash2, Loader2, Edit } from "lucide-react"
 import { FamilyMembers } from "./family-members"
 import { Pets } from "./pets"
 import AddressAutocomplete, { StructuredAddress } from "../ui/address-autocomplete"
 import { toast } from "sonner"
-import { v4 as uuidv4 } from 'uuid';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "../ui/input"
+import { useForm, Controller } from "react-hook-form"
 
-interface NoaaLocation extends StructuredAddress {
-  id: string; // Client-side unique ID
-  name: string; // User-defined name for the location
+interface NoaaLocation {
+  id: string;
+  name: string;
   full_address: string;
+  street_number: string;
+  street_name: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  latitude: number | null;
+  longitude: number | null;
 }
+
+function LocationDialog({ isOpen, onClose, onSave, location }) {
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm({
+    defaultValues: location || { name: '', full_address: '' }
+  });
+
+  const handleAddressSelect = (address: StructuredAddress, fullAddress: string) => {
+    setValue('full_address', fullAddress);
+    setValue('street_number', address.street_number);
+    setValue('street_name', address.street_name);
+    setValue('city', address.city);
+    setValue('state', address.state);
+    setValue('zip_code', address.zip_code);
+    setValue('latitude', address.latitude);
+    setValue('longitude', address.longitude);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{location ? 'Edit' : 'Add'} NOAA Alert Location</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSave)} className="space-y-4">
+            <Input {...register('name', { required: 'Location name is required' })} placeholder="Location Name (e.g. Home)" />
+            {errors.name && <p className="text-sm text-destructive">{errors.name.message as string}</p>}
+
+            <Controller
+              name="full_address"
+              control={control}
+              render={({ field }) => (
+                <AddressAutocomplete
+                  value={field.value}
+                  onChange={field.onChange}
+                  onAddressSelect={(addr, fullAddr) => handleAddressSelect(addr, field.value)}
+                />
+              )}
+            />
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button type="submit">Save</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 export function UserSettings() {
   const [locations, setLocations] = useState<NoaaLocation[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<NoaaLocation | null>(null);
+
+  const fetchLocations = async () => {
+    setIsFetching(true);
+    try {
+      const response = await fetch('/api/noaa-locations');
+      if (response.ok) {
+        const data = await response.json();
+        setLocations(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch NOAA locations:", error);
+      toast.error("Could not load your alert locations.");
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await fetch('/api/user/settings');
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.noaa_alert_locations) {
-            const locationsWithIds = data.noaa_alert_locations.map((loc: any) => ({ ...loc, id: loc.id || uuidv4() }));
-            setLocations(locationsWithIds);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch user settings:", error);
-        toast.error("Could not load your settings.");
-      } finally {
-        setIsFetching(false);
-      }
-    };
-    fetchSettings();
+    fetchLocations();
   }, []);
 
-  const handleLocationUpdate = (index: number, newAddress: StructuredAddress, newFullAddress: string) => {
-    const newLocations = [...locations];
-    const oldLocation = newLocations[index];
-    newLocations[index] = { ...oldLocation, ...newAddress, full_address: newFullAddress };
-    setLocations(newLocations);
-  };
+  const handleSave = async (data: any) => {
+    const method = selectedLocation ? 'PUT' : 'POST';
+    const url = selectedLocation ? `/api/noaa-locations/${selectedLocation.id}` : '/api/noaa-locations';
 
-  const handleLocationNameChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const newLocations = [...locations];
-    newLocations[index].name = e.target.value;
-    setLocations(newLocations);
-  };
-
-  const handleFullAddressChange = (value: string, index: number) => {
-    const newLocations = [...locations];
-    newLocations[index].full_address = value;
-    setLocations(newLocations);
-  };
-
-  const addLocation = () => {
-    setLocations([
-      ...locations,
-      {
-        id: uuidv4(),
-        name: `Location ${locations.length + 1}`,
-        full_address: '',
-        street_number: '',
-        street_name: '',
-        city: '',
-        state: '',
-        zip_code: '',
-        latitude: null,
-        longitude: null,
-      }
-    ]);
-  };
-
-  const removeLocation = (index: number) => {
-    const newLocations = locations.filter((_, i) => i !== index);
-    setLocations(newLocations);
-  };
-
-  const handleSaveSettings = async () => {
-    setIsLoading(true);
     try {
-      // We only need to store a subset of the fields in the DB
-      const locationsToSave = locations.map(({ id, ...rest }) => rest);
-
-      const response = await fetch('/api/user/settings', {
-        method: 'POST',
+      const response = await fetch(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ noaa_alert_locations: locationsToSave }),
+        body: JSON.stringify(data)
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save settings.");
+        throw new Error(`Failed to ${selectedLocation ? 'update' : 'create'} location.`);
       }
+      toast.success(`Location ${selectedLocation ? 'updated' : 'created'} successfully.`);
+      fetchLocations(); // Refresh the list
+      setIsDialogOpen(false);
+      setSelectedLocation(null);
 
-      toast.success("Settings saved successfully!");
-      const savedData = await response.json();
-      if (savedData && savedData.noaa_alert_locations) {
-        const locationsWithIds = savedData.noaa_alert_locations.map((loc: any) => ({ ...loc, id: loc.id || uuidv4() }));
-        setLocations(locationsWithIds);
-      }
+    } catch(err: any) {
+      toast.error(err.message);
+    }
+  }
 
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setIsLoading(false);
+  const handleDelete = async (locationId: string) => {
+    try {
+        const response = await fetch(`/api/noaa-locations/${locationId}`, { method: 'DELETE' });
+        if (!response.ok) {
+            throw new Error("Failed to delete location.");
+        }
+        toast.success("Location deleted successfully.");
+        fetchLocations();
+    } catch(err: any) {
+        toast.error(err.message);
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-heading text-xl flex items-center">
-          <User className="h-5 w-5 mr-2 text-primary" />
-          User Settings
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <FamilyMembers />
-        <Pets />
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-body font-semibold text-foreground flex items-center">
-              <MapPin className="h-4 w-4 mr-2" />
-              NOAA Alert Locations
-            </h3>
-            <Button variant="outline" size="sm" onClick={addLocation} className="font-body bg-transparent">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Location
-            </Button>
-          </div>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-heading text-xl flex items-center">
+            <User className="h-5 w-5 mr-2 text-primary" />
+            User Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <FamilyMembers />
+          <Pets />
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="font-body font-semibold text-foreground flex items-center">
+                <MapPin className="h-4 w-4 mr-2" />
+                NOAA Alert Locations
+              </h3>
+              <Button variant="outline" size="sm" onClick={() => { setSelectedLocation(null); setIsDialogOpen(true); }} className="font-body bg-transparent">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Location
+              </Button>
+            </div>
 
-          {isFetching ? <Loader2 className="animate-spin" /> : (
-            <div className="space-y-4">
-              {locations.map((location, index) => (
-                <div key={location.id} className="p-4 border rounded-lg space-y-3 bg-muted/20">
-                    <div className="flex justify-between items-center">
-                        <Input
-                            value={location.name}
-                            onChange={(e) => handleLocationNameChange(e, index)}
-                            placeholder="Location Name (e.g. Home)"
-                            className="text-sm font-medium border-none p-0 bg-transparent focus:ring-0"
-                        />
-                        <Button variant="ghost" size="icon" onClick={() => removeLocation(index)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
+            {isFetching ? <Loader2 className="animate-spin mx-auto" /> : (
+              <div className="space-y-2">
+                {locations.map((location) => (
+                  <div key={location.id} className="p-3 border rounded-lg flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{location.name}</p>
+                      <p className="text-sm text-muted-foreground">{location.full_address}</p>
+                    </div>
+                    <div className="flex items-center">
+                        <Button variant="ghost" size="icon" onClick={() => { setSelectedLocation(location); setIsDialogOpen(true); }}>
+                            <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(location.id)}>
+                            <Trash2 className="h-4 w-4" />
                         </Button>
                     </div>
-                  <AddressAutocomplete
-                    value={location.full_address}
-                    onChange={(value) => handleFullAddressChange(value, index)}
-                    onAddressSelect={(address) => handleLocationUpdate(index, address, location.full_address)}
-                  />
-                </div>
-              ))}
-              {locations.length === 0 && <p className="text-muted-foreground text-sm text-center py-4">No alert locations added.</p>}
-            </div>
-          )}
-        </div>
+                  </div>
+                ))}
+                {locations.length === 0 && <p className="text-muted-foreground text-sm text-center py-4">No alert locations added.</p>}
+              </div>
+            )}
+          </div>
 
-        <div className="space-y-4">
-          {/* Subscription Section remains unchanged */}
-        </div>
+          <div className="space-y-4">
+            {/* Subscription Section remains unchanged */}
+          </div>
+        </CardContent>
+      </Card>
 
-        <Button onClick={handleSaveSettings} disabled={isLoading || isFetching} className="w-full font-body bg-gray-900 hover:bg-gray-800">
-          {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-          Save All Settings
-        </Button>
-      </CardContent>
-    </Card>
+      {isDialogOpen && (
+          <LocationDialog
+            isOpen={isDialogOpen}
+            onClose={() => { setIsDialogOpen(false); setSelectedLocation(null); }}
+            onSave={handleSave}
+            location={selectedLocation}
+          />
+      )}
+    </>
   )
 }
