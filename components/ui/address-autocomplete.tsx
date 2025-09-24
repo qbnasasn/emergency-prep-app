@@ -1,56 +1,101 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
-import { Input } from '@/components/ui/input'
-import { mapsLoader } from '@/lib/maps-loader'
+import React from 'react';
+import GooglePlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-google-places-autocomplete';
+import { Input } from '@/components/ui/input';
 
 interface AddressAutocompleteProps {
-  value: string;
+  // This is the value of the input field (the full address string)
+  value: any;
+  // This is the onChange handler from react-hook-form
   onChange: (value: string) => void;
-  onAddressSelect: (address: google.maps.places.PlaceResult) => void;
-  placeholder?: string;
+  // This is our custom handler to pass up the structured address data
+  onAddressSelect: (address: StructuredAddress) => void;
 }
 
-const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
-  value,
-  onChange,
-  onAddressSelect,
-  placeholder = "Enter an address"
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null)
+export interface StructuredAddress {
+  street_number: string;
+  street_name: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  latitude: number | null;
+  longitude: number | null;
+}
 
-  // Effect to initialize the Google Maps Autocomplete
-  useEffect(() => {
-    mapsLoader.load().then(() => {
-      if (inputRef.current) {
-        const autocompleteInstance = new google.maps.places.Autocomplete(inputRef.current, {
-          types: ['address'],
-          componentRestrictions: { country: 'us' },
-          fields: ['address_components', 'geometry', 'formatted_address']
-        })
-        setAutocomplete(autocompleteInstance)
-      }
-    })
-  }, [])
+const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ value, onChange, onAddressSelect }) => {
 
-  // Effect to handle place selection
-  useEffect(() => {
-    if (autocomplete) {
-      const listener = autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace()
-        if (place.formatted_address) {
-          onChange(place.formatted_address) // Update the form state with the full address string
-          onAddressSelect(place) // Pass the full place object for parsing
-        }
-      })
-      return () => {
-        google.maps.event.removeListener(listener)
-      }
+  const handleSelect = async (place: any) => {
+    // Update the visible input field using the form's onChange
+    onChange(place.label);
+
+    try {
+      const results = await geocodeByAddress(place.label);
+      const latLng = await getLatLng(results[0]);
+
+      const addressComponents = results[0].address_components;
+
+      const street_number = addressComponents.find(c => c.types.includes('street_number'))?.long_name || '';
+      const street_name = addressComponents.find(c => c.types.includes('route'))?.long_name || '';
+      const city = addressComponents.find(c => c.types.includes('locality'))?.long_name || '';
+      const state = addressComponents.find(c => c.types.includes('administrative_area_level_1'))?.short_name || '';
+      const zip_code = addressComponents.find(c => c.types.includes('postal_code'))?.long_name || '';
+
+      onAddressSelect({
+        street_number,
+        street_name,
+        city,
+        state,
+        zip_code,
+        latitude: latLng.lat,
+        longitude: latLng.lng,
+      });
+
+    } catch (error) {
+      console.error('Error getting address details:', error);
+      // Handle error case, maybe clear the fields
+      onAddressSelect({
+        street_number: '',
+        street_name: '',
+        city: '',
+        state: '',
+        zip_code: '',
+        latitude: null,
+        longitude: null,
+      });
     }
-  }, [autocomplete, onChange, onAddressSelect])
+  };
 
-  return <Input ref={inputRef} value={value} onChange={(e) => onChange(e.target.value)} type="text" placeholder={placeholder} />
-}
+  return (
+    <GooglePlacesAutocomplete
+      apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+      selectProps={{
+        value,
+        onChange: handleSelect,
+        placeholder: 'Enter an address...',
+        styles: {
+          input: (provided) => ({
+            ...provided,
+            // You can use tailwind classes here if you set up your project that way
+            // For now, using inline styles to match the existing Input component
+            height: '40px',
+            padding: '8px 12px',
+            borderRadius: '0.375rem',
+            border: '1px solid hsl(240 5.9% 90%)',
+          }),
+          option: (provided) => ({
+            ...provided,
+            // style for dropdown options
+          }),
+        },
+      }}
+      autocompletionRequest={{
+        componentRestrictions: {
+          country: ['us'],
+        },
+      }}
+    />
+  );
+};
 
-export default AddressAutocomplete
+export default AddressAutocomplete;

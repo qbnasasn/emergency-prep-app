@@ -1,7 +1,6 @@
 'use client'
 
 import { useForm } from 'react-hook-form'
-import { useCallback } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
@@ -52,26 +51,16 @@ export function LocationForm({ onFormSubmit, initialData }) {
     onFormSubmit(values)
   }
 
-  const handleAddressSelect = useCallback((place: google.maps.places.PlaceResult) => {
-    if (place.address_components) {
-      const streetNumber = place.address_components.find(c => c.types.includes('street_number'))?.long_name || ''
-      const streetName = place.address_components.find(c => c.types.includes('route'))?.long_name || ''
-      const city = place.address_components.find(c => c.types.includes('locality'))?.long_name || ''
-      const state = place.address_components.find(c => c.types.includes('administrative_area_level_1'))?.short_name || ''
-      const zipCode = place.address_components.find(c => c.types.includes('postal_code'))?.long_name || ''
-
-      form.setValue('street_number', streetNumber)
-      form.setValue('street_name', streetName)
-      form.setValue('city', city)
-      form.setValue('state', state)
-      form.setValue('zip_code', zipCode)
-
-      if (place.geometry?.location) {
-        form.setValue('latitude', place.geometry.location.lat())
-        form.setValue('longitude', place.geometry.location.lng())
-      }
-    }
-  }, [form])
+  const handleAddressSelect = (address: any) => {
+    // The new AddressAutocomplete component gives us the structured address directly.
+    form.setValue('street_number', address.street_number);
+    form.setValue('street_name', address.street_name);
+    form.setValue('city', address.city);
+    form.setValue('state', address.state);
+    form.setValue('zip_code', address.zip_code);
+    form.setValue('latitude', address.latitude);
+    form.setValue('longitude', address.longitude);
+  }
 
   return (
     <Form {...form}>
