@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "../ui/input"
 import { useForm, Controller } from "react-hook-form"
+import { useCallback } from "react"
 
 interface NoaaLocation {
   id: string;
@@ -30,16 +31,16 @@ function LocationDialog({ isOpen, onClose, onSave, location }) {
     defaultValues: location || { name: '', full_address: '' }
   });
 
-  const handleAddressSelect = (address: StructuredAddress, fullAddress: string) => {
-    setValue('full_address', fullAddress);
-    setValue('street_number', address.street_number);
-    setValue('street_name', address.street_name);
-    setValue('city', address.city);
-    setValue('state', address.state);
-    setValue('zip_code', address.zip_code);
-    setValue('latitude', address.latitude);
-    setValue('longitude', address.longitude);
-  };
+  const handleAddressSelect = useCallback((address: StructuredAddress, fullAddress: string) => {
+    setValue('full_address', fullAddress, { shouldValidate: true });
+    setValue('street_number', address.street_number, { shouldValidate: true });
+    setValue('street_name', address.street_name, { shouldValidate: true });
+    setValue('city', address.city, { shouldValidate: true });
+    setValue('state', address.state, { shouldValidate: true });
+    setValue('zip_code', address.zip_code, { shouldValidate: true });
+    setValue('latitude', address.latitude, { shouldValidate: true });
+    setValue('longitude', address.longitude, { shouldValidate: true });
+  }, [setValue]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -58,7 +59,7 @@ function LocationDialog({ isOpen, onClose, onSave, location }) {
                 <AddressAutocomplete
                   value={field.value}
                   onChange={field.onChange}
-                  onAddressSelect={(addr, fullAddr) => handleAddressSelect(addr, field.value)}
+                  onAddressSelect={handleAddressSelect}
                 />
               )}
             />
