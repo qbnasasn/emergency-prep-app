@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button"
 import { Plus, MapPin } from "lucide-react"
-import Link from "next/link"
 
-export function KitsHeader() {
+interface KitsHeaderProps {
+  onNewKit: () => void;
+}
+
+export function KitsHeader({ onNewKit }: KitsHeaderProps) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div>
@@ -14,12 +17,10 @@ export function KitsHeader() {
           <MapPin className="h-4 w-4 mr-2" />
           View on Map
         </Button>
-        <Link href="/dashboard/kits/builder">
-          <Button size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            New Kit
-          </Button>
-        </Link>
+        <Button size="sm" onClick={onNewKit}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Kit
+        </Button>
       </div>
     </div>
   )
