@@ -1,5 +1,4 @@
 import pool from '@/lib/db';
-import { sql } from 'kysely';
 
 export type Kit = {
   id: string;
@@ -13,15 +12,17 @@ export type Kit = {
 };
 
 export async function getKits(userId: string): Promise<Kit[]> {
-  const result = await pool.query(
-    sql`
+  const query = {
+    text: `
       SELECT
         k.*,
         (SELECT COUNT(*) FROM kit_items ki WHERE ki.kit_id = k.id) as item_count
       FROM kits k
-      WHERE k.user_id = ${userId}
+      WHERE k.user_id = $1
       ORDER BY k.created_at DESC;
-    `
-  );
+    `,
+    values: [userId],
+  };
+  const result = await pool.query(query);
   return result.rows as Kit[];
 }

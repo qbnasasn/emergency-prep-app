@@ -1,5 +1,4 @@
 import pool from '@/lib/db';
-import { sql } from 'kysely';
 
 export type InventoryItem = {
   id: string;
@@ -22,10 +21,10 @@ export type InventoryItem = {
 };
 
 export async function getInventoryItems(userId: string): Promise<InventoryItem[]> {
-  const result = await pool.query(
-    sql`
-      SELECT * FROM inventory_items WHERE user_id = ${userId}
-    `
-  );
+  const query = {
+    text: 'SELECT * FROM inventory_items WHERE user_id = $1',
+    values: [userId],
+  };
+  const result = await pool.query(query);
   return result.rows as InventoryItem[];
 }
