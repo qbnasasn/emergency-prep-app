@@ -1,15 +1,6 @@
 "use client"
 
 import { Suspense, useState } from "react"
-import { toast } from "sonner"
-import { KitsHeader } from "@/components/kits/kits-header"
-import { KitsOverview } from "@/components/kits/kits-overview"
-import { KitsList } from "@/components/kits/kits-list"
-import { KitBuilderModal } from "@/components/kits/kit-builder-modal"
-import { Kit } from "@/lib/data/kits"
-"use client"
-
-import { Suspense, useState } from "react"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { KitsHeader } from "@/components/kits/kits-header"
