@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Plus, MapPin } from "lucide-react"
+import Link from "next/link"
 
 export function KitsHeader() {
   return (
@@ -13,10 +14,12 @@ export function KitsHeader() {
           <MapPin className="h-4 w-4 mr-2" />
           View on Map
         </Button>
-        <Button size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          New Kit
-        </Button>
+        <Link href="/dashboard/kits/builder">
+          <Button size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            New Kit
+          </Button>
+        </Link>
       </div>
     </div>
   )
