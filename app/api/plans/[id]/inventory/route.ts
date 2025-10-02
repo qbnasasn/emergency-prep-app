@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth-options"
 
 async function checkPlanOwnership(client: any, planId: string, userId: string) {
     const result = await client.query('SELECT user_id FROM plans WHERE id = $1', [planId]);
