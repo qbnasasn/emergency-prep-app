@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, MapPin, AlertTriangle, CheckCircle, Loader2 } from "lucide-react"
-import { getKits, Kit } from "@/lib/data/kits"
+import { Kit } from "@/lib/data/kits"
 
 export function KitsOverview() {
   const { data: session } = useSession()
@@ -14,12 +14,21 @@ export function KitsOverview() {
   useEffect(() => {
     const fetchKits = async () => {
       if (session?.user?.id) {
-        setIsLoading(true)
-        const userKits = await getKits(session.user.id)
-        setKits(userKits)
-        setIsLoading(false)
+        setIsLoading(true);
+        try {
+          const response = await fetch('/api/kits');
+          if (!response.ok) {
+            throw new Error('Failed to fetch kits');
+          }
+          const userKits = await response.json();
+          setKits(userKits);
+        } catch (error) {
+          console.error(error);
+        } finally {
+          setIsLoading(false);
+        }
       }
-    }
+    };
     fetchKits()
   }, [session])
 

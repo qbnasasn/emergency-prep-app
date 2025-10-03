@@ -13,11 +13,10 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
-import { getInventoryItems, InventoryItem } from "@/lib/data/inventory"
+import { InventoryItem } from "@/lib/data/inventory"
 import { useSession } from "next-auth/react"
 import { PlusCircle, XCircle, ShoppingCart, Loader2 } from "lucide-react"
 import { suggestedItems } from "@/lib/data/suggested-items"
-import { createKit } from "@/lib/actions/kits"
 import { Kit } from "@/lib/data/kits"
 
 type KitCategory = keyof typeof suggestedItems;
@@ -72,13 +71,21 @@ export function KitBuilderModal({ isOpen, onClose, onSave, kit }: KitBuilderModa
 
   useEffect(() => {
     async function fetchItems() {
-      if (session?.user?.id) {
-        const items = await getInventoryItems(session.user.id)
-        setInventoryItems(items)
+      if (session?.user?.id && isOpen) {
+        try {
+          const response = await fetch("/api/inventory");
+          if (!response.ok) {
+            throw new Error("Failed to fetch inventory");
+          }
+          const items = await response.json();
+          setInventoryItems(items);
+        } catch (error) {
+          setErrorMessage(error instanceof Error ? error.message : "Could not load inventory.");
+        }
       }
     }
-    fetchItems()
-  }, [session])
+    fetchItems();
+  }, [session, isOpen]);
 
   useEffect(() => {
     if (kitCategory && suggestedItems[kitCategory]) {

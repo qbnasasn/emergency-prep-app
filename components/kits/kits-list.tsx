@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Package, Car, Home, Building, Backpack, Shield, Wrench, Package2, Loader2 } from "lucide-react"
-import { getKits, Kit } from "@/lib/data/kits"
+import { Kit } from "@/lib/data/kits"
 import { format } from 'date-fns'
 import { KitCardActions } from "./kit-card-actions"
 import { cn } from "@/lib/utils"
@@ -36,9 +36,18 @@ export function KitsList({ onEditKit }: KitsListProps) {
     const fetchKits = async () => {
       if (session?.user?.id) {
         setIsLoading(true);
-        const userKits = await getKits(session.user.id);
-        setKits(userKits);
-        setIsLoading(false);
+        try {
+          const response = await fetch('/api/kits');
+          if (!response.ok) {
+            throw new Error('Failed to fetch kits');
+          }
+          const userKits = await response.json();
+          setKits(userKits);
+        } catch (error) {
+          console.error(error);
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
     fetchKits();
