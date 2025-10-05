@@ -20,24 +20,25 @@ import { deleteKit } from "@/lib/actions/kits"
 interface KitCardActionsProps {
   kit: Kit;
   onEditKit: (kit: Kit) => void;
+  onDataChange: () => void;
 }
 
-export function KitCardActions({ kit, onEditKit }: KitCardActionsProps) {
+export function KitCardActions({ kit, onEditKit, onDataChange }: KitCardActionsProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = async () => {
-    setIsDeleting(true)
-    const result = await deleteKit(kit.id)
-    setIsDeleting(false)
+    setIsDeleting(true);
+    const result = await deleteKit(kit.id);
+    setIsDeleting(false);
     if (result.success) {
-      toast.success("Kit deleted successfully.")
-      setIsDeleteDialogOpen(false)
-      // The page will be revalidated by the server action.
+      toast.success("Kit deleted successfully.");
+      setIsDeleteDialogOpen(false);
+      onDataChange(); // Trigger data refetch
     } else {
-      toast.error(result.message)
+      toast.error(result.message || "Failed to delete kit.");
     }
-  }
+  };
 
   return (
     <>

@@ -1,7 +1,5 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -24,35 +22,13 @@ const kitIconMap: { [key: string]: React.ElementType } = {
 };
 
 interface KitsListProps {
+  kits: Kit[];
+  isLoading: boolean;
   onEditKit: (kit: Kit) => void;
+  onDataChange: () => void;
 }
 
-export function KitsList({ onEditKit }: KitsListProps) {
-  const { data: session } = useSession();
-  const [kits, setKits] = useState<Kit[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchKits = async () => {
-      if (session?.user?.id) {
-        setIsLoading(true);
-        try {
-          const response = await fetch('/api/kits');
-          if (!response.ok) {
-            throw new Error('Failed to fetch kits');
-          }
-          const userKits = await response.json();
-          setKits(userKits);
-        } catch (error) {
-          console.error(error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-    fetchKits();
-  }, [session]);
-
+export function KitsList({ kits, isLoading, onEditKit, onDataChange }: KitsListProps) {
   if (isLoading) {
     return <div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -99,7 +75,7 @@ export function KitsList({ onEditKit }: KitsListProps) {
                     <Icon className="h-5 w-5 text-muted-foreground" />
                     <CardTitle className="text-lg">{kit.name}</CardTitle>
                   </div>
-                  <KitCardActions kit={kit} onEditKit={onEditKit} />
+                  <KitCardActions kit={kit} onEditKit={onEditKit} onDataChange={onDataChange} />
                 </div>
                 {kit.category && (
                   <Badge className={cn("mt-1", getCategoryColor(kit.category))}>{kit.category}</Badge>

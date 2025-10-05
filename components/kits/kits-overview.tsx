@@ -1,37 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, MapPin, AlertTriangle, CheckCircle, Loader2 } from "lucide-react"
 import { Kit } from "@/lib/data/kits"
 
-export function KitsOverview() {
-  const { data: session } = useSession()
-  const [kits, setKits] = useState<Kit[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+interface KitsOverviewProps {
+  kits: Kit[];
+  isLoading: boolean;
+}
 
-  useEffect(() => {
-    const fetchKits = async () => {
-      if (session?.user?.id) {
-        setIsLoading(true);
-        try {
-          const response = await fetch('/api/kits');
-          if (!response.ok) {
-            throw new Error('Failed to fetch kits');
-          }
-          const userKits = await response.json();
-          setKits(userKits);
-        } catch (error) {
-          console.error(error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-    fetchKits()
-  }, [session])
-
+export function KitsOverview({ kits, isLoading }: KitsOverviewProps) {
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

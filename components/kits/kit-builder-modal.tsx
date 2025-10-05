@@ -40,52 +40,73 @@ interface KitBuilderModalProps {
 }
 
 export function KitBuilderModal({ isOpen, onClose, onSave, kit }: KitBuilderModalProps) {
-  const { data: session } = useSession()
-  const [kitName, setKitName] = useState("")
-  const [kitDescription, setKitDescription] = useState("")
-  const [kitCategory, setKitCategory] = useState<KitCategory | "">("")
-  const [gpsCoordinates, setGpsCoordinates] = useState("")
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
-  const [selectedItems, setSelectedItems] = useState<InventoryItem[]>([])
-  const [currentSuggestedItems, setCurrentSuggestedItems] = useState<string[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const { data: session } = useSession();
+  const [kitName, setKitName] = useState("");
+  const [kitDescription, setKitDescription] = useState("");
+  const [kitCategory, setKitCategory] = useState<KitCategory | "">("");
+  const [gpsCoordinates, setGpsCoordinates] = useState("");
+  const [fullInventory, setFullInventory] = useState<InventoryItem[]>([]);
+  const [availableInventory, setAvailableInventory] = useState<InventoryItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<InventoryItem[]>([]);
+  const [currentSuggestedItems, setCurrentSuggestedItems] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Fetch all inventory items once when the modal is opened
   useEffect(() => {
-    if (kit) {
-      setKitName(kit.name || "");
-      setKitDescription(kit.description || "");
-      setKitCategory(kit.category as KitCategory || "");
-      setGpsCoordinates(kit.gps_location ? `${kit.gps_location.x}, ${kit.gps_location.y}` : "");
-      // Here you would also fetch and set the items associated with the kit
-    } else {
-      // Reset form for new kit
-      setKitName("");
-      setKitDescription("");
-      setKitCategory("");
-      setGpsCoordinates("");
-      setSelectedItems([]);
-    }
-  }, [kit]);
-
-
-  useEffect(() => {
-    async function fetchItems() {
-      if (session?.user?.id && isOpen) {
+    async function fetchAllInventory() {
+      if (isOpen && session?.user?.id) {
         try {
           const response = await fetch("/api/inventory");
-          if (!response.ok) {
-            throw new Error("Failed to fetch inventory");
-          }
+          if (!response.ok) throw new Error("Failed to fetch inventory");
           const items = await response.json();
-          setInventoryItems(items);
+          setFullInventory(items);
         } catch (error) {
           setErrorMessage(error instanceof Error ? error.message : "Could not load inventory.");
         }
       }
     }
-    fetchItems();
-  }, [session, isOpen]);
+    fetchAllInventory();
+  }, [isOpen, session]);
+
+  // Pre-fill form and fetch kit-specific items when in "edit" mode
+  useEffect(() => {
+    const initializeForm = async () => {
+      if (kit) {
+        setKitName(kit.name || "");
+        setKitDescription(kit.description || "");
+        setKitCategory((kit.category as KitCategory) || "");
+        setGpsCoordinates(kit.gps_location ? `${kit.gps_location.x}, ${kit.gps_location.y}` : "");
+
+        try {
+          const response = await fetch(`/api/kits/${kit.id}/items`);
+          if (!response.ok) throw new Error("Failed to fetch kit items");
+          const kitItems = await response.json();
+          setSelectedItems(kitItems);
+        } catch (error) {
+          setErrorMessage(error instanceof Error ? error.message : "Could not load kit items.");
+          setSelectedItems([]);
+        }
+      } else {
+        // Reset form for "new kit" mode
+        setKitName("");
+        setKitDescription("");
+        setKitCategory("");
+        setGpsCoordinates("");
+        setSelectedItems([]);
+      }
+    };
+
+    if (isOpen) {
+      initializeForm();
+    }
+  }, [kit, isOpen]);
+
+  // Update available inventory when full inventory or selected items change
+  useEffect(() => {
+    const selectedIds = new Set(selectedItems.map(item => item.id));
+    setAvailableInventory(fullInventory.filter(item => !selectedIds.has(item.id)));
+  }, [fullInventory, selectedItems]);
 
   useEffect(() => {
     if (kitCategory && suggestedItems[kitCategory]) {
@@ -96,14 +117,12 @@ export function KitBuilderModal({ isOpen, onClose, onSave, kit }: KitBuilderModa
   }, [kitCategory])
 
   const handleSelectItem = (item: InventoryItem) => {
-    setSelectedItems((prev) => [...prev, item])
-    setInventoryItems((prev) => prev.filter((i) => i.id !== item.id))
-  }
+    setSelectedItems((prev) => [...prev, item]);
+  };
 
   const handleDeselectItem = (item: InventoryItem) => {
-    setInventoryItems((prev) => [...prev, item])
-    setSelectedItems((prev) => prev.filter((i) => i.id !== item.id))
-  }
+    setSelectedItems((prev) => prev.filter((i) => i.id !== item.id));
+  };
 
   const handleAddToShoppingList = (itemName: string) => {
     console.log(`Added ${itemName} to shopping list.`)
@@ -173,7 +192,7 @@ export function KitBuilderModal({ isOpen, onClose, onSave, kit }: KitBuilderModa
                     <div className="space-y-2">
                     <h3 className="text-lg font-semibold">Available Inventory</h3>
                     <div className="border rounded-md p-4 h-64 overflow-y-auto">
-                        {inventoryItems.map((item) => (
+                        {availableInventory.map((item) => (
                         <div key={item.id} className="flex items-center justify-between py-1">
                             <span>{item.name}</span>
                             <Button variant="ghost" size="sm" onClick={() => handleSelectItem(item)}><PlusCircle className="h-4 w-4" /></Button>
