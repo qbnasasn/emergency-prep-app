@@ -16,7 +16,7 @@ export async function getKits(userId: string): Promise<Kit[]> {
     text: `
       SELECT
         k.*,
-        (SELECT COUNT(*) FROM kit_items ki WHERE ki.kit_id = k.id) as item_count
+        (SELECT COUNT(*) FROM kit_items ki WHERE ki.kit_id = k.id)::INTEGER as item_count
       FROM kits k
       WHERE k.user_id = $1
       ORDER BY k.created_at DESC;
