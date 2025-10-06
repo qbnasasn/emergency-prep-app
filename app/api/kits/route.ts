@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
+import { getKits } from '@/lib/data/kits';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -11,10 +11,8 @@ export async function GET() {
   const userId = session.user.id;
 
   try {
-    const client = await pool.connect();
-    const result = await client.query('SELECT * FROM kits WHERE user_id = $1', [userId]);
-    client.release();
-    return NextResponse.json(result.rows);
+    const kits = await getKits(userId);
+    return NextResponse.json(kits);
   } catch (error) {
     console.error('Error fetching kits:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
