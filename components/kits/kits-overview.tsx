@@ -31,7 +31,7 @@ export function KitsOverview({ kits, isLoading }: KitsOverviewProps) {
 
   const totalKits = kits.length
   const trackedLocations = kits.filter(kit => kit.gps_location).length
-  const incompleteKits = kits.filter(kit => (kit.item_count || 0) === 0).length
+  const incompleteKits = kits.filter(kit => Number(kit.item_count || 0) === 0).length
   const readyKits = totalKits - incompleteKits
 
   const stats = [
