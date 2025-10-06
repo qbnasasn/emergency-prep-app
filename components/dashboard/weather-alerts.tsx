@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle, Sun, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 interface WeatherAlert {
   id: string
   title: string
-  severity: "minor" | "moderate" | "severe" | "extreme"
+  severity: string
   description: string
   area: string
   expires: string
@@ -22,40 +23,34 @@ export function WeatherAlerts() {
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
 
-  // Mock NOAA weather alerts data
-  useEffect(() => {
-    const mockAlerts: WeatherAlert[] = [
-      {
-        id: "1",
-        title: "Winter Weather Advisory",
-        severity: "moderate",
-        description: "Snow and ice expected. Travel may be difficult.",
-        area: "Your Area",
-        expires: "2025-01-09T18:00:00Z",
-      },
-      {
-        id: "2",
-        title: "High Wind Warning",
-        severity: "severe",
-        description: "Damaging winds up to 70 mph possible.",
-        area: "Regional",
-        expires: "2025-01-09T12:00:00Z",
-      },
-    ]
+  const fetchAlerts = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/noaa-alerts');
+      if (!response.ok) {
+        throw new Error('Failed to fetch weather alerts.');
+      }
+      const data = await response.json();
+      setAlerts(data);
+      setLastUpdated(new Date());
+    } catch (error) {
+        if(error instanceof Error) {
+            toast.error(error.message);
+        } else {
+            toast.error("An unknown error occurred.");
+        }
 
-    setTimeout(() => {
-      setAlerts(mockAlerts)
-      setLoading(false)
-    }, 1000)
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAlerts();
   }, [])
 
   const refreshAlerts = () => {
-    setLoading(true)
-    setLastUpdated(new Date())
-    // TODO: Implement actual NOAA API call
-    setTimeout(() => {
-      setLoading(false)
-    }, 1000)
+    fetchAlerts();
   }
 
   const getSeverityColor = (severity: string) => {
