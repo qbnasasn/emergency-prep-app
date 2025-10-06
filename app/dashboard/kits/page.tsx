@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { KitsHeader } from "@/components/kits/kits-header"
