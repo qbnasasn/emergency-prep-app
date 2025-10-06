@@ -1,10 +1,13 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Edit, Trash2, Package, Car, Home, Building, Backpack, Shield, Wrench, Package2 } from "lucide-react"
-import { getKits } from "@/lib/data/kits"
-import { auth } from "@/lib/auth"
+import { MapPin, Package, Car, Home, Building, Backpack, Shield, Wrench, Package2, Loader2 } from "lucide-react"
+import { Kit } from "@/lib/data/kits"
 import { format } from 'date-fns'
+import { KitCardActions } from "./kit-card-actions"
+import { cn } from "@/lib/utils"
 
 const kitIconMap: { [key: string]: React.ElementType } = {
   "Go-Bag (Bug-Out Bag) 72-hours": Backpack,
@@ -18,13 +21,17 @@ const kitIconMap: { [key: string]: React.ElementType } = {
   "default": Package,
 };
 
-export async function KitsList() {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return <div>Please log in to see your kits.</div>
-  }
+interface KitsListProps {
+  kits: Kit[];
+  isLoading: boolean;
+  onEditKit: (kit: Kit) => void;
+  onDataChange: () => void;
+}
 
-  const kits = await getKits(session.user.id)
+export function KitsList({ kits, isLoading, onEditKit, onDataChange }: KitsListProps) {
+  if (isLoading) {
+    return <div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
 
   if (kits.length === 0) {
     return (
@@ -32,7 +39,7 @@ export async function KitsList() {
         <h2 className="text-xl font-semibold">No kits found.</h2>
         <p className="text-muted-foreground">Get started by creating a new kit.</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -50,29 +57,32 @@ export async function KitsList() {
           const Icon = kit.category ? kitIconMap[kit.category] || kitIconMap.default : kitIconMap.default
           const gpsDisplay = kit.gps_location ? `${kit.gps_location.x.toFixed(4)}, ${kit.gps_location.y.toFixed(4)}` : "Not set"
 
+          const getCategoryColor = (category: string) => {
+            const colors = [
+              "bg-blue-100 text-blue-800", "bg-orange-100 text-orange-800", "bg-red-100 text-red-800",
+              "bg-purple-100 text-purple-800", "bg-green-100 text-green-800", "bg-yellow-100 text-yellow-800",
+              "bg-indigo-100 text-indigo-800", "bg-pink-100 text-pink-800",
+            ];
+            const hash = category.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            return colors[hash % colors.length];
+          };
+
           return (
-            <Card key={kit.id} className="hover:shadow-md transition-shadow">
+            <Card key={kit.id} className="hover:shadow-md transition-shadow flex flex-col">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     <Icon className="h-5 w-5 text-muted-foreground" />
                     <CardTitle className="text-lg">{kit.name}</CardTitle>
                   </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <KitCardActions kit={kit} onEditKit={onEditKit} onDataChange={onDataChange} />
                 </div>
                 {kit.category && (
-                  <Badge variant="secondary">{kit.category}</Badge>
+                  <Badge className={cn("mt-1", getCategoryColor(kit.category))}>{kit.category}</Badge>
                 )}
               </CardHeader>
 
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 flex-grow flex flex-col justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4" />
