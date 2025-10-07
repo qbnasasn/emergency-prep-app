@@ -14,8 +14,8 @@ const initialSummaryData = [
   },
   {
     title: "Active Alerts",
-    value: "3",
-    change: "2 weather, 1 supply",
+    value: "...",
+    change: "Loading...",
     icon: AlertTriangle,
     color: "text-primary",
   },
@@ -28,8 +28,8 @@ const initialSummaryData = [
   },
   {
     title: "Expiring Soon",
-    value: "15",
-    change: "Next 30 days",
+    value: "...",
+    change: "Loading...",
     icon: Clock,
     color: "text-destructive",
   },
@@ -43,6 +43,8 @@ export function SummaryCards() {
       try {
         const inventoryRes = await fetch("/api/inventory")
         const kitsRes = await fetch("/api/kits")
+        const alertsRes = await fetch("/api/noaa-alerts")
+        const expiringSoonRes = await fetch("/api/inventory/expiring-soon")
 
         if (inventoryRes.ok) {
           const inventoryData = await inventoryRes.json()
@@ -61,6 +63,28 @@ export function SummaryCards() {
             prevData.map((item) =>
               item.title === "Emergency Kits"
                 ? { ...item, value: kitsData.length.toString(), change: `Total kits` }
+                : item,
+            ),
+          )
+        }
+
+        if (alertsRes.ok) {
+          const alertsData = await alertsRes.json()
+          setSummaryData((prevData) =>
+            prevData.map((item) =>
+              item.title === "Active Alerts"
+                ? { ...item, value: alertsData.length.toString(), change: `${alertsData.length} weather alerts` }
+                : item,
+            ),
+          )
+        }
+
+        if (expiringSoonRes.ok) {
+          const expiringSoonData = await expiringSoonRes.json()
+          setSummaryData((prevData) =>
+            prevData.map((item) =>
+              item.title === "Expiring Soon"
+                ? { ...item, value: expiringSoonData.count.toString(), change: `Next 30 days` }
                 : item,
             ),
           )
