@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@auth/pg-adapter": "^1.10.0",
+    "@clerk/nextjs": "^6.33.3",
     "@googlemaps/js-api-loader": "^1.16.10",
     "@hookform/resolvers": "^3.10.0",
     "@neondatabase/serverless": "^1.0.1",
