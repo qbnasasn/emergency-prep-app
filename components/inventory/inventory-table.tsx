@@ -32,36 +32,14 @@ export interface InventoryItem {
 
 interface InventoryTableProps {
   filters: FilterState
+  items: InventoryItem[]
 }
 
-export function InventoryTable({ filters }: InventoryTableProps) {
-  const [items, setItems] = useState<InventoryItem[]>([])
+export function InventoryTable({ filters, items }: InventoryTableProps) {
   const [error, setError] = useState<string | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
-
-  const fetchItems = async () => {
-    try {
-      const response = await fetch("/api/inventory")
-      if (!response.ok) {
-        throw new Error("Failed to fetch inventory items")
-      }
-      const data = await response.json()
-      setItems(data)
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError("An unknown error occurred")
-      }
-      console.error(err)
-    }
-  }
-
-  useEffect(() => {
-    fetchItems()
-  }, [])
 
   const getStockStatus = (item: InventoryItem) => {
     const today = new Date()
@@ -138,7 +116,7 @@ export function InventoryTable({ filters }: InventoryTableProps) {
       if (response.ok) {
         setIsDeleteDialogOpen(false)
         setSelectedItem(null)
-        fetchItems() // Refetch items after delete
+        window.location.reload() // Refetch items after delete
       } else {
         console.error("Failed to delete item")
       }
@@ -150,7 +128,7 @@ export function InventoryTable({ filters }: InventoryTableProps) {
   const handleFormSubmit = () => {
     setIsEditDialogOpen(false)
     setSelectedItem(null)
-    fetchItems() // Refetch items after add/edit
+    window.location.reload() // Refetch items after add/edit
   }
 
   const formatDate = (dateString: string | null) => {

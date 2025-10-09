@@ -3,6 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, AlertTriangle, TrendingUp, Calendar } from "lucide-react"
 import { useEffect, useState } from "react"
+import { InventoryItem } from "./inventory-table"
+
+interface InventoryStatsProps {
+  items: InventoryItem[]
+}
 
 const initialStats = [
   {
@@ -39,68 +44,60 @@ const initialStats = [
   },
 ]
 
-export function InventoryStats() {
+export function InventoryStats({ items }: InventoryStatsProps) {
   const [stats, setStats] = useState(initialStats)
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch("/api/inventory")
-        if (!response.ok) {
-          throw new Error("Failed to fetch inventory data")
-        }
-        const inventoryData = await response.json()
-
-        // Calculate stats
-        const totalItems = inventoryData.length
-
-        const lowStockCount = inventoryData.filter(
-          (item: any) => item.min_stock && item.quantity <= item.min_stock,
-        ).length
-
-        const totalValue = inventoryData.reduce((acc: number, item: any) => {
-          const cost = item.cost_per_unit || 0
-          const quantity = item.quantity || 0
-          return acc + cost * quantity
-        }, 0)
-
-        const expiringSoonCount = inventoryData.filter((item: any) => {
-          if (!item.expiry_date) return false
-          const today = new Date()
-          const expiration = new Date(item.expiry_date)
-          const daysUntilExpiration = Math.ceil((expiration.getTime() - today.getTime()) / (1000 * 3600 * 24))
-          return daysUntilExpiration > 0 && daysUntilExpiration <= 30
-        }).length
-
-        // Update state
-        const newStats = initialStats.map((stat) => {
-          switch (stat.title) {
-            case "Total Items":
-              return { ...stat, value: totalItems.toString(), change: `Total items in inventory` }
-            case "Low Stock Alerts":
-              return { ...stat, value: lowStockCount.toString(), change: "Needs attention" }
-            case "Total Value":
-              return {
-                ...stat,
-                value: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(totalValue),
-                change: "Estimated value",
-              }
-            case "Expiring Soon":
-              return { ...stat, value: expiringSoonCount.toString(), change: "Next 30 days" }
-            default:
-              return stat
-          }
-        })
-        setStats(newStats)
-      } catch (error) {
-        console.error("Failed to fetch inventory stats", error)
-        const errorStats = initialStats.map((stat) => ({ ...stat, value: "Error", change: "Could not load" }))
-        setStats(errorStats)
-      }
+    if (items.length === 0) {
+      // Keep loading state if no items are passed yet
+      setStats(initialStats)
+      return
     }
 
-    fetchStats()
-  }, [])
+    const inventoryData = items
+
+    // Calculate stats
+    const totalItems = inventoryData.length
+
+    const lowStockCount = inventoryData.filter(
+      (item: any) => item.min_stock && item.quantity <= item.min_stock,
+    ).length
+
+    const totalValue = inventoryData.reduce((acc: number, item: any) => {
+      const cost = item.cost_per_unit || 0
+      const quantity = item.quantity || 0
+      return acc + cost * quantity
+    }, 0)
+
+    const expiringSoonCount = inventoryData.filter((item: any) => {
+      if (!item.expiry_date) return false
+      const today = new Date()
+      const expiration = new Date(item.expiry_date)
+      const daysUntilExpiration = Math.ceil((expiration.getTime() - today.getTime()) / (1000 * 3600 * 24))
+      return daysUntilExpiration > 0 && daysUntilExpiration <= 30
+    }).length
+
+    // Update state
+    const newStats = initialStats.map((stat) => {
+      switch (stat.title) {
+        case "Total Items":
+          return { ...stat, value: totalItems.toString(), change: `Total items in inventory` }
+        case "Low Stock Alerts":
+          return { ...stat, value: lowStockCount.toString(), change: "Needs attention" }
+        case "Total Value":
+          return {
+            ...stat,
+            value: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(totalValue),
+            change: "Estimated value",
+          }
+        case "Expiring Soon":
+          return { ...stat, value: expiringSoonCount.toString(), change: "Next 30 days" }
+        default:
+          return stat
+      }
+    })
+    setStats(newStats)
+  }, [items])
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -8,19 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Filter, X } from "lucide-react"
 import { useState, useEffect } from "react"
 
-const categories = [
-  "Food & Water",
-  "Medical Supplies",
-  "Tools & Equipment",
-  "Clothing & Shelter",
-  "Communication",
-  "Power & Lighting",
-  "Personal Care",
-  "Documents",
-]
-
-const locations = ["Home - Kitchen", "Home - Basement", "Home - Garage", "Vehicle", "Office", "Storage Unit"]
-
 export interface FilterState {
   category: string
   location: string
@@ -35,6 +22,8 @@ export interface FilterState {
 
 interface InventoryFiltersProps {
   onFilterChange: (filters: FilterState) => void
+  categories: string[]
+  locations: string[]
 }
 
 export const initialFilterState: FilterState = {
@@ -49,7 +38,7 @@ export const initialFilterState: FilterState = {
   },
 }
 
-export function InventoryFilters({ onFilterChange }: InventoryFiltersProps) {
+export function InventoryFilters({ onFilterChange, categories, locations }: InventoryFiltersProps) {
   const [category, setCategory] = useState(initialFilterState.category)
   const [location, setLocation] = useState(initialFilterState.location)
   const [stockStatus, setStockStatus] = useState(initialFilterState.stockStatus)
