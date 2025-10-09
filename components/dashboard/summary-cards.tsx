@@ -14,8 +14,8 @@ const initialSummaryData = [
   },
   {
     title: "Active Alerts",
-    value: "3",
-    change: "2 weather, 1 supply",
+    value: "...",
+    change: "Loading...",
     icon: AlertTriangle,
     color: "text-primary",
   },
@@ -28,8 +28,8 @@ const initialSummaryData = [
   },
   {
     title: "Expiring Soon",
-    value: "15",
-    change: "Next 30 days",
+    value: "...",
+    change: "Loading...",
     icon: Clock,
     color: "text-destructive",
   },
@@ -41,33 +41,47 @@ export function SummaryCards() {
   useEffect(() => {
     const fetchSummaryData = async () => {
       try {
-        const inventoryRes = await fetch("/api/inventory")
-        const kitsRes = await fetch("/api/kits")
+        const [inventoryRes, kitsRes, alertsRes] = await Promise.all([
+          fetch("/api/inventory"),
+          fetch("/api/kits"),
+          fetch("/api/noaa-alerts"),
+        ])
 
-        if (inventoryRes.ok) {
-          const inventoryData = await inventoryRes.json()
-          setSummaryData((prevData) =>
-            prevData.map((item) =>
-              item.title === "Inventory Items"
-                ? { ...item, value: inventoryData.length.toString(), change: `Total items` }
-                : item,
-            ),
-          )
+        if (!inventoryRes.ok || !kitsRes.ok || !alertsRes.ok) {
+          throw new Error("Failed to fetch summary data")
         }
 
-        if (kitsRes.ok) {
-          const kitsData = await kitsRes.json()
-          setSummaryData((prevData) =>
-            prevData.map((item) =>
-              item.title === "Emergency Kits"
-                ? { ...item, value: kitsData.length.toString(), change: `Total kits` }
-                : item,
-            ),
-          )
-        }
+        const inventoryData = await inventoryRes.json()
+        const kitsData = await kitsRes.json()
+        const alertsData = await alertsRes.json()
+
+        const expiringSoonCount = inventoryData.filter((inventoryItem: any) => {
+          if (!inventoryItem.expiry_date) return false
+          const today = new Date()
+          const expiration = new Date(inventoryItem.expiry_date)
+          const daysUntilExpiration = Math.ceil((expiration.getTime() - today.getTime()) / (1000 * 3600 * 24))
+          return daysUntilExpiration > 0 && daysUntilExpiration <= 30
+        }).length
+
+        const newSummaryData = initialSummaryData.map((item) => {
+          switch (item.title) {
+            case "Inventory Items":
+              return { ...item, value: inventoryData.length.toString(), change: "Total items" }
+            case "Active Alerts":
+              return { ...item, value: alertsData.length.toString(), change: `${alertsData.length} weather alerts` }
+            case "Emergency Kits":
+              return { ...item, value: kitsData.length.toString(), change: "Total kits" }
+            case "Expiring Soon":
+              return { ...item, value: expiringSoonCount.toString(), change: "Next 30 days" }
+            default:
+              return item
+          }
+        })
+
+        setSummaryData(newSummaryData)
       } catch (error) {
         console.error("Failed to fetch summary data", error)
-        // You could set an error state here and display it in the UI
+        // You could set an error state here and display it in the UI for each card
       }
     }
 
