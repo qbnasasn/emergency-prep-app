@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +11,7 @@ import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { ItemForm } from "./item-form"
+import { FilterState } from "./inventory-filters"
 
 export interface InventoryItem {
   id: string
@@ -29,7 +30,11 @@ export interface InventoryItem {
   image: string | null
 }
 
-export function InventoryTable() {
+interface InventoryTableProps {
+  filters: FilterState
+}
+
+export function InventoryTable({ filters }: InventoryTableProps) {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [error, setError] = useState<string | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -58,42 +63,6 @@ export function InventoryTable() {
     fetchItems()
   }, [])
 
-  const handleEdit = (item: InventoryItem) => {
-    setSelectedItem(item)
-    setIsEditDialogOpen(true)
-  }
-
-  const handleDelete = (item: InventoryItem) => {
-    setSelectedItem(item)
-    setIsDeleteDialogOpen(true)
-  }
-
-  const confirmDelete = async () => {
-    if (!selectedItem) return;
-
-    try {
-      const response = await fetch(`/api/inventory/${selectedItem.id}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        setIsDeleteDialogOpen(false)
-        setSelectedItem(null)
-        fetchItems(); // Refetch items after delete
-      } else {
-        console.error("Failed to delete item")
-      }
-    } catch (error) {
-      console.error("Error deleting item:", error)
-    }
-  }
-
-  const handleFormSubmit = () => {
-    setIsEditDialogOpen(false)
-    setSelectedItem(null)
-    fetchItems(); // Refetch items after add/edit
-  }
-
   const getStockStatus = (item: InventoryItem) => {
     const today = new Date()
     const expiration = item.expiry_date ? new Date(item.expiry_date) : null
@@ -112,6 +81,76 @@ export function InventoryTable() {
       return { status: "Expiring Soon", variant: "secondary" as const, color: "bg-yellow-100 text-yellow-800" }
     }
     return { status: "In Stock", variant: "default" as const, color: "bg-green-100 text-green-800" }
+  }
+
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      // Category filter
+      if (filters.category !== "all" && item.category !== filters.category) {
+        return false
+      }
+
+      // Location filter
+      if (filters.location !== "all" && item.location !== filters.location) {
+        return false
+      }
+
+      // Stock Status filter
+      const { status } = getStockStatus(item)
+      const { stockStatus } = filters
+      const anyStatusChecked =
+        stockStatus.inStock ||
+        stockStatus.lowStock ||
+        stockStatus.outOfStock ||
+        stockStatus.expired ||
+        stockStatus.expiringSoon
+      if (anyStatusChecked) {
+        if (stockStatus.inStock && status === "In Stock") return true
+        if (stockStatus.lowStock && status === "Low Stock") return true
+        if (stockStatus.outOfStock && status === "Out of Stock") return true
+        if (stockStatus.expired && status === "Expired") return true
+        if (stockStatus.expiringSoon && status === "Expiring Soon") return true
+        return false
+      }
+
+      return true
+    })
+  }, [items, filters])
+
+  const handleEdit = (item: InventoryItem) => {
+    setSelectedItem(item)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleDelete = (item: InventoryItem) => {
+    setSelectedItem(item)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!selectedItem) return
+
+    try {
+      const response = await fetch(`/api/inventory/${selectedItem.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setIsDeleteDialogOpen(false)
+        setSelectedItem(null)
+        fetchItems() // Refetch items after delete
+      } else {
+        console.error("Failed to delete item")
+      }
+    } catch (error) {
+      console.error("Error deleting item:", error)
+    }
+  }
+
+  const handleFormSubmit = () => {
+    setIsEditDialogOpen(false)
+    setSelectedItem(null)
+    fetchItems() // Refetch items after add/edit
   }
 
   const formatDate = (dateString: string | null) => {
@@ -135,7 +174,6 @@ export function InventoryTable() {
         </CardHeader>
         <CardContent>
           {error && <p className="text-destructive">{error}</p>}
-          {!error && items.length === 0 && <p>No inventory items found.</p>}
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -151,7 +189,14 @@ export function InventoryTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => {
+                {!error && filteredItems.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      No items match your filters.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {filteredItems.map((item) => {
                   const stockStatus = getStockStatus(item)
                   return (
                     <TableRow key={item.id}>
