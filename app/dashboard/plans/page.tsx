@@ -20,7 +20,7 @@ export default function PlansPage() {
   const fetchPlans = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch("/api/plans")
+      const response = await fetch("/api/plans/full")
       if (!response.ok) {
         throw new Error("Failed to fetch plans")
       }
@@ -201,7 +201,7 @@ export default function PlansPage() {
   return (
     <div className="space-y-6">
       <PlansHeader onCreate={handleCreate} />
-      <PlansOverview />
+      <PlansOverview plans={plans} />
       <PlansList
         plans={plans}
         onEdit={handleEdit}

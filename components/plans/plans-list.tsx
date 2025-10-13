@@ -13,6 +13,11 @@ export interface EmergencyPlan {
   hazard_type: string
   is_active: boolean
   created_at: string
+  updated_at?: string;
+  contacts_count?: number;
+  pets_count?: number;
+  locations_count?: number;
+  items_count?: number;
 }
 
 interface PlansListProps {
