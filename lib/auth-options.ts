@@ -50,6 +50,41 @@ export const authOptions: AuthOptions = {
     strategy: 'jwt' as const,
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === 'google') {
+        const { name, email } = user;
+        const userId = user.id;
+
+        const client = await pool.connect();
+        try {
+          // Check if the user already exists in the family_members table
+          const existingMemberResult = await client.query(
+            'SELECT * FROM family_members WHERE user_id = $1',
+            [userId]
+          );
+
+          if (existingMemberResult.rows.length === 0) {
+            // If the user doesn't exist, insert them
+            const fullName = name || '';
+            const nameParts = fullName.split(' ');
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' ');
+
+            await client.query(
+              `INSERT INTO family_members (user_id, first_name, last_name, email, role)
+               VALUES ($1, $2, $3, $4, 'Lead Coordinator')`,
+              [userId, firstName, lastName, email]
+            );
+          }
+        } catch (error) {
+          console.error('Error in signIn callback:', error);
+          return false; // Prevent sign-in if there's an error
+        } finally {
+          client.release();
+        }
+      }
+      return true; // Continue with the sign-in process
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
