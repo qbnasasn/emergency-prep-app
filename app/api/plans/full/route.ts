@@ -22,6 +22,7 @@ export async function GET() {
         p.description,
         p.is_active,
         p.created_at,
+        p.updated_at,
         p.hazard_type,
         COUNT(DISTINCT pc.family_member_id) AS contacts_count,
         COUNT(DISTINCT pp.pet_id) AS pets_count,

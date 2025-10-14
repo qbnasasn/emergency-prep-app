@@ -126,7 +126,7 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
                 </p>
                 <div className="space-y-3">
                   <div className="text-xs font-body text-muted-foreground">
-                    Last updated: {formatDate(plan.created_at)}
+                    Last updated: {formatDate(plan.updated_at || plan.created_at)}
                   </div>
 
                   <div className="flex space-x-2 pt-2">
