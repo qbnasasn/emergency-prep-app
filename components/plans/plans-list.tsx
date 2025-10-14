@@ -13,6 +13,11 @@ export interface EmergencyPlan {
   hazard_type: string
   is_active: boolean
   created_at: string
+  updated_at?: string;
+  contacts_count?: number;
+  pets_count?: number;
+  locations_count?: number;
+  items_count?: number;
 }
 
 interface PlansListProps {
@@ -121,7 +126,7 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
                 </p>
                 <div className="space-y-3">
                   <div className="text-xs font-body text-muted-foreground">
-                    Last updated: {formatDate(plan.created_at)}
+                    Last updated: {formatDate(plan.updated_at || plan.created_at)}
                   </div>
 
                   <div className="flex space-x-2 pt-2">
