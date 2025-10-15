@@ -1,20 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-options';
-import { Kysely } from 'kysely';
-import { NeonDialect } from 'kysely-neon';
-
-interface Database {
-  noaa_locations: { id: string; name: string; latitude: number; longitude: number; user_id: string; };
-  plan_locations: { id: string; name: string; latitude: number; longitude: number; plan_id: string; };
-  plans: { id: string; user_id: string; };
-  kits: { id: string; name: string; gps_location: { x: number; y: number }; user_id: string; };
-}
-
-const db = new Kysely<Database>({
-  dialect: new NeonDialect({
-    connectionString: process.env.POSTGRES_URL,
-  }),
-});
+import pool from '@/lib/db'; // Using the project's original db pool
 
 export const getUserLocations = async () => {
   const session = await getServerSession(authOptions);
@@ -23,43 +9,43 @@ export const getUserLocations = async () => {
     throw new Error('Not authenticated');
   }
   const userId = session.user.id;
+  const client = await pool.connect();
 
-  const userLocations = await db.selectFrom('noaa_locations')
-    .selectAll()
-    .where('user_id', '=', userId)
-    .execute();
+  try {
+    // Fetch NOAA locations
+    const noaaLocationsRes = await client.query(
+      'SELECT id, name, latitude, longitude FROM noaa_locations WHERE user_id = $1',
+      [userId]
+    );
 
-  const planLocations = await db.selectFrom('plan_locations')
-    .selectAll()
-    .where('plan_id', 'in', (eb) => eb.selectFrom('plans').select('id').where('user_id', '=', userId))
-    .execute();
+    // Fetch Plan locations
+    const planLocationsRes = await client.query(
+      `SELECT pl.id, pl.name, pl.latitude, pl.longitude
+       FROM plan_locations pl
+       JOIN plans p ON pl.plan_id = p.id
+       WHERE p.user_id = $1`,
+      [userId]
+    );
 
-  const kits = await db.selectFrom('kits')
-    .select(['id', 'name', 'gps_location'])
-    .where('user_id', '=', userId)
-    .where('gps_location', 'is not', null)
-    .execute();
+    // Fetch Kit locations
+    const kitsRes = await client.query(
+      'SELECT id, name, gps_location FROM kits WHERE user_id = $1 AND gps_location IS NOT NULL',
+      [userId]
+    );
 
-  const allLocations = [
-    ...userLocations.map(location => ({
-      id: location.id,
-      name: location.name,
-      latitude: Number(location.latitude),
-      longitude: Number(location.longitude),
-    })),
-    ...planLocations.map(location => ({
-      id: location.id,
-      name: location.name,
-      latitude: Number(location.latitude),
-      longitude: Number(location.longitude),
-    })),
-    ...kits.map(kit => ({
-      id: kit.id,
-      name: kit.name,
-      latitude: kit.gps_location.y,
-      longitude: kit.gps_location.x,
-    }))
-  ];
+    const allLocations = [
+      ...noaaLocationsRes.rows.map(loc => ({ ...loc, latitude: Number(loc.latitude), longitude: Number(loc.longitude) })),
+      ...planLocationsRes.rows.map(loc => ({ ...loc, latitude: Number(loc.latitude), longitude: Number(loc.longitude) })),
+      ...kitsRes.rows.map(kit => ({
+        id: kit.id,
+        name: kit.name,
+        latitude: kit.gps_location.y,
+        longitude: kit.gps_location.x,
+      }))
+    ];
 
-  return allLocations;
+    return allLocations;
+  } finally {
+    client.release();
+  }
 };

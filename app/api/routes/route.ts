@@ -1,27 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-options';
-import { Kysely } from 'kysely';
-import { NeonDialect } from 'kysely-neon';
-
-interface Database {
-  routes: {
-    id: string;
-    plan_id: string;
-    name: string;
-    waypoints: any; // Using any for JSONB
-  };
-  plans: {
-    id: string;
-    user_id: string;
-  };
-}
-
-const db = new Kysely<Database>({
-  dialect: new NeonDialect({
-    connectionString: process.env.POSTGRES_URL,
-  }),
-});
+import pool from '@/lib/db'; // Using the project's original db pool
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -30,16 +10,20 @@ export async function GET() {
     return new NextResponse('Not authenticated', { status: 401 });
   }
   const userId = session.user.id;
+  const client = await pool.connect();
 
   try {
-    const routes = await db.selectFrom('routes')
-      .selectAll()
-      .where('plan_id', 'in', (eb) => eb.selectFrom('plans').select('id').where('user_id', '=', userId))
-      .execute();
-
-    return NextResponse.json(routes);
+    const result = await client.query(
+      `SELECT r.* FROM routes r
+       JOIN plans p ON r.plan_id = p.id
+       WHERE p.user_id = $1`,
+      [userId]
+    );
+    return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Failed to fetch routes:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
+  } finally {
+    client.release();
   }
 }
