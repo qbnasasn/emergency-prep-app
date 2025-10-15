@@ -73,6 +73,13 @@ export function FamilyMembers() {
     fetchMembers()
   }
 
+  const formatHeight = (inches) => {
+    if (!inches) return '';
+    const feet = Math.floor(inches / 12);
+    const remainingInches = inches % 12;
+    return `${feet}' ${remainingInches}"`;
+  };
+
   return (
     <>
       <Card>
@@ -93,6 +100,10 @@ export function FamilyMembers() {
                 <div>
                   <p className="font-semibold">{member.first_name} {member.last_name}</p>
                   <p className="text-sm text-muted-foreground">{member.role}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {member.birth_date ? new Date(member.birth_date).toLocaleDateString() : ''}
+                    {member.height_inches ? ` | ${formatHeight(member.height_inches)}` : ''}
+                  </p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button variant="ghost" size="icon" onClick={() => handleEdit(member)}>

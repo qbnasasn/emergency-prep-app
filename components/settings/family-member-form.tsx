@@ -3,6 +3,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -12,7 +13,7 @@ import AddressAutocomplete from '@/components/ui/address-autocomplete'
 const formSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
-  weight_lbs: z.coerce.number().positive('Weight must be positive'),
+  weight_lbs: z.coerce.number().positive('Weight must be positive').optional(),
   height_inches: z.coerce.number().positive('Height must be positive'),
   birth_date: z.string().min(1, 'Birth date is required'),
   role: z.string().min(1, 'Role is required'),
@@ -34,6 +35,8 @@ const roles = [
 ]
 
 export function FamilyMemberForm({ onFormSubmit, initialData }) {
+  const [feet, setFeet] = useState(0)
+  const [inches, setInches] = useState(0)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
@@ -54,6 +57,23 @@ export function FamilyMemberForm({ onFormSubmit, initialData }) {
       zip_code: '',
     },
   })
+
+  useEffect(() => {
+    if (initialData?.birth_date) {
+      // The date from the DB is a string that might be interpreted in UTC.
+      // We create a new Date to ensure we're working with a date object,
+      // then adjust for the timezone offset to get the correct local date.
+      const date = new Date(initialData.birth_date);
+      date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+      const formattedDate = date.toISOString().split('T')[0];
+      form.setValue('birth_date', formattedDate, { shouldValidate: true, shouldDirty: true });
+    }
+    if (initialData?.height_inches) {
+      const totalInches = initialData.height_inches;
+      setFeet(Math.floor(totalInches / 12));
+      setInches(totalInches % 12);
+    }
+  }, [initialData, form.setValue])
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     onFormSubmit(values)
@@ -113,19 +133,38 @@ export function FamilyMemberForm({ onFormSubmit, initialData }) {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="height_inches"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Height (in)</FormLabel>
-                <FormControl>
-                  <Input type="number" placeholder="72" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-2 gap-2">
+            <FormItem>
+              <FormLabel>Height (ft)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="5"
+                  value={feet}
+                  onChange={(e) => {
+                    const newFeet = parseInt(e.target.value) || 0;
+                    setFeet(newFeet);
+                    form.setValue('height_inches', (newFeet * 12) + inches, { shouldValidate: true });
+                  }}
+                />
+              </FormControl>
+            </FormItem>
+            <FormItem>
+              <FormLabel>(in)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="10"
+                  value={inches}
+                  onChange={(e) => {
+                    const newInches = parseInt(e.target.value) || 0;
+                    setInches(newInches);
+                    form.setValue('height_inches', (feet * 12) + newInches, { shouldValidate: true });
+                  }}
+                />
+              </FormControl>
+            </FormItem>
+          </div>
           <FormField
             control={form.control}
             name="birth_date"
