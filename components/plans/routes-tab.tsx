@@ -7,7 +7,7 @@ import { Trash2, PlusCircle, ArrowUp, ArrowDown, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Location } from './plan-builder';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import RouteMap from './RouteMap';
+import Map from '@/components/maps/Map';
 
 export interface Route {
   id: string;
@@ -157,7 +157,7 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
                     </div>
                 </div>
                 <div>
-                  <RouteMap waypoints={route.waypoints.map(id => locations.find(loc => loc.id === id)).filter(Boolean) as Location[]} />
+                  <Map waypoints={route.waypoints.map(id => locations.find(loc => loc.id === id)).filter(Boolean) as Location[]} />
                 </div>
               </div>
             </CardContent>
