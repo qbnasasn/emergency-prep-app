@@ -1,32 +1,13 @@
-import { auth } from '@clerk/nextjs/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth-options';
 import { Kysely } from 'kysely';
 import { NeonDialect } from 'kysely-neon';
 
 interface Database {
-  noaa_locations: {
-    id: string;
-    name: string;
-    latitude: number;
-    longitude: number;
-    user_id: string;
-  };
-  plan_locations: {
-    id: string;
-    name: string;
-    latitude: number;
-    longitude: number;
-    plan_id: string;
-  };
-  plans: {
-    id: string;
-    user_id: string;
-  };
-  kits: {
-    id: string;
-    name: string;
-    gps_location: { x: number; y: number };
-    user_id: string;
-  };
+  noaa_locations: { id: string; name: string; latitude: number; longitude: number; user_id: string; };
+  plan_locations: { id: string; name: string; latitude: number; longitude: number; plan_id: string; };
+  plans: { id: string; user_id: string; };
+  kits: { id: string; name: string; gps_location: { x: number; y: number }; user_id: string; };
 }
 
 const db = new Kysely<Database>({
@@ -36,11 +17,12 @@ const db = new Kysely<Database>({
 });
 
 export const getUserLocations = async () => {
-  const { userId } = auth();
+  const session = await getServerSession(authOptions);
 
-  if (!userId) {
+  if (!session?.user?.id) {
     throw new Error('Not authenticated');
   }
+  const userId = session.user.id;
 
   const userLocations = await db.selectFrom('noaa_locations')
     .selectAll()

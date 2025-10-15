@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth-options';
 import { Kysely } from 'kysely';
 import { NeonDialect } from 'kysely-neon';
 
@@ -23,11 +24,12 @@ const db = new Kysely<Database>({
 });
 
 export async function GET() {
-  const { userId } = auth();
+  const session = await getServerSession(authOptions);
 
-  if (!userId) {
+  if (!session?.user?.id) {
     return new NextResponse('Not authenticated', { status: 401 });
   }
+  const userId = session.user.id;
 
   try {
     const routes = await db.selectFrom('routes')
