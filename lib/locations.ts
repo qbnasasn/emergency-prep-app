@@ -1,6 +1,14 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-options';
-import pool from '@/lib/db'; // Using the project's original db pool
+import pool from '@/lib/db';
+
+// Helper to parse Postgres point strings like '(12.34,56.78)'
+function parsePoint(pointString: string): { x: number; y: number } | null {
+  if (typeof pointString !== 'string') return null;
+  const match = pointString.match(/\(([^,]+),([^)]+)\)/);
+  if (!match) return null;
+  return { x: parseFloat(match[1]), y: parseFloat(match[2]) };
+}
 
 export const getUserLocations = async () => {
   const session = await getServerSession(authOptions);
@@ -36,12 +44,21 @@ export const getUserLocations = async () => {
     const allLocations = [
       ...noaaLocationsRes.rows.map(loc => ({ ...loc, latitude: Number(loc.latitude), longitude: Number(loc.longitude) })),
       ...planLocationsRes.rows.map(loc => ({ ...loc, latitude: Number(loc.latitude), longitude: Number(loc.longitude) })),
-      ...kitsRes.rows.map(kit => ({
-        id: kit.id,
-        name: kit.name,
-        latitude: kit.gps_location.y,
-        longitude: kit.gps_location.x,
-      }))
+      ...kitsRes.rows.map(kit => {
+        // The pg driver can return point types as strings '(x,y)' or objects {x, y}
+        const gpsPoint = typeof kit.gps_location === 'string'
+          ? parsePoint(kit.gps_location)
+          : kit.gps_location;
+
+        if (!gpsPoint) return null;
+
+        return {
+          id: kit.id,
+          name: kit.name,
+          latitude: gpsPoint.y,
+          longitude: gpsPoint.x,
+        }
+      }).filter(Boolean), // Filter out any nulls from failed parsing
     ];
 
     return allLocations;
