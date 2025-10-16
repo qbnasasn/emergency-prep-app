@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, PlusCircle, ArrowUp, ArrowDown, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { Route, Location } from './plan-builder'; // Import the correct Route type from the parent
+import { Route, Location } from './plan-builder';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Map from '@/components/maps/Map';
 
@@ -19,7 +19,7 @@ interface RoutesTabProps {
 export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesTabProps) {
   const handleAddRoute = () => {
     const newRoute: Route = {
-      id: uuidv4(), // Temporary client-side ID
+      id: uuidv4(),
       name: 'New Route',
       waypoints: [],
     };
@@ -38,16 +38,14 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
     );
   };
 
-  const handleAddWaypoint = (routeId: string, locationId: string) => {
-    if (!locationId) return;
-    const locationToAdd = locations.find(loc => loc.id === locationId);
+  // This function now expects the full Location object
+  const handleAddWaypoint = (routeId: string, locationToAdd: Location | undefined) => {
     if (!locationToAdd) return;
 
     onRoutesChange(
       routes.map(route => {
         if (route.id === routeId) {
-          // Avoid adding duplicate waypoints
-          if (route.waypoints.some(wp => wp.id === locationId)) return route;
+          if (route.waypoints.some(wp => wp.id === locationToAdd.id)) return route;
           return { ...route, waypoints: [...route.waypoints, locationToAdd] };
         }
         return route;
@@ -113,7 +111,7 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   {route.waypoints.map((waypoint, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded-md bg-background">
+                    <div key={waypoint.id} className="flex items-center justify-between p-2 border rounded-md bg-background">
                       <p className="font-medium">{index + 1}. {waypoint.name}</p>
                       <div className="flex items-center">
                         <Button variant="ghost" size="icon" disabled={index === 0} onClick={() => handleMoveWaypoint(route.id, index, 'up')}>
@@ -132,7 +130,12 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
                       <p className="text-xs text-muted-foreground text-center">A route needs at least two locations (a start and an end).</p>
                   )}
                    <div className="mt-2">
-                      <Select onValueChange={(value) => handleAddWaypoint(route.id, value)}>
+                      <Select
+                        onValueChange={(locationId) => {
+                          const selectedLocation = locations.find(loc => loc.id === locationId);
+                          handleAddWaypoint(route.id, selectedLocation);
+                        }}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Add a location to this route..." />
                         </SelectTrigger>
