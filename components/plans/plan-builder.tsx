@@ -13,28 +13,29 @@ import { EmergencyPlan } from "./plans-list"
 import { FamilyTab, FamilyMember } from "./family-tab"
 import { LocationsTab } from "./locations-tab"
 import { InventoryTab } from "./inventory-tab"
-import { RoutesTab, Route } from "./routes-tab"
+import { RoutesTab } from "./routes-tab"
 import { Loader2 } from "lucide-react"
+import { Location } from "@/components/maps/Map" // Import the correct Location type
+
+// Define a Route type that expects full Location objects for its waypoints
+export interface Route {
+  id: string;
+  name: string;
+  waypoints: Location[];
+}
+
+// A temporary type for the raw route data from the API
+interface RawRoute {
+  id: string;
+  name: string;
+  waypoints: string[]; // API sends an array of location IDs
+}
 
 export interface Pet {
   id: string;
   name: string;
   species: string;
   breed: string;
-}
-
-export interface Location {
-  id: string;
-  name: string;
-  type: string;
-  street_number: string;
-  street_name: string;
-  city: string;
-  state: string;
-  zip_code: string;
-  notes: string;
-  latitude?: number;
-  longitude?: number;
 }
 
 const hazardTypes = [
@@ -44,7 +45,7 @@ const hazardTypes = [
 
 interface PlanBuilderProps {
   plan?: EmergencyPlan | null
-  onSave: (planData: any, contactIds: string[], petIds: string[], itemIds: string[], kitIds: string[], routes: Route[]) => Promise<void>
+  onSave: (planData: any, contactIds: string[], petIds: string[], itemIds: string[], kitIds: string[], routes: RawRoute[]) => Promise<void>
   onCancel: () => void
   isSaving: boolean
 }
@@ -62,7 +63,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
   const [selectedPetIds, setSelectedPetIds] = useState<Set<string>>(new Set())
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set())
   const [selectedKitIds, setSelectedKitIds] = useState<Set<string>>(new Set())
-  const [routes, setRoutes] = useState<Route[]>([])
+  const [routes, setRoutes] = useState<Route[]>([]) // This will hold the processed routes
   const [locations, setLocations] = useState<Location[]>([])
 
   // Component state
@@ -93,14 +94,29 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 const routesPromise = fetch(`/api/plans/${plan.id}/routes`).then(res => res.json());
                 const locationsPromise = fetch(`/api/plans/${plan.id}/locations`).then(res => res.json());
 
-                const [contactsData, planPetsData, inventoryData, routesData, locationsData] = await Promise.all([contactsPromise, petsPromise, inventoryPromise, routesPromise, locationsPromise]);
+                const [contactsData, planPetsData, inventoryData, rawRoutesData, locationsData] = await Promise.all([contactsPromise, petsPromise, inventoryPromise, routesPromise, locationsPromise]);
+
+                // Set locations first, ensuring they have lat/lng
+                const formattedLocations = locationsData.map((loc: any) => ({
+                  ...loc,
+                  latitude: Number(loc.latitude),
+                  longitude: Number(loc.longitude)
+                }));
+                setLocations(formattedLocations);
+
+                // Now process the routes using the formatted locations
+                const processedRoutes = rawRoutesData.map((route: RawRoute) => ({
+                  ...route,
+                  waypoints: route.waypoints
+                    .map(waypointId => formattedLocations.find((loc: Location) => loc.id === waypointId))
+                    .filter((loc): loc is Location => !!loc),
+                }));
+                setRoutes(processedRoutes);
 
                 setSelectedMemberIds(new Set(contactsData.map((m: FamilyMember) => m.id)));
                 setSelectedPetIds(new Set(planPetsData.map((p: Pet) => p.id)));
                 setSelectedItemIds(new Set(inventoryData.items.map((i: any) => i.id)));
                 setSelectedKitIds(new Set(inventoryData.kits.map((k: any) => k.id)));
-                setRoutes(routesData);
-                setLocations(locationsData);
 
             } else {
                 setPlanName("");
@@ -172,13 +188,19 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
       hazard_type: hazardType,
     };
 
+    // Convert routes back to raw format for saving
+    const rawRoutesToSave = routes.map(route => ({
+      ...route,
+      waypoints: route.waypoints.map(wp => wp.id),
+    }));
+
     onSave(
       planData,
       Array.from(selectedMemberIds),
       Array.from(selectedPetIds),
       Array.from(selectedItemIds),
       Array.from(selectedKitIds),
-      routes
+      rawRoutesToSave
     );
   }
 
@@ -253,7 +275,11 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                             if (plan?.id) {
                                 fetch(`/api/plans/${plan.id}/locations`)
                                     .then(res => res.json())
-                                    .then(data => setLocations(data));
+                                    .then(data => setLocations(data.map((loc: any) => ({
+                                      ...loc,
+                                      latitude: Number(loc.latitude),
+                                      longitude: Number(loc.longitude)
+                                    }))));
                             }
                         }}
                     />
