@@ -12,7 +12,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-interface Route {
+interface RawRoute {
+  id: string;
+  name: string;
+  waypoints: string[]; // Comes from the API as an array of location IDs
+}
+
+interface ProcessedRoute {
   id: string;
   name: string;
   waypoints: Location[];
@@ -20,8 +26,8 @@ interface Route {
 
 export function DashboardMap() {
   const [locations, setLocations] = useState<Location[]>([]);
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [selectedRoute, setSelectedRoute] = useState<Route | undefined>(undefined);
+  const [routes, setRoutes] = useState<ProcessedRoute[]>([]);
+  const [selectedRoute, setSelectedRoute] = useState<ProcessedRoute | undefined>(undefined);
   const [showWeather, setShowWeather] = useState(false);
 
   useEffect(() => {
@@ -32,20 +38,24 @@ export function DashboardMap() {
           fetch('/api/routes')
         ]);
 
-        if (!locationsRes.ok) {
-          throw new Error('Failed to fetch locations');
-        }
-        if (!routesRes.ok) {
-          throw new Error('Failed to fetch routes');
-        }
+        if (!locationsRes.ok) throw new Error('Failed to fetch locations');
+        if (!routesRes.ok) throw new Error('Failed to fetch routes');
 
-        const userLocations = await locationsRes.json();
-        const userRoutess = await routesRes.json();
+        const userLocations: Location[] = await locationsRes.json();
+        const rawRoutes: RawRoute[] = await routesRes.json();
+
+        // Process routes to replace waypoint IDs with full location objects
+        const processedRoutes = rawRoutes.map(route => ({
+          ...route,
+          waypoints: route.waypoints
+            .map(waypointId => userLocations.find(loc => loc.id === waypointId))
+            .filter((loc): loc is Location => !!loc), // Filter out any undefined matches and assert type
+        }));
 
         setLocations(userLocations);
-        setRoutes(userRoutess);
-        if (userRoutess.length > 0) {
-          setSelectedRoute(userRoutess[0]);
+        setRoutes(processedRoutes);
+        if (processedRoutes.length > 0) {
+          setSelectedRoute(processedRoutes[0]);
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -65,7 +75,7 @@ export function DashboardMap() {
       <Map locations={locations} waypoints={selectedRoute?.waypoints} showWeather={showWeather} />
       <div className="absolute top-4 right-4 flex space-x-2">
         {routes.length > 0 && (
-          <Select onValueChange={handleRouteChange} defaultValue={selectedRoute?.id}>
+          <Select onValueChange={handleRouteChange} value={selectedRoute?.id}>
             <SelectTrigger className="w-[180px]">
               <RouteIcon className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Select a route" />
