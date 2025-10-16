@@ -5,9 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, PlusCircle, ArrowUp, ArrowDown, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { Route, Location } from './plan-builder';
+import { Location } from './plan-builder';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Map from '@/components/maps/Map';
+import RouteMap from './RouteMap';
+
+export interface Route {
+  id: string;
+  name: string;
+  waypoints: string[]; // Array of location IDs
+}
 
 interface RoutesTabProps {
   planId: string | undefined;
@@ -19,7 +25,7 @@ interface RoutesTabProps {
 export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesTabProps) {
   const handleAddRoute = () => {
     const newRoute: Route = {
-      id: uuidv4(),
+      id: uuidv4(), // Temporary client-side ID
       name: 'New Route',
       waypoints: [],
     };
@@ -38,15 +44,14 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
     );
   };
 
-  // This function now expects the full Location object
-  const handleAddWaypoint = (routeId: string, locationToAdd: Location | undefined) => {
-    if (!locationToAdd) return;
-
+  const handleAddWaypoint = (routeId: string, locationId: string) => {
+    if (!locationId) return;
     onRoutesChange(
       routes.map(route => {
         if (route.id === routeId) {
-          if (route.waypoints.some(wp => wp.id === locationToAdd.id)) return route;
-          return { ...route, waypoints: [...route.waypoints, locationToAdd] };
+          // Avoid adding duplicate waypoints
+          if (route.waypoints.includes(locationId)) return route;
+          return { ...route, waypoints: [...route.waypoints, locationId] };
         }
         return route;
       })
@@ -81,6 +86,10 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
     );
   };
 
+  const getLocationName = (locationId: string) => {
+    return locations.find(loc => loc.id === locationId)?.name || 'Unknown Location';
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -110,9 +119,9 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  {route.waypoints.map((waypoint, index) => (
-                    <div key={waypoint.id} className="flex items-center justify-between p-2 border rounded-md bg-background">
-                      <p className="font-medium">{index + 1}. {waypoint.name}</p>
+                  {route.waypoints.map((waypointId, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 border rounded-md bg-background">
+                      <p className="font-medium">{index + 1}. {getLocationName(waypointId)}</p>
                       <div className="flex items-center">
                         <Button variant="ghost" size="icon" disabled={index === 0} onClick={() => handleMoveWaypoint(route.id, index, 'up')}>
                           <ArrowUp className="h-4 w-4" />
@@ -130,22 +139,17 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
                       <p className="text-xs text-muted-foreground text-center">A route needs at least two locations (a start and an end).</p>
                   )}
                    <div className="mt-2">
-                      <Select
-                        onValueChange={(locationId) => {
-                          const selectedLocation = locations.find(loc => loc.id === locationId);
-                          handleAddWaypoint(route.id, selectedLocation);
-                        }}
-                      >
+                      <Select onValueChange={(value) => handleAddWaypoint(route.id, value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Add a location to this route..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {locations.filter(loc => !route.waypoints.some(wp => wp.id === loc.id)).map(location => (
+                          {locations.filter(loc => !route.waypoints.includes(loc.id)).map(location => (
                             <SelectItem key={location.id} value={location.id}>
                               {location.name}
                             </SelectItem>
                           ))}
-                          {locations.filter(loc => !route.waypoints.some(wp => wp.id === loc.id)).length === 0 && (
+                          {locations.filter(loc => !route.waypoints.includes(loc.id)).length === 0 && (
                               <p className="p-2 text-sm text-muted-foreground">All available locations have been added.</p>
                           )}
                         </SelectContent>
@@ -153,7 +157,7 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
                     </div>
                 </div>
                 <div>
-                  <Map waypoints={route.waypoints} />
+                  <RouteMap waypoints={route.waypoints.map(id => locations.find(loc => loc.id === id)).filter(Boolean) as Location[]} />
                 </div>
               </div>
             </CardContent>

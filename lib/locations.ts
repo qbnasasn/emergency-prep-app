@@ -2,7 +2,6 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-options';
 import pool from '@/lib/db';
 
-// Helper to parse Postgres point strings like '(12.34,56.78)'
 function parsePoint(pointString: string): { x: number; y: number } | null {
   if (typeof pointString !== 'string') return null;
   const match = pointString.match(/\(([^,]+),([^)]+)\)/);
@@ -20,32 +19,40 @@ export const getUserLocations = async () => {
   const client = await pool.connect();
 
   try {
-    // Fetch NOAA locations
     const noaaLocationsRes = await client.query(
       'SELECT id, name, latitude, longitude FROM noaa_locations WHERE user_id = $1',
       [userId]
     );
 
-    // Fetch Plan locations
     const planLocationsRes = await client.query(
-      `SELECT pl.id, pl.name, pl.latitude, pl.longitude
+      `SELECT pl.id, pl.name, pl.latitude, pl.longitude, pl.type as location_type
        FROM plan_locations pl
        JOIN plans p ON pl.plan_id = p.id
        WHERE p.user_id = $1`,
       [userId]
     );
 
-    // Fetch Kit locations
     const kitsRes = await client.query(
       'SELECT id, name, gps_location FROM kits WHERE user_id = $1 AND gps_location IS NOT NULL',
       [userId]
     );
 
     const allLocations = [
-      ...noaaLocationsRes.rows.map(loc => ({ ...loc, latitude: Number(loc.latitude), longitude: Number(loc.longitude) })),
-      ...planLocationsRes.rows.map(loc => ({ ...loc, latitude: Number(loc.latitude), longitude: Number(loc.longitude) })),
+      ...noaaLocationsRes.rows.map(loc => ({
+        id: loc.id,
+        name: loc.name,
+        latitude: Number(loc.latitude),
+        longitude: Number(loc.longitude),
+        type: 'noaa_location' // Add type
+      })),
+      ...planLocationsRes.rows.map(loc => ({
+        id: loc.id,
+        name: loc.name,
+        latitude: Number(loc.latitude),
+        longitude: Number(loc.longitude),
+        type: loc.location_type || 'plan_location' // Add type
+      })),
       ...kitsRes.rows.map(kit => {
-        // The pg driver can return point types as strings '(x,y)' or objects {x, y}
         const gpsPoint = typeof kit.gps_location === 'string'
           ? parsePoint(kit.gps_location)
           : kit.gps_location;
@@ -57,8 +64,9 @@ export const getUserLocations = async () => {
           name: kit.name,
           latitude: gpsPoint.y,
           longitude: gpsPoint.x,
+          type: 'kit' // Add type for emergency packs
         }
-      }).filter(Boolean), // Filter out any nulls from failed parsing
+      }).filter(Boolean),
     ];
 
     return allLocations;

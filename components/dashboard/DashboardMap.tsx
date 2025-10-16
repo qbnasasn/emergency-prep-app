@@ -15,7 +15,7 @@ import {
 interface RawRoute {
   id: string;
   name: string;
-  waypoints: string[]; // Comes from the API as an array of location IDs
+  waypoints: string[];
 }
 
 interface ProcessedRoute {
@@ -27,7 +27,7 @@ interface ProcessedRoute {
 export function DashboardMap() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [routes, setRoutes] = useState<ProcessedRoute[]>([]);
-  const [selectedRoute, setSelectedRoute] = useState<ProcessedRoute | undefined>(undefined);
+  const [selectedRouteId, setSelectedRouteId] = useState<string | undefined>(undefined);
   const [showWeather, setShowWeather] = useState(false);
 
   useEffect(() => {
@@ -44,18 +44,17 @@ export function DashboardMap() {
         const userLocations: Location[] = await locationsRes.json();
         const rawRoutes: RawRoute[] = await routesRes.json();
 
-        // Process routes to replace waypoint IDs with full location objects
         const processedRoutes = rawRoutes.map(route => ({
           ...route,
           waypoints: route.waypoints
             .map(waypointId => userLocations.find(loc => loc.id === waypointId))
-            .filter((loc): loc is Location => !!loc), // Filter out any undefined matches and assert type
+            .filter((loc): loc is Location => !!loc),
         }));
 
         setLocations(userLocations);
         setRoutes(processedRoutes);
         if (processedRoutes.length > 0) {
-          setSelectedRoute(processedRoutes[0]);
+          setSelectedRouteId(processedRoutes[0].id);
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -65,17 +64,15 @@ export function DashboardMap() {
     fetchData();
   }, []);
 
-  const handleRouteChange = (routeId: string) => {
-    const route = routes.find(r => r.id === routeId);
-    setSelectedRoute(route);
-  };
+  const selectedRoute = routes.find(r => r.id === selectedRouteId);
 
   return (
     <div className="relative h-96 bg-muted rounded-lg overflow-hidden">
       <Map locations={locations} waypoints={selectedRoute?.waypoints} showWeather={showWeather} />
       <div className="absolute top-4 right-4 flex space-x-2">
         {routes.length > 0 && (
-          <Select onValueChange={handleRouteChange} value={selectedRoute?.id}>
+          // Use a controlled 'value' prop and the 'onValueChange' handler to update state
+          <Select value={selectedRouteId} onValueChange={setSelectedRouteId}>
             <SelectTrigger className="w-[180px]">
               <RouteIcon className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Select a route" />
