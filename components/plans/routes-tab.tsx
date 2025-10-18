@@ -157,7 +157,12 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
                     </div>
                 </div>
                 <div className="h-64 bg-muted rounded-lg">
-                  <Map waypoints={route.waypoints.map(id => locations.find(loc => loc.id === id)).filter((loc): loc is Location => !!loc)} />
+                  <Map
+                    waypoints={route.waypoints
+                      .map(id => locations.find(loc => loc.id === id))
+                      .filter((loc): loc is Location => !!loc && loc.latitude != null && loc.longitude != null)
+                    }
+                  />
                 </div>
               </div>
             </CardContent>
