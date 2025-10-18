@@ -67,6 +67,14 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
 
   // Component state
   const [isLoading, setIsLoading] = useState(true)
+
+  const parseLocations = (locationsData: Location[]) => {
+    return locationsData.map(loc => ({
+      ...loc,
+      latitude: loc.latitude ? parseFloat(loc.latitude as any) : undefined,
+      longitude: loc.longitude ? parseFloat(loc.longitude as any) : undefined,
+    }));
+  };
   const [activeTab, setActiveTab] = useState("basic")
 
   useEffect(() => {
@@ -100,11 +108,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 setSelectedItemIds(new Set(inventoryData.items.map((i: any) => i.id)));
                 setSelectedKitIds(new Set(inventoryData.kits.map((k: any) => k.id)));
                 setRoutes(routesData);
-                setLocations(locationsData.map((loc: Location) => ({
-                  ...loc,
-                  latitude: loc.latitude ? parseFloat(loc.latitude as any) : undefined,
-                  longitude: loc.longitude ? parseFloat(loc.longitude as any) : undefined,
-                })));
+                setLocations(parseLocations(locationsData));
 
             } else {
                 setPlanName("");
@@ -257,7 +261,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                             if (plan?.id) {
                                 fetch(`/api/plans/${plan.id}/locations`)
                                     .then(res => res.json())
-                                    .then(data => setLocations(data));
+                                    .then(data => setLocations(parseLocations(data)));
                             }
                         }}
                     />
