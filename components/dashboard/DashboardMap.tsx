@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from "react"
-import Map, { Location } from "@/components/maps"
+import Map, { Location } from "@/components/maps/Map"
 import { Button } from "@/components/ui/button"
 import { Layers, Route as RouteIcon } from "lucide-react"
 import {
@@ -12,13 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-interface RawRoute {
-  id: string;
-  name: string;
-  waypoints: string[];
-}
-
-interface ProcessedRoute {
+interface Route {
   id: string;
   name: string;
   waypoints: Location[];
@@ -26,8 +20,8 @@ interface ProcessedRoute {
 
 export function DashboardMap() {
   const [locations, setLocations] = useState<Location[]>([]);
-  const [routes, setRoutes] = useState<ProcessedRoute[]>([]);
-  const [selectedRouteId, setSelectedRouteId] = useState<string | undefined>(undefined);
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [selectedRoute, setSelectedRoute] = useState<Route | undefined>(undefined);
   const [showWeather, setShowWeather] = useState(false);
 
   useEffect(() => {
@@ -37,36 +31,41 @@ export function DashboardMap() {
           fetch('/api/locations'),
           fetch('/api/routes')
         ]);
-        if (!locationsRes.ok) throw new Error(`Failed to fetch locations: ${locationsRes.statusText}`);
-        if (!routesRes.ok) throw new Error(`Failed to fetch routes: ${routesRes.statusText}`);
-        const userLocations: Location[] = await locationsRes.json();
-        const rawRoutes: RawRoute[] = await routesRes.json();
-        const processedRoutes = rawRoutes.map(route => ({
-          ...route,
-          waypoints: route.waypoints
-            .map(waypointId => userLocations.find(loc => loc.id === waypointId))
-            .filter((loc): loc is Location => !!loc),
-        }));
+
+        if (!locationsRes.ok) {
+          throw new Error('Failed to fetch locations');
+        }
+        if (!routesRes.ok) {
+          throw new Error('Failed to fetch routes');
+        }
+
+        const userLocations = await locationsRes.json();
+        const userRoutess = await routesRes.json();
+
         setLocations(userLocations);
-        setRoutes(processedRoutes);
-        if (processedRoutes.length > 0) {
-          setSelectedRouteId(processedRoutes[0].id);
+        setRoutes(userRoutess);
+        if (userRoutess.length > 0) {
+          setSelectedRoute(userRoutess[0]);
         }
       } catch (error) {
-        console.error("Failed to fetch dashboard map data:", error);
+        console.error("Failed to fetch data:", error);
       }
     }
+
     fetchData();
   }, []);
 
-  const selectedRoute = routes.find(r => r.id === selectedRouteId);
+  const handleRouteChange = (routeId: string) => {
+    const route = routes.find(r => r.id === routeId);
+    setSelectedRoute(route);
+  };
 
   return (
     <div className="relative h-96 bg-muted rounded-lg overflow-hidden">
       <Map locations={locations} waypoints={selectedRoute?.waypoints} showWeather={showWeather} />
       <div className="absolute top-4 right-4 flex space-x-2">
         {routes.length > 0 && (
-          <Select value={selectedRouteId} onValueChange={setSelectedRouteId}>
+          <Select onValueChange={handleRouteChange} defaultValue={selectedRoute?.id}>
             <SelectTrigger className="w-[180px]">
               <RouteIcon className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Select a route" />
