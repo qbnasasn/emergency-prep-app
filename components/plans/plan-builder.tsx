@@ -282,16 +282,18 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
             </Card>
         </TabsContent>
         <TabsContent value="routes">
-            <Card>
-                <CardContent className="pt-6">
-                    <RoutesTab
-                        planId={plan?.id}
-                        routes={routes}
-                        onRoutesChange={setRoutes}
-                        locations={locations}
-                    />
-                </CardContent>
-            </Card>
+            {activeTab === 'routes' && (
+                <Card>
+                    <CardContent className="pt-6">
+                        <RoutesTab
+                            planId={plan?.id}
+                            routes={routes}
+                            onRoutesChange={setRoutes}
+                            locations={locations}
+                        />
+                    </CardContent>
+                </Card>
+            )}
         </TabsContent>
       </Tabs>
 
