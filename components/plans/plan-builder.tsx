@@ -100,7 +100,11 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 setSelectedItemIds(new Set(inventoryData.items.map((i: any) => i.id)));
                 setSelectedKitIds(new Set(inventoryData.kits.map((k: any) => k.id)));
                 setRoutes(routesData);
-                setLocations(locationsData);
+                setLocations(locationsData.map((loc: Location) => ({
+                  ...loc,
+                  latitude: loc.latitude ? parseFloat(loc.latitude as any) : undefined,
+                  longitude: loc.longitude ? parseFloat(loc.longitude as any) : undefined,
+                })));
 
             } else {
                 setPlanName("");
