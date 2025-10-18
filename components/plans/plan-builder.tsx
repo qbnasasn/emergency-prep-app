@@ -13,27 +13,28 @@ import { EmergencyPlan } from "./plans-list"
 import { FamilyTab, FamilyMember } from "./family-tab"
 import { LocationsTab } from "./locations-tab"
 import { InventoryTab } from "./inventory-tab"
-import { RoutesTab } from "./routes-tab"
+import { RoutesTab, Route } from "./routes-tab"
 import { Loader2 } from "lucide-react"
-import { Location } from "@/components/maps/Map"
-
-export interface Route {
-  id: string;
-  name: string;
-  waypoints: Location[];
-}
-
-interface RawRoute {
-  id: string;
-  name: string;
-  waypoints: string[];
-}
 
 export interface Pet {
   id: string;
   name: string;
   species: string;
   breed: string;
+}
+
+export interface Location {
+  id: string;
+  name: string;
+  type: string;
+  street_number: string;
+  street_name: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  notes: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 const hazardTypes = [
@@ -43,15 +44,18 @@ const hazardTypes = [
 
 interface PlanBuilderProps {
   plan?: EmergencyPlan | null
-  onSave: (planData: any, contactIds: string[], petIds: string[], itemIds: string[], kitIds: string[], routes: RawRoute[]) => Promise<void>
+  onSave: (planData: any, contactIds: string[], petIds: string[], itemIds: string[], kitIds: string[], routes: Route[]) => Promise<void>
   onCancel: () => void
   isSaving: boolean
 }
 
 export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderProps) {
+  // Form state
   const [planName, setPlanName] = useState("")
   const [description, setDescription] = useState("")
   const [hazardType, setHazardType] = useState("")
+
+  // Tab-specific state
   const [allFamilyMembers, setAllFamilyMembers] = useState<FamilyMember[]>([])
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set())
   const [allPets, setAllPets] = useState<any[]>([])
@@ -60,6 +64,8 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
   const [selectedKitIds, setSelectedKitIds] = useState<Set<string>>(new Set())
   const [routes, setRoutes] = useState<Route[]>([])
   const [locations, setLocations] = useState<Location[]>([])
+
+  // Component state
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("basic")
 
@@ -67,12 +73,15 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
     const fetchInitialData = async () => {
         setIsLoading(true);
         try {
+            // Fetch static data
             const membersPromise = fetch('/api/family-members').then(res => res.json());
             const petsPromise = fetch('/api/pets').then(res => res.json());
+
             const [membersData, petsData] = await Promise.all([membersPromise, petsPromise]);
             setAllFamilyMembers(membersData);
             setAllPets(petsData);
 
+            // Fetch plan-specific data
             if (plan) {
                 setPlanName(plan.name);
                 setDescription(plan.description || "");
@@ -84,27 +93,15 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 const routesPromise = fetch(`/api/plans/${plan.id}/routes`).then(res => res.json());
                 const locationsPromise = fetch(`/api/plans/${plan.id}/locations`).then(res => res.json());
 
-                const [contactsData, planPetsData, inventoryData, rawRoutesData, locationsData] = await Promise.all([contactsPromise, petsPromise, inventoryPromise, routesPromise, locationsPromise]);
-
-                const formattedLocations = locationsData.map((loc: any) => ({
-                  ...loc,
-                  latitude: Number(loc.latitude),
-                  longitude: Number(loc.longitude)
-                }));
-                setLocations(formattedLocations);
-
-                const processedRoutes = rawRoutesData.map((route: RawRoute) => ({
-                  ...route,
-                  waypoints: route.waypoints
-                    .map(waypointId => formattedLocations.find((loc: Location) => loc.id === waypointId))
-                    .filter((loc): loc is Location => !!loc),
-                }));
-                setRoutes(processedRoutes);
+                const [contactsData, planPetsData, inventoryData, routesData, locationsData] = await Promise.all([contactsPromise, petsPromise, inventoryPromise, routesPromise, locationsPromise]);
 
                 setSelectedMemberIds(new Set(contactsData.map((m: FamilyMember) => m.id)));
                 setSelectedPetIds(new Set(planPetsData.map((p: Pet) => p.id)));
                 setSelectedItemIds(new Set(inventoryData.items.map((i: any) => i.id)));
                 setSelectedKitIds(new Set(inventoryData.kits.map((k: any) => k.id)));
+                setRoutes(routesData);
+                setLocations(locationsData);
+
             } else {
                 setPlanName("");
                 setDescription("");
@@ -122,6 +119,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
             setIsLoading(false);
         }
     };
+
     fetchInitialData();
     setActiveTab("basic");
   }, [plan])
@@ -168,25 +166,11 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
       return;
     }
 
-    // Validation for routes
-    for (const route of routes) {
-      if (route.waypoints.length < 2) {
-        toast.error(`Route "${route.name}" is incomplete. A route must have at least two locations (a start and an end).`);
-        setActiveTab("routes"); // Switch to the routes tab to show the user the problem
-        return;
-      }
-    }
-
     const planData = {
       name: planName,
       description: description,
       hazard_type: hazardType,
     };
-
-    const rawRoutesToSave = routes.map(route => ({
-      ...route,
-      waypoints: route.waypoints.map(wp => wp.id),
-    }));
 
     onSave(
       planData,
@@ -194,7 +178,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
       Array.from(selectedPetIds),
       Array.from(selectedItemIds),
       Array.from(selectedKitIds),
-      rawRoutesToSave
+      routes
     );
   }
 
@@ -269,11 +253,7 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                             if (plan?.id) {
                                 fetch(`/api/plans/${plan.id}/locations`)
                                     .then(res => res.json())
-                                    .then(data => setLocations(data.map((loc: any) => ({
-                                      ...loc,
-                                      latitude: Number(loc.latitude),
-                                      longitude: Number(loc.longitude)
-                                    }))));
+                                    .then(data => setLocations(data));
                             }
                         }}
                     />

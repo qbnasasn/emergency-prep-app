@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from "react"
-import Map, { Location } from "@/components/maps/Map"
+import Map, { Location } from "@/components/maps"
 import { Button } from "@/components/ui/button"
 import { Layers, Route as RouteIcon } from "lucide-react"
 import {
@@ -37,30 +37,25 @@ export function DashboardMap() {
           fetch('/api/locations'),
           fetch('/api/routes')
         ]);
-
-        if (!locationsRes.ok) throw new Error('Failed to fetch locations');
-        if (!routesRes.ok) throw new Error('Failed to fetch routes');
-
+        if (!locationsRes.ok) throw new Error(`Failed to fetch locations: ${locationsRes.statusText}`);
+        if (!routesRes.ok) throw new Error(`Failed to fetch routes: ${routesRes.statusText}`);
         const userLocations: Location[] = await locationsRes.json();
         const rawRoutes: RawRoute[] = await routesRes.json();
-
         const processedRoutes = rawRoutes.map(route => ({
           ...route,
           waypoints: route.waypoints
             .map(waypointId => userLocations.find(loc => loc.id === waypointId))
             .filter((loc): loc is Location => !!loc),
         }));
-
         setLocations(userLocations);
         setRoutes(processedRoutes);
         if (processedRoutes.length > 0) {
           setSelectedRouteId(processedRoutes[0].id);
         }
       } catch (error) {
-        console.error("Failed to fetch data:", error);
+        console.error("Failed to fetch dashboard map data:", error);
       }
     }
-
     fetchData();
   }, []);
 
@@ -71,7 +66,6 @@ export function DashboardMap() {
       <Map locations={locations} waypoints={selectedRoute?.waypoints} showWeather={showWeather} />
       <div className="absolute top-4 right-4 flex space-x-2">
         {routes.length > 0 && (
-          // Use a controlled 'value' prop and the 'onValueChange' handler to update state
           <Select value={selectedRouteId} onValueChange={setSelectedRouteId}>
             <SelectTrigger className="w-[180px]">
               <RouteIcon className="h-4 w-4 mr-2" />

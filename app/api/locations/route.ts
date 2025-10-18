@@ -6,7 +6,7 @@ export async function GET() {
     const locations = await getUserLocations();
     return NextResponse.json(locations);
   } catch (error) {
-    console.error('Failed to fetch locations:', error);
+    console.error('Failed to fetch locations via API:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
