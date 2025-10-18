@@ -156,8 +156,8 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
                       </Select>
                     </div>
                 </div>
-                <div>
-                  <Map waypoints={route.waypoints.map(id => locations.find(loc => loc.id === id)).filter(Boolean) as Location[]} />
+                <div className="h-64 bg-muted rounded-lg">
+                  <Map waypoints={route.waypoints.map(id => locations.find(loc => loc.id === id)).filter((loc): loc is Location => !!loc)} />
                 </div>
               </div>
             </CardContent>

@@ -65,17 +65,17 @@ export async function PUT(req: Request, { params }: RouteParams) {
       // Delete existing routes for this plan
       await client.query('DELETE FROM routes WHERE plan_id = $1', [planId]);
 
-      // Insert new routes
-      if (routes.length > 0) {
-        const insertQuery = `
-          INSERT INTO routes (plan_id, name, waypoints)
-          SELECT $1, unnest($2::text[]), unnest($3::jsonb[])
-          RETURNING *;
-        `;
-        const names = routes.map(r => r.name);
-        const waypoints = routes.map(r => JSON.stringify(r.waypoints || []));
-
-        await client.query(insertQuery, [planId, names, waypoints]);
+      // Insert new routes one by one for robustness
+      for (const route of routes) {
+        const { name, waypoints } = route;
+        if (name && Array.isArray(waypoints)) {
+            const insertQuery = `
+                INSERT INTO routes (plan_id, name, waypoints)
+                VALUES ($1, $2, $3);
+            `;
+            // The 'waypoints' column is of type jsonb, so we stringify the array
+            await client.query(insertQuery, [planId, name, JSON.stringify(waypoints)]);
+        }
       }
 
       await client.query('COMMIT');
