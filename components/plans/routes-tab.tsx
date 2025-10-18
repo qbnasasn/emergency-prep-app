@@ -7,12 +7,12 @@ import { Trash2, PlusCircle, ArrowUp, ArrowDown, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Location } from './plan-builder';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Map from '@/components/maps/Map';
+import Map from '@/components/maps'; // Use the new Map component
 
 export interface Route {
   id: string;
   name: string;
-  waypoints: string[]; // Array of location IDs
+  waypoints: string[];
 }
 
 interface RoutesTabProps {
@@ -24,11 +24,7 @@ interface RoutesTabProps {
 
 export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesTabProps) {
   const handleAddRoute = () => {
-    const newRoute: Route = {
-      id: uuidv4(), // Temporary client-side ID
-      name: 'New Route',
-      waypoints: [],
-    };
+    const newRoute: Route = { id: uuidv4(), name: 'New Route', waypoints: [] };
     onRoutesChange([...routes, newRoute]);
   };
 
@@ -37,20 +33,14 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
   };
 
   const handleRouteNameChange = (routeId: string, newName: string) => {
-    onRoutesChange(
-      routes.map(route =>
-        route.id === routeId ? { ...route, name: newName } : route
-      )
-    );
+    onRoutesChange(routes.map(route => route.id === routeId ? { ...route, name: newName } : route));
   };
 
   const handleAddWaypoint = (routeId: string, locationId: string) => {
     if (!locationId) return;
     onRoutesChange(
       routes.map(route => {
-        if (route.id === routeId) {
-          // Avoid adding duplicate waypoints
-          if (route.waypoints.includes(locationId)) return route;
+        if (route.id === routeId && !route.waypoints.includes(locationId)) {
           return { ...route, waypoints: [...route.waypoints, locationId] };
         }
         return route;
@@ -94,75 +84,52 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Evacuation Routes</CardTitle>
-        <Button size="sm" variant="outline" onClick={handleAddRoute}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Route
-        </Button>
+        <Button size="sm" variant="outline" onClick={handleAddRoute}><PlusCircle className="mr-2 h-4 w-4" /> Add Route</Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {routes.length === 0 && (
-          <p className="text-center text-muted-foreground p-4">No routes defined. Add one to get started.</p>
-        )}
-        {routes.map(route => (
-          <Card key={route.id} className="bg-muted/30">
-            <CardHeader className="flex flex-row items-center justify-between py-3">
-                <Input
-                  value={route.name}
-                  onChange={e => handleRouteNameChange(route.id, e.target.value)}
-                  placeholder="Enter route name"
-                  className="font-semibold text-lg flex-grow bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-                <Button variant="ghost" size="icon" onClick={() => handleDeleteRoute(route.id)}>
-                    <Trash2 className="h-5 w-5 text-destructive" />
-                </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  {route.waypoints.map((waypointId, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded-md bg-background">
-                      <p className="font-medium">{index + 1}. {getLocationName(waypointId)}</p>
-                      <div className="flex items-center">
-                        <Button variant="ghost" size="icon" disabled={index === 0} onClick={() => handleMoveWaypoint(route.id, index, 'up')}>
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" disabled={index === route.waypoints.length - 1} onClick={() => handleMoveWaypoint(route.id, index, 'down')}>
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleRemoveWaypoint(route.id, index)}>
-                          <X className="h-4 w-4 text-destructive" />
-                        </Button>
+        {routes.map(route => {
+          const routeWaypoints = route.waypoints
+            .map(id => locations.find(loc => loc.id === id))
+            .filter((l): l is Location => !!l);
+          return (
+            <Card key={route.id} className="bg-muted/30">
+              <CardHeader className="flex flex-row items-center justify-between py-3">
+                  <Input value={route.name} onChange={e => handleRouteNameChange(route.id, e.target.value)} placeholder="Enter route name" className="font-semibold text-lg flex-grow bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0" />
+                  <Button variant="ghost" size="icon" onClick={() => handleDeleteRoute(route.id)}><Trash2 className="h-5 w-5 text-destructive" /></Button>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    {route.waypoints.map((waypointId, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 border rounded-md bg-background">
+                        <p className="font-medium">{index + 1}. {getLocationName(waypointId)}</p>
+                        <div className="flex items-center">
+                          <Button variant="ghost" size="icon" disabled={index === 0} onClick={() => handleMoveWaypoint(route.id, index, 'up')}><ArrowUp className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" disabled={index === route.waypoints.length - 1} onClick={() => handleMoveWaypoint(route.id, index, 'down')}><ArrowDown className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleRemoveWaypoint(route.id, index)}><X className="h-4 w-4 text-destructive" /></Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  {route.waypoints.length < 2 && (
-                      <p className="text-xs text-muted-foreground text-center">A route needs at least two locations (a start and an end).</p>
-                  )}
-                   <div className="mt-2">
-                      <Select onValueChange={(value) => handleAddWaypoint(route.id, value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Add a location to this route..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {locations.filter(loc => !route.waypoints.includes(loc.id)).map(location => (
-                            <SelectItem key={location.id} value={location.id}>
-                              {location.name}
-                            </SelectItem>
-                          ))}
-                          {locations.filter(loc => !route.waypoints.includes(loc.id)).length === 0 && (
-                              <p className="p-2 text-sm text-muted-foreground">All available locations have been added.</p>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    ))}
+                    {route.waypoints.length < 2 && (<p className="text-xs text-muted-foreground text-center">A route needs at least two locations.</p>)}
+                     <div className="mt-2">
+                        <Select onValueChange={(value) => handleAddWaypoint(route.id, value)}>
+                          <SelectTrigger><SelectValue placeholder="Add a location to this route..." /></SelectTrigger>
+                          <SelectContent>
+                            {locations.filter(loc => !route.waypoints.includes(loc.id)).map(location => (
+                              <SelectItem key={location.id} value={location.id}>{location.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                  </div>
+                  <div>
+                    <Map waypoints={routeWaypoints} locations={routeWaypoints} />
+                  </div>
                 </div>
-                <div>
-                  <Map waypoints={route.waypoints.map(id => locations.find(loc => loc.id === id)).filter(Boolean) as Location[]} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </CardContent>
     </Card>
   );
