@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { mapsLoader } from '@/lib/maps-loader';
 
 export interface Location {
@@ -20,6 +20,7 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, showWeather }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
   const weatherLayer = useRef<google.maps.weather.WeatherLayer | null>(null);
+  const [isMapInitialized, setMapInitialized] = useState(false);
 
   useEffect(() => {
     mapsLoader.importLibrary('maps').then(({ Map }) => {
@@ -43,13 +44,14 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, showWeather }) => {
           mapInstance.current.setCenter({ lat: locations[0].latitude, lng: locations[0].longitude });
         }
       }
+      setMapInitialized(true);
     }).catch(e => {
       console.error("Failed to load Google Maps", e);
     });
   }, [locations]);
 
   useEffect(() => {
-    if (!mapInstance.current || !waypoints || waypoints.length < 2) return;
+    if (!isMapInitialized || !mapInstance.current || !waypoints || waypoints.length < 2) return;
 
     mapsLoader.importLibrary('routes').then(async () => {
       const { DirectionsService, DirectionsRenderer } = await google.maps.importLibrary('routes') as google.maps.RoutesLibrary;
@@ -83,7 +85,7 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, showWeather }) => {
     }).catch(e => {
       console.error("Failed to load Google Maps Routes", e);
     });
-  }, [waypoints, mapInstance.current]);
+  }, [waypoints, isMapInitialized]);
 
   useEffect(() => {
     if (!mapInstance.current) return;
