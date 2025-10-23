@@ -7,10 +7,9 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
-            <Image src="/images/LOGO.png" alt="PreSafe Logo" width={120} height={160} className="h-40 w-auto" />
+          <div className="flex justify-center mb-8">
+            <Image src="/images/LOGO.png" alt="PrepSafe Logo" width={160} height={213} className="h-48 w-auto" />
           </div>
-          <h1 className="font-heading font-black text-3xl text-gray-900 mb-2">PreSafe</h1>
           <p className="font-body text-gray-600 text-lg">Your Safety, Our Priority: Prepare for Tomorrow, Today!</p>
         </div>
 
