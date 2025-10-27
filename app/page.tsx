@@ -10,7 +10,7 @@ export default function HomePage() {
           <div className="flex justify-center">
             <Image src="/images/LOGO.png" alt="PrepSafe Logo" width={160} height={213} className="h-48 w-auto" />
           </div>
-          <p className="font-body text-gray-600 text-lg">Your Safety, Our Priority: Prepare for Tomorrow, Today!</p>
+          <p className="font-body text-gray-600 text-lg">Prepare for Tomorrow, Today!</p>
         </div>
 
         <SignInForm />
