@@ -80,7 +80,7 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      let uploadedImageUrl = values.image;
+      let finalImageUrl = imageUrl;
 
       if (inputFileRef.current?.files && inputFileRef.current.files.length > 0) {
         const file = inputFileRef.current.files[0];
@@ -91,8 +91,8 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
 
         if (response.ok) {
           const newBlob = await response.json();
-          uploadedImageUrl = newBlob.url;
-          setImageUrl(uploadedImageUrl);
+          finalImageUrl = newBlob.url;
+          setImageUrl(finalImageUrl);
         } else {
           console.error('Failed to upload image');
           return;
@@ -101,7 +101,7 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
 
       const submissionValues = {
         ...values,
-        image: uploadedImageUrl,
+        image: finalImageUrl,
         purchase_date: values.purchase_date || null,
         expiry_date: values.expiry_date || null,
       };
@@ -294,13 +294,13 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
             <FormItem>
               <FormLabel>UPC / Barcode</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} ref={field.ref} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        {imageUrl && <img src={imageUrl} alt="Inventory item image" className="w-full h-auto" />}
+        {imageUrl && <img src={imageUrl} alt="Inventory item image" className="w-40 h-40 object-cover rounded-lg" />}
         <FormField
           control={form.control}
           name="image"
