@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -48,7 +49,7 @@ const formSchema = z.object({
   is_food_item: z.boolean().default(false),
   calories: z.coerce.number().int().optional(),
   upc: z.string().optional(),
-  image: z.string().optional(),
+  image: z.any().optional(),
 })
 
 interface ItemFormProps {
@@ -75,16 +76,42 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
   })
 
   const isEditMode = !!initialData;
+  const inputFileRef = useRef<HTMLInputElement>(null);
+  const [imageUrl, setImageUrl] = useState<string | undefined>(initialData?.image);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      let uploadedImageUrl = values.image;
+
+      if (inputFileRef.current?.files && inputFileRef.current.files.length > 0) {
+        const file = inputFileRef.current.files[0];
+        const response = await fetch(`/api/upload?filename=${file.name}`, {
+          method: 'POST',
+          body: file,
+        });
+
+        if (response.ok) {
+          const newBlob = await response.json();
+          uploadedImageUrl = newBlob.url;
+          setImageUrl(uploadedImageUrl);
+        } else {
+          console.error('Failed to upload image');
+          return;
+        }
+      }
+
+      const submissionValues = {
+        ...values,
+        image: uploadedImageUrl,
+      };
+
       const url = isEditMode ? `/api/inventory/${initialData.id}` : "/api/inventory";
       const method = isEditMode ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method: method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(submissionValues),
       })
 
       if (response.ok) {
@@ -291,14 +318,15 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
             </FormItem>
           )}
         />
+        {imageUrl && <img src={imageUrl} alt="Inventory item image" className="w-full h-auto" />}
         <FormField
           control={form.control}
           name="image"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image URL</FormLabel>
+              <FormLabel>Image</FormLabel>
               <FormControl>
-                <Input placeholder="https://..." {...field} />
+                <Input type="file" ref={inputFileRef} />
               </FormControl>
               <FormMessage />
             </FormItem>
