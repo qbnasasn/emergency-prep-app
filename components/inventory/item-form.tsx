@@ -46,7 +46,6 @@ const formSchema = z.object({
   purchase_date: z.string().optional(),
   expiry_date: z.string().optional(),
   min_stock: z.coerce.number().int().optional(),
-  is_food_item: z.boolean().default(false),
   calories: z.coerce.number().int().optional(),
   upc: z.string().optional(),
   image: z.any().optional(),
@@ -103,6 +102,8 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
       const submissionValues = {
         ...values,
         image: uploadedImageUrl,
+        purchase_date: values.purchase_date || null,
+        expiry_date: values.expiry_date || null,
       };
 
       const url = isEditMode ? `/api/inventory/${initialData.id}` : "/api/inventory";
@@ -185,25 +186,6 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
                 <Input {...field} />
               </FormControl>
               <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="is_food_item"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Is this a food item?
-                </FormLabel>
-              </div>
             </FormItem>
           )}
         />
