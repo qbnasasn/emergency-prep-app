@@ -60,11 +60,7 @@ export function PlansHeader({ onCreate, plans }: PlansHeaderProps) {
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
 
-      html2pdf().from(printContainer).set(opt).toPdf().get('pdf').then(function (pdf: any) {
-        pdf.autoPrint();
-        const blob = pdf.output('bloburl');
-        window.open(blob, '_blank');
-      }).finally(() => {
+      html2pdf().from(printContainer).set(opt).save().finally(() => {
         document.body.removeChild(printContainer);
         setIsPrinting(false);
       });
@@ -101,7 +97,7 @@ export function PlansHeader({ onCreate, plans }: PlansHeaderProps) {
 
         <Button variant="outline" size="sm" className="font-body bg-transparent" onClick={handlePrintAll} disabled={isPrinting}>
           {isPrinting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
-          Print All
+          Download All as PDF
         </Button>
 
         <Button className="font-body bg-gray-900 hover:bg-gray-800" onClick={onCreate}>

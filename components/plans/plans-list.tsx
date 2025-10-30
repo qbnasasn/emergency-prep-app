@@ -76,11 +76,7 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
           jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
 
-        html2pdf().from(printElement).set(opt).toPdf().get('pdf').then(function (pdf: any) {
-          pdf.autoPrint();
-          const blob = pdf.output('bloburl');
-          window.open(blob, '_blank');
-        }).finally(() => {
+        html2pdf().from(printElement).set(opt).save().finally(() => {
           root.unmount();
           document.body.removeChild(printElement);
           setIsPrinting(false);
@@ -170,7 +166,7 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
                       </DropdownMenuItem>
                       <DropdownMenuItem className="font-body" onClick={() => handlePrint(plan.id)} disabled={isPrinting}>
                         {isPrinting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
-                        Print Plan
+                        Download PDF
                       </DropdownMenuItem>
                       <DropdownMenuItem className="font-body text-destructive" onClick={() => onDelete(plan.id)}>
                         <Trash2 className="mr-2 h-4 w-4" />
