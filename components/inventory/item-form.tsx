@@ -104,6 +104,7 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
         image: finalImageUrl,
         purchase_date: values.purchase_date || null,
         expiry_date: values.expiry_date || null,
+        upc: values.upc || "",
       };
 
       const url = isEditMode ? `/api/inventory/${initialData.id}` : "/api/inventory";
@@ -300,20 +301,47 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
             </FormItem>
           )}
         />
-        {imageUrl && <img src={imageUrl} alt="Inventory item image" className="w-40 h-40 object-cover rounded-lg" />}
-        <FormField
-          control={form.control}
-          name="image"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image</FormLabel>
-              <FormControl>
-                <Input type="file" ref={inputFileRef} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <FormItem>
+          <FormLabel>Image</FormLabel>
+          {imageUrl && (
+            <div className="mt-2">
+              <img src={imageUrl} alt="Inventory item image" className="w-40 h-40 object-cover rounded-lg" />
+            </div>
           )}
-        />
+          <div className="flex items-center gap-4 mt-2">
+            <Button type="button" variant="outline" onClick={() => inputFileRef.current?.click()}>
+              {imageUrl ? 'Change Image' : 'Add Image'}
+            </Button>
+            {imageUrl && (
+              <Button type="button" variant="destructive" onClick={() => {
+                setImageUrl(undefined);
+                if (inputFileRef.current) {
+                  inputFileRef.current.value = '';
+                }
+              }}>
+                Delete Image
+              </Button>
+            )}
+          </div>
+          <FormControl>
+            <Input
+              type="file"
+              ref={inputFileRef}
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  const file = e.target.files[0];
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    setImageUrl(reader.result as string);
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
         <Button type="submit" className="w-full">{isEditMode ? 'Save Changes' : 'Add Item'}</Button>
       </form>
     </Form>
