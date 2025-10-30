@@ -1,8 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import ReactDOM from "react-dom"
-import html2pdf from "html2pdf.js"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -37,8 +36,22 @@ interface PlansListProps {
 
 export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, isLoading, error, fetchPlans }: PlansListProps) {
   const [isPrinting, setIsPrinting] = useState(false);
+  const [html2pdf, setHtml2pdf] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('html2pdf.js').then(module => {
+        setHtml2pdf(() => module.default);
+      });
+    }
+  }, []);
 
   const handlePrint = async (planId: string) => {
+    if (!html2pdf) {
+      console.error("html2pdf.js has not loaded yet.");
+      return;
+    }
+
     setIsPrinting(true);
     try {
       const response = await fetch(`/api/plans/full?id=${planId}`);
@@ -52,7 +65,6 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
 
       const reactElement = <PrintablePlan plan={planDetails} />;
 
-      // Use a callback with ReactDOM.render to ensure the component is rendered before generating the PDF
       ReactDOM.render(reactElement, printElement, () => {
         const opt = {
           margin:       0.5,
@@ -63,7 +75,6 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
         };
 
         html2pdf().from(printElement).set(opt).toPdf().get('pdf').then(function (pdf: any) {
-          // Trigger the browser's print dialog
           pdf.autoPrint();
           const blob = pdf.output('bloburl');
           window.open(blob, '_blank');

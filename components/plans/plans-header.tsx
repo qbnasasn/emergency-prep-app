@@ -1,8 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import ReactDOM from "react-dom"
-import html2pdf from "html2pdf.js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, FileText, Printer, Loader2 } from "lucide-react"
@@ -16,8 +15,22 @@ interface PlansHeaderProps {
 export function PlansHeader({ onCreate, plans }: PlansHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isPrinting, setIsPrinting] = useState(false);
+  const [html2pdf, setHtml2pdf] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('html2pdf.js').then(module => {
+        setHtml2pdf(() => module.default);
+      });
+    }
+  }, []);
 
   const handlePrintAll = async () => {
+    if (!html2pdf) {
+      console.error("html2pdf.js has not loaded yet.");
+      return;
+    }
+
     setIsPrinting(true);
     try {
       const fetchPromises = plans.map(plan =>
