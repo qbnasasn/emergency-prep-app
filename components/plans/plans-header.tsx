@@ -1,17 +1,65 @@
 "use client"
 
-import Link from "next/link"
+import { useState } from "react"
+import ReactDOM from "react-dom"
+import html2pdf from "html2pdf.js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, FileText, Printer } from "lucide-react"
-import { useState } from "react"
+import { Plus, Search, FileText, Printer, Loader2 } from "lucide-react"
+import PrintablePlan from './printable-plan';
 
 interface PlansHeaderProps {
   onCreate: () => void;
+  plans: any[]; // Assuming plans are passed as a prop
 }
 
-export function PlansHeader({ onCreate }: PlansHeaderProps) {
-  const [searchQuery, setSearchQuery] = useState("")
+export function PlansHeader({ onCreate, plans }: PlansHeaderProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isPrinting, setIsPrinting] = useState(false);
+
+  const handlePrintAll = async () => {
+    setIsPrinting(true);
+    try {
+      const fetchPromises = plans.map(plan =>
+        fetch(`/api/plans/full?id=${plan.id}`).then(res => res.json())
+      );
+      const allPlanDetails = await Promise.all(fetchPromises);
+
+      const printContainer = document.createElement('div');
+      document.body.appendChild(printContainer);
+
+      const renderPromises = allPlanDetails.map(planDetails => {
+        return new Promise<void>(resolve => {
+          const planElement = document.createElement('div');
+          printContainer.appendChild(planElement);
+          ReactDOM.render(<PrintablePlan plan={planDetails} />, planElement, () => resolve());
+        });
+      });
+
+      await Promise.all(renderPromises);
+
+      const opt = {
+        margin:       0.5,
+        filename:     'all_plans.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().from(printContainer).set(opt).toPdf().get('pdf').then(function (pdf: any) {
+        pdf.autoPrint();
+        const blob = pdf.output('bloburl');
+        window.open(blob, '_blank');
+      }).finally(() => {
+        document.body.removeChild(printContainer);
+        setIsPrinting(false);
+      });
+
+    } catch (err) {
+      console.error("Printing all plans failed", err);
+      setIsPrinting(false);
+    }
+  };
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
@@ -36,8 +84,8 @@ export function PlansHeader({ onCreate }: PlansHeaderProps) {
           Templates
         </Button>
 
-        <Button variant="outline" size="sm" className="font-body bg-transparent">
-          <Printer className="h-4 w-4 mr-2" />
+        <Button variant="outline" size="sm" className="font-body bg-transparent" onClick={handlePrintAll} disabled={isPrinting}>
+          {isPrinting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
           Print All
         </Button>
 

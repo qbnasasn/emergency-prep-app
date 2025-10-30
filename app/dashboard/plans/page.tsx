@@ -200,7 +200,7 @@ export default function PlansPage() {
 
   return (
     <div className="space-y-6">
-      <PlansHeader onCreate={handleCreate} />
+      <PlansHeader onCreate={handleCreate} plans={plans} />
       <PlansOverview plans={plans} />
       <PlansList
         plans={plans}

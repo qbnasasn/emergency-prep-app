@@ -1,6 +1,5 @@
 "use client"
 
-import { useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -46,9 +45,10 @@ const formSchema = z.object({
   purchase_date: z.string().optional(),
   expiry_date: z.string().optional(),
   min_stock: z.coerce.number().int().optional(),
+  is_food_item: z.boolean().default(false),
   calories: z.coerce.number().int().optional(),
   upc: z.string().optional(),
-  image: z.any().optional(),
+  image: z.string().optional(),
 })
 
 interface ItemFormProps {
@@ -75,45 +75,16 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
   })
 
   const isEditMode = !!initialData;
-  const inputFileRef = useRef<HTMLInputElement>(null);
-  const [imageUrl, setImageUrl] = useState<string | undefined>(initialData?.image);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      let finalImageUrl = imageUrl;
-
-      if (inputFileRef.current?.files && inputFileRef.current.files.length > 0) {
-        const file = inputFileRef.current.files[0];
-        const response = await fetch(`/api/upload?filename=${file.name}`, {
-          method: 'POST',
-          body: file,
-        });
-
-        if (response.ok) {
-          const newBlob = await response.json();
-          finalImageUrl = newBlob.url;
-          setImageUrl(finalImageUrl);
-        } else {
-          console.error('Failed to upload image');
-          return;
-        }
-      }
-
-      const submissionValues = {
-        ...values,
-        image: finalImageUrl,
-        purchase_date: values.purchase_date || null,
-        expiry_date: values.expiry_date || null,
-        upc: values.upc || "",
-      };
-
       const url = isEditMode ? `/api/inventory/${initialData.id}` : "/api/inventory";
       const method = isEditMode ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method: method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(submissionValues),
+        body: JSON.stringify(values),
       })
 
       if (response.ok) {
@@ -187,6 +158,25 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
                 <Input {...field} />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="is_food_item"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Is this a food item?
+                </FormLabel>
+              </div>
             </FormItem>
           )}
         />
@@ -295,53 +285,25 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
             <FormItem>
               <FormLabel>UPC / Barcode</FormLabel>
               <FormControl>
-                <Input {...field} ref={field.ref} />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <FormItem>
-          <FormLabel>Image</FormLabel>
-          {imageUrl && (
-            <div className="mt-2">
-              <img src={imageUrl} alt="Inventory item image" className="w-40 h-40 object-cover rounded-lg" />
-            </div>
+        <FormField
+          control={form.control}
+          name="image"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Image URL</FormLabel>
+              <FormControl>
+                <Input placeholder="https://..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
-          <div className="flex items-center gap-4 mt-2">
-            <Button type="button" variant="outline" onClick={() => inputFileRef.current?.click()}>
-              {imageUrl ? 'Change Image' : 'Add Image'}
-            </Button>
-            {imageUrl && (
-              <Button type="button" variant="destructive" onClick={() => {
-                setImageUrl(undefined);
-                if (inputFileRef.current) {
-                  inputFileRef.current.value = '';
-                }
-              }}>
-                Delete Image
-              </Button>
-            )}
-          </div>
-          <FormControl>
-            <Input
-              type="file"
-              ref={inputFileRef}
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  const file = e.target.files[0];
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    setImageUrl(reader.result as string);
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-            />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
+        />
         <Button type="submit" className="w-full">{isEditMode ? 'Save Changes' : 'Add Item'}</Button>
       </form>
     </Form>

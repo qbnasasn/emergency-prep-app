@@ -1,10 +1,14 @@
 "use client"
 
+import { useState } from "react"
+import ReactDOM from "react-dom"
+import html2pdf from "html2pdf.js"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MoreHorizontal, Edit, Trash2, Play, Printer, Loader2, AlertTriangle, XCircle } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import PrintablePlan from './printable-plan';
 
 export interface EmergencyPlan {
   id: string
@@ -32,6 +36,48 @@ interface PlansListProps {
 }
 
 export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, isLoading, error, fetchPlans }: PlansListProps) {
+  const [isPrinting, setIsPrinting] = useState(false);
+
+  const handlePrint = async (planId: string) => {
+    setIsPrinting(true);
+    try {
+      const response = await fetch(`/api/plans/full?id=${planId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch plan details');
+      }
+      const planDetails = await response.json();
+
+      const printElement = document.createElement('div');
+      document.body.appendChild(printElement);
+
+      const reactElement = <PrintablePlan plan={planDetails} />;
+
+      // Use a callback with ReactDOM.render to ensure the component is rendered before generating the PDF
+      ReactDOM.render(reactElement, printElement, () => {
+        const opt = {
+          margin:       0.5,
+          filename:     `${planDetails.name}.pdf`,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2 },
+          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        html2pdf().from(printElement).set(opt).toPdf().get('pdf').then(function (pdf: any) {
+          // Trigger the browser's print dialog
+          pdf.autoPrint();
+          const blob = pdf.output('bloburl');
+          window.open(blob, '_blank');
+        }).finally(() => {
+          document.body.removeChild(printElement);
+          setIsPrinting(false);
+        });
+      });
+
+    } catch (err) {
+      console.error("Printing failed", err);
+      setIsPrinting(false);
+    }
+  };
 
   const getStatus = (isActive: boolean) => {
     return isActive ? "Active" : "Draft"
@@ -108,8 +154,8 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
                         <Edit className="mr-2 h-4 w-4" />
                         Edit Plan
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="font-body">
-                        <Printer className="mr-2 h-4 w-4" />
+                      <DropdownMenuItem className="font-body" onClick={() => handlePrint(plan.id)} disabled={isPrinting}>
+                        {isPrinting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
                         Print Plan
                       </DropdownMenuItem>
                       <DropdownMenuItem className="font-body text-destructive" onClick={() => onDelete(plan.id)}>
