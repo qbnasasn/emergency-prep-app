@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import ReactDOM from "react-dom"
+import { createRoot } from "react-dom/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, FileText, Printer, Loader2 } from "lucide-react"
@@ -33,23 +33,24 @@ export function PlansHeader({ onCreate, plans }: PlansHeaderProps) {
 
     setIsPrinting(true);
     try {
-      const fetchPromises = plans.map(plan =>
-        fetch(`/api/plans/full?id=${plan.id}`).then(res => res.json())
-      );
-      const allPlanDetails = await Promise.all(fetchPromises);
+      const response = await fetch('/api/plans/full/all');
+      if (!response.ok) {
+        throw new Error('Failed to fetch all plan details');
+      }
+      const allPlanDetails = await response.json();
 
       const printContainer = document.createElement('div');
       document.body.appendChild(printContainer);
 
-      const renderPromises = allPlanDetails.map(planDetails => {
-        return new Promise<void>(resolve => {
-          const planElement = document.createElement('div');
-          printContainer.appendChild(planElement);
-          ReactDOM.render(<PrintablePlan plan={planDetails} />, planElement, () => resolve());
-        });
+      allPlanDetails.forEach(planDetails => {
+        const planElement = document.createElement('div');
+        printContainer.appendChild(planElement);
+        const root = createRoot(planElement);
+        root.render(<PrintablePlan plan={planDetails} />);
       });
 
-      await Promise.all(renderPromises);
+      // Allow time for rendering
+      setTimeout(() => {
 
       const opt = {
         margin:       0.5,
@@ -67,6 +68,7 @@ export function PlansHeader({ onCreate, plans }: PlansHeaderProps) {
         document.body.removeChild(printContainer);
         setIsPrinting(false);
       });
+      }, 500);
 
     } catch (err) {
       console.error("Printing all plans failed", err);

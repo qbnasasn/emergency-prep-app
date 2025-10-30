@@ -13,16 +13,23 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { ItemForm } from "@/components/inventory/item-form"
+import { ImportDialog } from "@/components/inventory/import-dialog"
 
-export function InventoryHeader() {
+interface InventoryHeaderProps {
+  fetchItems: () => void;
+}
+
+export function InventoryHeader({ fetchItems }: InventoryHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleFormSubmit = () => {
     setIsDialogOpen(false);
-    // Here you would typically trigger a refresh of the inventory list
-    // For now, we just close the dialog. A simple way to refresh is to reload the page:
-    window.location.reload();
+    fetchItems();
+  }
+
+  const handleImportComplete = () => {
+    fetchItems();
   }
 
   return (
@@ -43,12 +50,19 @@ export function InventoryHeader() {
           />
         </div>
 
-        <Button variant="outline" size="sm" className="font-body bg-transparent">
-          <Upload className="h-4 w-4 mr-2" />
-          Import
-        </Button>
+        <ImportDialog onImportComplete={handleImportComplete} />
 
-        <Button variant="outline" size="sm" className="font-body bg-transparent">
+        <Button variant="outline" size="sm" className="font-body bg-transparent" onClick={async () => {
+          const response = await fetch('/api/inventory/export');
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'inventory.csv';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }}>
           <Download className="h-4 w-4 mr-2" />
           Export
         </Button>

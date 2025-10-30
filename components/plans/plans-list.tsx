@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import ReactDOM from "react-dom"
+import { createRoot } from "react-dom/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -63,9 +63,11 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
       const printElement = document.createElement('div');
       document.body.appendChild(printElement);
 
-      const reactElement = <PrintablePlan plan={planDetails} />;
+      const root = createRoot(printElement);
+      root.render(<PrintablePlan plan={planDetails} />);
 
-      ReactDOM.render(reactElement, printElement, () => {
+      // Allow time for the component to render before generating the PDF
+      setTimeout(() => {
         const opt = {
           margin:       0.5,
           filename:     `${planDetails.name}.pdf`,
@@ -79,10 +81,11 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
           const blob = pdf.output('bloburl');
           window.open(blob, '_blank');
         }).finally(() => {
+          root.unmount();
           document.body.removeChild(printElement);
           setIsPrinting(false);
         });
-      });
+      }, 500); // A short delay to ensure rendering is complete
 
     } catch (err) {
       console.error("Printing failed", err);
