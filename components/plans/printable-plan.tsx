@@ -148,25 +148,6 @@ const PrintablePlan: React.FC<PrintablePlanProps> = ({ plan }) => {
           ))}
         </ul>
       </div>
-
-      <style jsx global>{`
-        .printable-plan .page-break {
-          page-break-after: always;
-        }
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .printable-plan, .printable-plan * {
-            visibility: visible;
-          }
-          .printable-plan {
-            position: absolute;
-            left: 0;
-            top: 0;
-          }
-        }
-      `}</style>
     </div>
   );
 };
