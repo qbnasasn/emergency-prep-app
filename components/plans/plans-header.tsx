@@ -1,17 +1,76 @@
 "use client"
 
-import Link from "next/link"
+import { useState, useEffect } from "react"
+import { createRoot } from "react-dom/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, FileText, Printer } from "lucide-react"
-import { useState } from "react"
+import { Plus, Search, FileText, Printer, Loader2 } from "lucide-react"
+import PrintablePlan from './printable-plan';
 
 interface PlansHeaderProps {
   onCreate: () => void;
+  plans: any[]; // Assuming plans are passed as a prop
 }
 
-export function PlansHeader({ onCreate }: PlansHeaderProps) {
-  const [searchQuery, setSearchQuery] = useState("")
+export function PlansHeader({ onCreate, plans }: PlansHeaderProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [html2pdf, setHtml2pdf] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('html2pdf.js').then(module => {
+        setHtml2pdf(() => module.default);
+      });
+    }
+  }, []);
+
+  const handlePrintAll = async () => {
+    if (!html2pdf) {
+      console.error("html2pdf.js has not loaded yet.");
+      return;
+    }
+
+    setIsPrinting(true);
+    try {
+      const response = await fetch('/api/plans/full/all');
+      if (!response.ok) {
+        throw new Error('Failed to fetch all plan details');
+      }
+      const allPlanDetails = await response.json();
+
+      const printContainer = document.createElement('div');
+      document.body.appendChild(printContainer);
+
+      allPlanDetails.forEach(planDetails => {
+        const planElement = document.createElement('div');
+        printContainer.appendChild(planElement);
+        const root = createRoot(planElement);
+        root.render(<PrintablePlan plan={planDetails} />);
+      });
+
+      // Allow time for rendering
+      setTimeout(() => {
+
+      const opt = {
+        margin:       0.5,
+        filename:     'all_plans.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().from(printContainer).set(opt).save().finally(() => {
+        document.body.removeChild(printContainer);
+        setIsPrinting(false);
+      });
+      }, 500);
+
+    } catch (err) {
+      console.error("Printing all plans failed", err);
+      setIsPrinting(false);
+    }
+  };
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
@@ -36,9 +95,9 @@ export function PlansHeader({ onCreate }: PlansHeaderProps) {
           Templates
         </Button>
 
-        <Button variant="outline" size="sm" className="font-body bg-transparent">
-          <Printer className="h-4 w-4 mr-2" />
-          Print All
+        <Button variant="outline" size="sm" className="font-body bg-transparent" onClick={handlePrintAll} disabled={isPrinting}>
+          {isPrinting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
+          Download All as PDF
         </Button>
 
         <Button className="font-body bg-gray-900 hover:bg-gray-800" onClick={onCreate}>

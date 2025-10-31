@@ -1,98 +1,66 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { auth } from '@/lib/auth';
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth-options"
 
-interface RouteParams {
-  params: {
-    id: string; // This is the planId
-  };
-}
+export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request, { params }: RouteParams) {
-  const session = await auth();
-  if (!session?.user?.id) {
+export async function GET(req: Request, { params }: { params: { id: string } }) {
+  const planId = params.id;
+
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user || !session.user.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const userId = session.user.id;
-  const { id: planId } = params;
 
   try {
     const client = await pool.connect();
-    try {
-      const planCheck = await client.query('SELECT user_id FROM plans WHERE id = $1', [planId]);
-      if (planCheck.rows.length === 0 || planCheck.rows[0].user_id !== userId) {
-        return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
-      }
 
-      const result = await client.query(
-        'SELECT * FROM routes WHERE plan_id = $1 ORDER BY created_at ASC',
-        [planId]
-      );
-      return NextResponse.json(result.rows);
-    } finally {
+    // First, verify that the plan belongs to the user
+    const planQuery = 'SELECT * FROM plans WHERE id = $1 AND user_id = $2';
+    const planResult = await client.query(planQuery, [planId, userId]);
+    if (planResult.rows.length === 0) {
       client.release();
-    }
-  } catch (error) {
-    console.error('Error fetching routes:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
-}
-
-export async function PUT(req: Request, { params }: RouteParams) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  const userId = session.user.id;
-  const { id: planId } = params;
-
-  try {
-    const { routes } = await req.json();
-    if (!Array.isArray(routes)) {
-      return NextResponse.json({ error: 'Invalid payload: routes must be an array' }, { status: 400 });
+      return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
     }
 
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
+    const routesQuery = `
+      SELECT
+        r.id,
+        r.name,
+        r.waypoints
+      FROM routes r
+      WHERE r.plan_id = $1
+    `;
+    const routesResult = await client.query(routesQuery, [planId]);
 
-      const planCheck = await client.query('SELECT user_id FROM plans WHERE id = $1', [planId]);
-      if (planCheck.rows.length === 0 || planCheck.rows[0].user_id !== userId) {
-        await client.query('ROLLBACK');
-        return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
+    const routes = [];
+
+    for (const route of routesResult.rows) {
+      if (route.waypoints && route.waypoints.length > 0) {
+        const waypointsQuery = `
+          SELECT id, name, latitude, longitude, address
+          FROM plan_locations
+          WHERE id = ANY($1::uuid[])
+        `;
+        const waypointIds = route.waypoints;
+        const waypointsResult = await client.query(waypointsQuery, [waypointIds]);
+
+        // Preserve the order of waypoints
+        const orderedWaypoints = waypointIds.map(id =>
+          waypointsResult.rows.find(wp => wp.id === id)
+        ).filter(Boolean); // Filter out any nulls if an ID wasn't found
+
+        route.waypoints = orderedWaypoints;
       }
-
-      // Delete existing routes for this plan
-      await client.query('DELETE FROM routes WHERE plan_id = $1', [planId]);
-
-      // Insert new routes one by one for robustness
-      for (const route of routes) {
-        const { name, waypoints } = route;
-        if (name && Array.isArray(waypoints)) {
-            const insertQuery = `
-                INSERT INTO routes (plan_id, name, waypoints)
-                VALUES ($1, $2, $3);
-            `;
-            // The 'waypoints' column is of type jsonb, so we stringify the array
-            await client.query(insertQuery, [planId, name, JSON.stringify(waypoints)]);
-        }
-      }
-
-      await client.query('COMMIT');
-
-      // Fetch the newly created routes to return them
-      const newRoutesResult = await client.query('SELECT * FROM routes WHERE plan_id = $1 ORDER BY created_at ASC', [planId]);
-
-      return NextResponse.json(newRoutesResult.rows, { status: 200 });
-    } catch (error) {
-      await client.query('ROLLBACK');
-      console.error('Error updating routes:', error);
-      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-    } finally {
-      client.release();
+      routes.push(route);
     }
+
+    client.release();
+    return NextResponse.json(routes);
   } catch (error) {
-    console.error('Error parsing request body:', error);
+    console.error(`Error fetching routes for plan ${planId}:`, error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
