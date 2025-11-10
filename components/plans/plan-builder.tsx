@@ -95,20 +95,25 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 setDescription(plan.description || "");
                 setHazardType(plan.hazard_type);
 
+                // Fetch locations first as other components may depend on them
+                const locationsResponse = await fetch(`/api/plans/${plan.id}/locations`);
+                const locationsData = await locationsResponse.json();
+                setLocations(parseLocations(locationsData));
+
                 const contactsPromise = fetch(`/api/plans/${plan.id}/contacts`).then(res => res.json());
                 const petsPromise = fetch(`/api/plans/${plan.id}/pets`).then(res => res.json());
                 const inventoryPromise = fetch(`/api/plans/${plan.id}/inventory`).then(res => res.json());
                 const routesPromise = fetch(`/api/plans/${plan.id}/routes`).then(res => res.json());
-                const locationsPromise = fetch(`/api/plans/${plan.id}/locations`).then(res => res.json());
 
-                const [contactsData, planPetsData, inventoryData, routesData, locationsData] = await Promise.all([contactsPromise, petsPromise, inventoryPromise, routesPromise, locationsPromise]);
+
+                const [contactsData, planPetsData, inventoryData, routesData] = await Promise.all([contactsPromise, petsPromise, inventoryPromise, routesPromise]);
 
                 setSelectedMemberIds(new Set(contactsData.map((m: FamilyMember) => m.id)));
                 setSelectedPetIds(new Set(planPetsData.map((p: Pet) => p.id)));
                 setSelectedItemIds(new Set(inventoryData.items.map((i: any) => i.id)));
                 setSelectedKitIds(new Set(inventoryData.kits.map((k: any) => k.id)));
                 setRoutes(routesData);
-                setLocations(parseLocations(locationsData));
+
 
             } else {
                 setPlanName("");
@@ -282,18 +287,16 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
             </Card>
         </TabsContent>
         <TabsContent value="routes">
-            {activeTab === 'routes' && (
-                <Card>
-                    <CardContent className="pt-6">
-                        <RoutesTab
-                            planId={plan?.id}
-                            routes={routes}
-                            onRoutesChange={setRoutes}
-                            locations={locations}
-                        />
-                    </CardContent>
-                </Card>
-            )}
+            <Card>
+                <CardContent className="pt-6">
+                    <RoutesTab
+                        planId={plan?.id}
+                        routes={routes}
+                        onRoutesChange={setRoutes}
+                        locations={locations}
+                    />
+                </CardContent>
+            </Card>
         </TabsContent>
       </Tabs>
 
