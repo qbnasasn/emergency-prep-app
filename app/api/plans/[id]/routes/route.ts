@@ -40,7 +40,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     for (const route of routesResult.rows) {
       if (route.waypoints && route.waypoints.length > 0) {
         const waypointsQuery = `
-          SELECT id, name, latitude, longitude, address
+          SELECT id, name, latitude, longitude, street_number, street_name, city, state, zip_code
           FROM plan_locations
           WHERE id = ANY($1::uuid[])
         `;
