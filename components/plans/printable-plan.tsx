@@ -48,6 +48,7 @@ interface Plan {
   pets: Pet[];
   locations: Location[];
   inventory_items: InventoryItem[];
+  routes: Route[];
 }
 
 interface PrintablePlanProps {
@@ -55,27 +56,8 @@ interface PrintablePlanProps {
 }
 
 const PrintablePlan: React.FC<PrintablePlanProps> = ({ plan }) => {
-  const [routes, setRoutes] = useState<Route[]>([]);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!;
-
-  useEffect(() => {
-    const fetchRoutes = async () => {
-      if (plan.id) {
-        try {
-          const response = await fetch(`/api/plans/${plan.id}/routes`);
-          if (response.ok) {
-            const data = await response.json();
-            setRoutes(data);
-          } else {
-            console.error("Failed to fetch routes");
-          }
-        } catch (error) {
-          console.error("Error fetching routes:", error);
-        }
-      }
-    };
-    fetchRoutes();
-  }, [plan.id]);
+  const { routes = [] } = plan;
 
   return (
     <div className="printable-plan p-8 bg-white text-black font-sans">
@@ -121,7 +103,7 @@ const PrintablePlan: React.FC<PrintablePlanProps> = ({ plan }) => {
         {plan.locations.map(location => (
           <div key={location.id} className="mb-4 p-3 rounded-lg bg-gray-50">
             <p className="font-bold text-xl">{location.name}</p>
-            <p className="text-gray-700">{location.address}</p>
+            <p className="text-gray-700">{location.street_number} {location.street_name}, {location.city}, {location.state} {location.zip_code}</p>
           </div>
         ))}
       </div>
