@@ -2,7 +2,9 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Montserrat, Open_Sans } from "next/font/google"
 import "./globals.css"
+import { getServerSession } from "next-auth/next"
 import Provider from "@/components/auth/session-provider"
+import { authOptions } from "@/lib/auth-options"
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -24,15 +26,17 @@ export const metadata: Metadata = {
   generator: "v0.app",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const session = await getServerSession(authOptions)
+
   return (
     <html lang="en" className={`${montserrat.variable} ${openSans.variable}`}>
       <body className="font-sans antialiased">
-        <Provider>{children}</Provider>
+        <Provider session={session}>{children}</Provider>
       </body>
     </html>
   )

@@ -2,7 +2,7 @@ import { Pool, neon, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 
 // Set the WebSocket proxy for Drizzle
-// neonConfig.wsProxy = (host) => `${host}:5432/ws-proxy`;
+neonConfig.wsProxy = (host) => `${host.split(':')[0]}:5432/ws-proxy`;
 
 let pool: Pool;
 
