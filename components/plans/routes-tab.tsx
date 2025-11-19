@@ -12,7 +12,7 @@ import Map from '@/components/maps/Map';
 export interface Route {
   id: string;
   name: string;
-  waypoints: string[]; // Array of location IDs
+  waypoints: Location[];
 }
 
 interface RoutesTabProps {
@@ -46,12 +46,15 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
 
   const handleAddWaypoint = (routeId: string, locationId: string) => {
     if (!locationId) return;
+    const locationToAdd = locations.find(loc => loc.id === locationId);
+    if (!locationToAdd) return;
+
     onRoutesChange(
       routes.map(route => {
         if (route.id === routeId) {
           // Avoid adding duplicate waypoints
-          if (route.waypoints.includes(locationId)) return route;
-          return { ...route, waypoints: [...route.waypoints, locationId] };
+          if (route.waypoints.some(wp => wp.id === locationId)) return route;
+          return { ...route, waypoints: [...route.waypoints, locationToAdd] };
         }
         return route;
       })
@@ -86,9 +89,6 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
     );
   };
 
-  const getLocationName = (locationId: string) => {
-    return locations.find(loc => loc.id === locationId)?.name || 'Unknown Location';
-  };
 
   return (
     <Card>
@@ -119,9 +119,9 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  {route.waypoints.map((waypointId, index) => (
+                  {route.waypoints.map((waypoint, index) => (
                     <div key={index} className="flex items-center justify-between p-2 border rounded-md bg-background">
-                      <p className="font-medium">{index + 1}. {getLocationName(waypointId)}</p>
+                      <p className="font-medium">{index + 1}. {waypoint.name}</p>
                       <div className="flex items-center">
                         <Button variant="ghost" size="icon" disabled={index === 0} onClick={() => handleMoveWaypoint(route.id, index, 'up')}>
                           <ArrowUp className="h-4 w-4" />
@@ -144,12 +144,12 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
                           <SelectValue placeholder="Add a location to this route..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {locations.filter(loc => !route.waypoints.includes(loc.id)).map(location => (
+                          {locations.filter(loc => !route.waypoints.some(wp => wp.id === loc.id)).map(location => (
                             <SelectItem key={location.id} value={location.id}>
                               {location.name}
                             </SelectItem>
                           ))}
-                          {locations.filter(loc => !route.waypoints.includes(loc.id)).length === 0 && (
+                          {locations.filter(loc => !route.waypoints.some(wp => wp.id === loc.id)).length === 0 && (
                               <p className="p-2 text-sm text-muted-foreground">All available locations have been added.</p>
                           )}
                         </SelectContent>
@@ -159,7 +159,6 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
                 <div className="h-64 bg-muted rounded-lg">
                   <Map
                     waypoints={route.waypoints
-                      .map(id => locations.find(loc => loc.id === id))
                       .filter((loc): loc is Location => !!loc && loc.latitude != null && loc.longitude != null)
                     }
                   />

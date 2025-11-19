@@ -91,11 +91,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
             // Insert new routes
             for (const route of routes) {
-                // Ensure waypoints are just an array of location IDs
-                const waypointIds = route.waypoints.map(wp => wp.id || wp);
+                // The client might send full objects or just IDs, so we need to handle both cases
+                const waypointIds = route.waypoints.map((wp: any) => typeof wp === 'object' ? wp.id : wp);
                 await client.query(
                     'INSERT INTO routes (id, plan_id, name, waypoints) VALUES ($1, $2, $3, $4)',
-                    [route.id, planId, route.name, waypointIds]
+                    [route.id, planId, route.name, JSON.stringify(waypointIds)]
                 );
             }
 

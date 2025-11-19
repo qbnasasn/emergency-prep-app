@@ -112,7 +112,16 @@ export function PlanBuilder({ plan, onSave, onCancel, isSaving }: PlanBuilderPro
                 setSelectedPetIds(new Set(planPetsData.map((p: Pet) => p.id)));
                 setSelectedItemIds(new Set(inventoryData.items.map((i: any) => i.id)));
                 setSelectedKitIds(new Set(inventoryData.kits.map((k: any) => k.id)));
-                setRoutes(routesData);
+
+                const parsedRoutes = routesData.map((route: Route) => ({
+                  ...route,
+                  waypoints: route.waypoints.map((wp: any) => ({
+                    ...wp,
+                    latitude: wp.latitude ? parseFloat(wp.latitude) : undefined,
+                    longitude: wp.longitude ? parseFloat(wp.longitude) : undefined,
+                  })),
+                }));
+                setRoutes(parsedRoutes);
 
 
             } else {
