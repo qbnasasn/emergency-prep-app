@@ -35,30 +35,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     `;
     const routesResult = await client.query(routesQuery, [planId]);
 
-    const routes = [];
-
-    for (const route of routesResult.rows) {
-      if (route.waypoints && route.waypoints.length > 0) {
-        const waypointsQuery = `
-          SELECT id, name, latitude, longitude, street_number, street_name, city, state, zip_code
-          FROM plan_locations
-          WHERE id = ANY($1::uuid[])
-        `;
-        const waypointIds = route.waypoints;
-        const waypointsResult = await client.query(waypointsQuery, [waypointIds]);
-
-        // Preserve the order of waypoints
-        const orderedWaypoints = waypointIds.map(id =>
-          waypointsResult.rows.find(wp => wp.id === id)
-        ).filter(Boolean); // Filter out any nulls if an ID wasn't found
-
-        route.waypoints = orderedWaypoints;
-      }
-      routes.push(route);
-    }
-
     client.release();
-    return NextResponse.json(routes);
+    return NextResponse.json(routesResult.rows);
   } catch (error) {
     console.error(`Error fetching routes for plan ${planId}:`, error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -91,11 +69,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
             // Insert new routes
             for (const route of routes) {
-                // Ensure waypoints are just an array of location IDs
-                const waypointIds = route.waypoints.map(wp => wp.id || wp);
+                // The waypoints are already an array of location IDs from the client
                 await client.query(
                     'INSERT INTO routes (id, plan_id, name, waypoints) VALUES ($1, $2, $3, $4)',
-                    [route.id, planId, route.name, waypointIds]
+                    [route.id, planId, route.name, route.waypoints]
                 );
             }
 
