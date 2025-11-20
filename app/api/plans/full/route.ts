@@ -45,6 +45,51 @@ export async function GET(req: Request) {
       const itemsResult = await client.query(itemsQuery, [planId]);
       plan.inventory_items = itemsResult.rows;
 
+      // Fetch routes and hydrate waypoints
+      const routesQuery = 'SELECT * FROM routes WHERE plan_id = $1';
+      const routesResult = await client.query(routesQuery, [planId]);
+      const routes = routesResult.rows;
+
+      // Hydrate waypoints
+      const hydratedRoutes = routes.map((route: any) => {
+        let waypointIds: string[] = [];
+
+        if (Array.isArray(route.waypoints)) {
+          waypointIds = route.waypoints;
+        } else if (typeof route.waypoints === 'string') {
+          try {
+            const parsed = JSON.parse(route.waypoints);
+            if (Array.isArray(parsed)) {
+              waypointIds = parsed;
+            }
+          } catch (e) {
+            console.error('Error parsing waypoints JSON:', e);
+            waypointIds = [];
+          }
+        }
+
+        const hydratedWaypoints = waypointIds.map((waypointId: string) => {
+          const location = plan.locations.find((loc: any) => loc.id === waypointId);
+          if (location) {
+            const lat = parseFloat(location.latitude);
+            const lng = parseFloat(location.longitude);
+
+            // Ensure coordinates are valid numbers
+            if (!isNaN(lat) && !isNaN(lng)) {
+              return {
+                latitude: lat,
+                longitude: lng
+              };
+            }
+          }
+          return null;
+        }).filter((wp: any) => wp !== null);
+
+        return { ...route, waypoints: hydratedWaypoints };
+      });
+
+      plan.routes = hydratedRoutes;
+
       client.release();
       return NextResponse.json(plan);
     } catch (error) {

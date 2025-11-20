@@ -11,14 +11,22 @@ interface StaticMapProps {
 }
 
 const StaticMap: React.FC<StaticMapProps> = ({ waypoints, apiKey }) => {
-  if (!apiKey || waypoints.length === 0) {
+  // Filter out invalid waypoints just in case
+  const validWaypoints = waypoints.filter(wp =>
+    !isNaN(wp.latitude) &&
+    !isNaN(wp.longitude) &&
+    wp.latitude !== null &&
+    wp.longitude !== null
+  );
+
+  if (!apiKey || validWaypoints.length === 0) {
     return <p>Map data is not available.</p>;
   }
 
   const mapSize = "600x400";
-  const path = waypoints.map(wp => `${wp.latitude},${wp.longitude}`).join('|');
+  const path = validWaypoints.map(wp => `${wp.latitude},${wp.longitude}`).join('|');
 
-  const markers = waypoints.map((wp, index) => {
+  const markers = validWaypoints.map((wp, index) => {
     return `&markers=color:red|label:${index + 1}|${wp.latitude},${wp.longitude}`;
   }).join('');
 

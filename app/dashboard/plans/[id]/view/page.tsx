@@ -6,6 +6,7 @@ import PrintablePlan from "@/components/plans/printable-plan"
 import { Button } from "@/components/ui/button"
 import { Loader2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 
 export default function PlanViewPage() {
   const [plan, setPlan] = useState(null)
@@ -19,6 +20,8 @@ export default function PlanViewPage() {
     if (typeof window !== 'undefined') {
       import('html2pdf.js').then(module => {
         setHtml2pdf(() => module.default);
+      }).catch(err => {
+        console.error("Failed to load html2pdf.js", err);
       });
     }
   }, []);
@@ -27,10 +30,18 @@ export default function PlanViewPage() {
     if (planId) {
       setIsLoading(true)
       fetch(`/api/plans/full?id=${planId}`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch plan");
+          return res.json();
+        })
         .then((data) => {
           setPlan(data)
           setIsLoading(false)
+        })
+        .catch(err => {
+          console.error(err);
+          setIsLoading(false);
+          toast.error("Failed to load plan details.");
         })
     }
   }, [planId])
@@ -38,18 +49,43 @@ export default function PlanViewPage() {
   const handlePrint = () => {
     if (!html2pdf || !plan) {
       console.error("html2pdf.js has not loaded yet or no plan data.");
+      toast.error("PDF generator is initializing. Please try again in a moment.");
       return;
     }
     setIsPrinting(true);
     const element = document.getElementById("printable-plan-view");
+    if (!element) {
+      console.error("Element not found");
+      setIsPrinting(false);
+      return;
+    }
+
     const opt = {
       margin: 0.5,
-      filename: `emergency-plan.pdf`,
+      filename: `emergency-plan-${plan.name.replace(/\s+/g, '-').toLowerCase()}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
+      html2canvas: { scale: 2, useCORS: true, allowTaint: false }, // useCORS is important for Google Maps
       jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
     };
-    html2pdf().from(element).set(opt).save().finally(() => setIsPrinting(false));
+
+    try {
+      html2pdf()
+        .from(element)
+        .set(opt)
+        .save()
+        .then(() => {
+          toast.success("PDF downloaded successfully.");
+        })
+        .catch((err: any) => {
+          console.error("PDF generation failed in promise", err);
+          toast.error("Failed to generate PDF. Please try again.");
+        })
+        .finally(() => setIsPrinting(false));
+    } catch (err) {
+      console.error("PDF generation initialization failed", err);
+      toast.error("Failed to initialize PDF generator.");
+      setIsPrinting(false);
+    }
   }
 
   if (isLoading) {

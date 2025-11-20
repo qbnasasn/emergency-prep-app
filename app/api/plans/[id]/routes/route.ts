@@ -69,10 +69,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
             // Insert new routes
             for (const route of routes) {
-                // The waypoints are already an array of location IDs from the client
+                // The waypoints are already an array of location IDs from the client, but we need to ensure
+                // it's properly serialized for the jsonb column
                 await client.query(
                     'INSERT INTO routes (id, plan_id, name, waypoints) VALUES ($1, $2, $3, $4)',
-                    [route.id, planId, route.name, route.waypoints]
+                    [route.id, planId, route.name, JSON.stringify(route.waypoints)]
                 );
             }
 
