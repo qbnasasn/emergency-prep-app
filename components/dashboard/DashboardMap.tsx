@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Map, { Location, Kit } from "@/components/maps/Map"
-import { Button } from "@/components/ui/button"
-import { Layers, Route as RouteIcon } from "lucide-react"
+import { Route as RouteIcon } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -23,7 +22,6 @@ export function DashboardMap() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [kits, setKits] = useState<Kit[]>([]);
   const [selectedRoute, setSelectedRoute] = useState<Route | undefined>(undefined);
-  const [showWeather, setShowWeather] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -67,7 +65,6 @@ export function DashboardMap() {
         locations={locations}
         waypoints={selectedRoute?.waypoints}
         kits={kits}
-        showWeather={showWeather}
       />
       <div className="absolute top-4 right-4 flex space-x-2">
         {routes.length > 0 && (
@@ -85,10 +82,6 @@ export function DashboardMap() {
             </SelectContent>
           </Select>
         )}
-        <Button variant="ghost" size="sm" onClick={() => setShowWeather(!showWeather)}>
-          <Layers className="h-4 w-4 mr-2" />
-          {showWeather ? "Hide" : "Show"} Weather
-        </Button>
       </div>
     </div>
   );
