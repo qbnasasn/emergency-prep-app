@@ -106,6 +106,43 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits }) => {
   }, [locations, kits, waypoints]); // Re-run when data changes
 
   useEffect(() => {
+    if (!isMapInitialized || !mapInstance.current) return;
+
+    // Zoom to selected kit
+    if (kits && kits.length === 1 && kits[0].gps_location) {
+      const kit = kits[0];
+      // Note: Backend stores Latitude in X and Longitude in Y for kits (non-standard)
+      const position = { lat: kit.gps_location.x, lng: kit.gps_location.y };
+      mapInstance.current.setCenter(position);
+      mapInstance.current.setZoom(15);
+    }
+    // If "All Kits" (and possibly locations) are shown and no specific route is selected, fit bounds
+    else if (kits && kits.length > 1 && !waypoints) {
+       const bounds = new google.maps.LatLngBounds();
+       let hasPoints = false;
+
+       kits.forEach(kit => {
+         if (kit.gps_location) {
+           // Note: Backend stores Latitude in X and Longitude in Y for kits
+           bounds.extend({ lat: kit.gps_location.x, lng: kit.gps_location.y });
+           hasPoints = true;
+         }
+       });
+
+       if (locations && locations.length > 0) {
+          locations.forEach(loc => {
+             bounds.extend({ lat: loc.latitude, lng: loc.longitude });
+             hasPoints = true;
+          });
+       }
+
+       if (hasPoints) {
+         mapInstance.current.fitBounds(bounds);
+       }
+    }
+  }, [kits, isMapInitialized, waypoints, locations]);
+
+  useEffect(() => {
     if (!isMapInitialized || !mapInstance.current || !waypoints || waypoints.length < 2) return;
 
     mapsLoader.importLibrary('routes').then(async () => {
