@@ -64,7 +64,7 @@ export default function PlanViewPage() {
       margin: 0.5,
       filename: `emergency-plan-${plan.name.replace(/\s+/g, '-').toLowerCase()}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, allowTaint: true },
+      html2canvas: { scale: 2, useCORS: true, allowTaint: false }, // useCORS is important for Google Maps
       jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
     };
 

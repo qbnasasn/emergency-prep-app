@@ -71,10 +71,16 @@ export async function GET(req: Request) {
         const hydratedWaypoints = waypointIds.map((waypointId: string) => {
           const location = plan.locations.find((loc: any) => loc.id === waypointId);
           if (location) {
-            return {
-              latitude: parseFloat(location.latitude),
-              longitude: parseFloat(location.longitude)
-            };
+            const lat = parseFloat(location.latitude);
+            const lng = parseFloat(location.longitude);
+
+            // Ensure coordinates are valid numbers
+            if (!isNaN(lat) && !isNaN(lng)) {
+              return {
+                latitude: lat,
+                longitude: lng
+              };
+            }
           }
           return null;
         }).filter((wp: any) => wp !== null);
