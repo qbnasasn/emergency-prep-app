@@ -69,10 +69,10 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits, showWeather }) =>
       if (kits) {
         kits.forEach(kit => {
           if (kit.gps_location) {
-             // Assuming standard GIS convention: x = Longitude, y = Latitude
+             // Based on user report (pins in Antarctica), the backend stores x=Lat, y=Lng.
              const marker = new google.maps.Marker({
               map: mapInstance.current,
-              position: { lat: kit.gps_location.y, lng: kit.gps_location.x },
+              position: { lat: kit.gps_location.x, lng: kit.gps_location.y },
               title: `Kit: ${kit.name}`,
               icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png' // Use HTTPS
             });
