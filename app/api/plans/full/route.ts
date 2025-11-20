@@ -77,6 +77,8 @@ export async function GET(req: Request) {
             // Ensure coordinates are valid numbers
             if (!isNaN(lat) && !isNaN(lng)) {
               return {
+                id: location.id,
+                name: location.name,
                 latitude: lat,
                 longitude: lng
               };
