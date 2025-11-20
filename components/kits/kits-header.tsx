@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Plus, MapPin } from "lucide-react"
+import { Plus } from "lucide-react"
 
 interface KitsHeaderProps {
   onNewKit: () => void;
@@ -13,10 +13,6 @@ export function KitsHeader({ onNewKit }: KitsHeaderProps) {
         <p className="text-muted-foreground">Build and manage your emergency preparedness kits with GPS tracking</p>
       </div>
       <div className="flex gap-2">
-        <Button variant="outline" size="sm">
-          <MapPin className="h-4 w-4 mr-2" />
-          View on Map
-        </Button>
         <Button size="sm" onClick={onNewKit}>
           <Plus className="h-4 w-4 mr-2" />
           New Kit
