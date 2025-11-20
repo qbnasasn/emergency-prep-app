@@ -52,21 +52,34 @@ export async function GET(req: Request) {
 
       // Hydrate waypoints
       const hydratedRoutes = routes.map((route: any) => {
-        if (Array.isArray(route.waypoints)) {
-          const hydratedWaypoints = route.waypoints.map((waypointId: string) => {
-            const location = plan.locations.find((loc: any) => loc.id === waypointId);
-            if (location) {
-              return {
-                latitude: parseFloat(location.latitude),
-                longitude: parseFloat(location.longitude)
-              };
-            }
-            return null;
-          }).filter((wp: any) => wp !== null);
+        let waypointIds: string[] = [];
 
-          return { ...route, waypoints: hydratedWaypoints };
+        if (Array.isArray(route.waypoints)) {
+          waypointIds = route.waypoints;
+        } else if (typeof route.waypoints === 'string') {
+          try {
+            const parsed = JSON.parse(route.waypoints);
+            if (Array.isArray(parsed)) {
+              waypointIds = parsed;
+            }
+          } catch (e) {
+            console.error('Error parsing waypoints JSON:', e);
+            waypointIds = [];
+          }
         }
-        return { ...route, waypoints: [] };
+
+        const hydratedWaypoints = waypointIds.map((waypointId: string) => {
+          const location = plan.locations.find((loc: any) => loc.id === waypointId);
+          if (location) {
+            return {
+              latitude: parseFloat(location.latitude),
+              longitude: parseFloat(location.longitude)
+            };
+          }
+          return null;
+        }).filter((wp: any) => wp !== null);
+
+        return { ...route, waypoints: hydratedWaypoints };
       });
 
       plan.routes = hydratedRoutes;

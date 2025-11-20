@@ -64,22 +64,28 @@ export default function PlanViewPage() {
       margin: 0.5,
       filename: `emergency-plan-${plan.name.replace(/\s+/g, '-').toLowerCase()}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
+      html2canvas: { scale: 2, useCORS: true, allowTaint: true },
       jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
     };
 
-    html2pdf()
-      .from(element)
-      .set(opt)
-      .save()
-      .then(() => {
-        toast.success("PDF downloaded successfully.");
-      })
-      .catch((err: any) => {
-        console.error("PDF generation failed", err);
-        toast.error("Failed to generate PDF.");
-      })
-      .finally(() => setIsPrinting(false));
+    try {
+      html2pdf()
+        .from(element)
+        .set(opt)
+        .save()
+        .then(() => {
+          toast.success("PDF downloaded successfully.");
+        })
+        .catch((err: any) => {
+          console.error("PDF generation failed in promise", err);
+          toast.error("Failed to generate PDF. Please try again.");
+        })
+        .finally(() => setIsPrinting(false));
+    } catch (err) {
+      console.error("PDF generation initialization failed", err);
+      toast.error("Failed to initialize PDF generator.");
+      setIsPrinting(false);
+    }
   }
 
   if (isLoading) {
