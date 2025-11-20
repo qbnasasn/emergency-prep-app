@@ -45,6 +45,32 @@ export async function GET(req: Request) {
       const itemsResult = await client.query(itemsQuery, [planId]);
       plan.inventory_items = itemsResult.rows;
 
+      // Fetch routes and hydrate waypoints
+      const routesQuery = 'SELECT * FROM routes WHERE plan_id = $1';
+      const routesResult = await client.query(routesQuery, [planId]);
+      const routes = routesResult.rows;
+
+      // Hydrate waypoints
+      const hydratedRoutes = routes.map((route: any) => {
+        if (Array.isArray(route.waypoints)) {
+          const hydratedWaypoints = route.waypoints.map((waypointId: string) => {
+            const location = plan.locations.find((loc: any) => loc.id === waypointId);
+            if (location) {
+              return {
+                latitude: parseFloat(location.latitude),
+                longitude: parseFloat(location.longitude)
+              };
+            }
+            return null;
+          }).filter((wp: any) => wp !== null);
+
+          return { ...route, waypoints: hydratedWaypoints };
+        }
+        return { ...route, waypoints: [] };
+      });
+
+      plan.routes = hydratedRoutes;
+
       client.release();
       return NextResponse.json(plan);
     } catch (error) {
