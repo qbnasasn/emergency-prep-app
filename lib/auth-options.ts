@@ -25,22 +25,36 @@ export const authOptions: AuthOptions = {
 
         const client = await pool.connect();
         try {
-          const result = await client.query('SELECT id, full_name, email, password_hash FROM users WHERE email = $1', [credentials.email]);
-          const user = result.rows[0];
+            // Check if a user with the given email exists and is linked to the 'credentials' provider
+            const userQuery = `
+                SELECT u.id, u.name, u.email, u.password
+                FROM users u
+                JOIN accounts a ON u.id = a.user_id
+                WHERE u.email = $1 AND a.provider = 'credentials'
+            `;
+            const result = await client.query(userQuery, [credentials.email]);
+            const user = result.rows[0];
 
-          if (!user || !user.password_hash) {
+            if (!user || !user.password) {
+                // No user found with this email for the credentials provider
+                return null;
+            }
+
+            // Verify the password
+            const passwordsMatch = await bcrypt.compare(credentials.password, user.password);
+
+            if (passwordsMatch) {
+                // Return the user object if the password is correct
+                return { id: user.id, name: user.name, email: user.email };
+            } else {
+                // Password does not match
+                return null;
+            }
+        } catch (error) {
+            console.error('Authorization error:', error);
             return null;
-          }
-
-          const passwordsMatch = await bcrypt.compare(credentials.password, user.password_hash);
-
-          if (passwordsMatch) {
-            return { id: user.id, name: user.full_name, email: user.email };
-          } else {
-            return null;
-          }
         } finally {
-          client.release();
+            client.release();
         }
       },
     }),
@@ -66,9 +80,9 @@ export const authOptions: AuthOptions = {
           if (existingMemberResult.rows.length === 0) {
             // If the user doesn't exist, insert them
             const fullName = name || '';
-            const nameParts = fullName.split(' ');
-            const firstName = nameParts[0];
-            const lastName = nameParts.slice(1).join(' ');
+            const nameParts = fullName.split(' ').filter(Boolean);
+            const firstName = nameParts.shift() || '';
+            const lastName = nameParts.join(' ');
 
             await client.query(
               `INSERT INTO family_members (user_id, first_name, last_name, email, role)
