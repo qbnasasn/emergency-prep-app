@@ -27,11 +27,12 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits, showWeather }) =>
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
   const weatherLayer = useRef<google.maps.weather.WeatherLayer | null>(null);
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]); // Store markers for cleanup
   const [isMapInitialized, setMapInitialized] = useState(false);
 
   useEffect(() => {
-    mapsLoader.importLibrary('maps').then(({ Map }) => {
+    mapsLoader.importLibrary('maps').then(({ Map, InfoWindow }) => {
       if (!mapRef.current) return;
 
       // Initialize map only once
@@ -44,9 +45,27 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits, showWeather }) =>
         setMapInitialized(true);
       }
 
+      // Initialize InfoWindow only once
+      if (!infoWindowRef.current) {
+        infoWindowRef.current = new InfoWindow();
+      }
+
       // Clear existing markers
-      markersRef.current.forEach(marker => marker.setMap(null));
+      markersRef.current.forEach(marker => {
+        google.maps.event.clearInstanceListeners(marker); // Clear listeners to prevent leaks
+        marker.setMap(null);
+      });
       markersRef.current = [];
+
+      const addHoverListener = (marker: google.maps.Marker, content: string) => {
+        marker.addListener('mouseover', () => {
+          infoWindowRef.current?.setContent(`<div style="padding: 5px; font-weight: bold; color: black;">${content}</div>`);
+          infoWindowRef.current?.open(mapInstance.current, marker);
+        });
+        marker.addListener('mouseout', () => {
+           infoWindowRef.current?.close();
+        });
+      };
 
       // Locations (Standard Red Pins)
       if (locations) {
@@ -56,6 +75,7 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits, showWeather }) =>
             position: { lat: location.latitude, lng: location.longitude },
             title: location.name,
           });
+          addHoverListener(marker, location.name);
           markersRef.current.push(marker);
         });
 
@@ -76,6 +96,7 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits, showWeather }) =>
               title: `Kit: ${kit.name}`,
               icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png' // Use HTTPS
             });
+            addHoverListener(marker, `Kit: ${kit.name}`);
             markersRef.current.push(marker);
           }
         });
