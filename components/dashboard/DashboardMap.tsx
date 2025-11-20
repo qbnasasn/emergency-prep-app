@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Map, { Location, Kit } from "@/components/maps/Map"
-import { Route as RouteIcon } from "lucide-react"
+import { Route as RouteIcon, Backpack } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -22,6 +22,7 @@ export function DashboardMap() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [kits, setKits] = useState<Kit[]>([]);
   const [selectedRoute, setSelectedRoute] = useState<Route | undefined>(undefined);
+  const [selectedKitId, setSelectedKitId] = useState<string>("all");
 
   useEffect(() => {
     async function fetchData() {
@@ -64,12 +65,28 @@ export function DashboardMap() {
       <Map
         locations={locations}
         waypoints={selectedRoute?.waypoints}
-        kits={kits}
+        kits={selectedKitId === 'all' ? kits : kits.filter(k => k.id === selectedKitId)}
       />
       <div className="absolute top-4 right-4 flex space-x-2">
+        {kits.length > 0 && (
+          <Select onValueChange={setSelectedKitId} defaultValue="all">
+            <SelectTrigger className="w-[180px] bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <Backpack className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Select a kit" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Kits</SelectItem>
+              {kits.map(kit => (
+                <SelectItem key={kit.id} value={kit.id}>
+                  {kit.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         {routes.length > 0 && (
           <Select onValueChange={handleRouteChange} defaultValue={selectedRoute?.id}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px] bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <RouteIcon className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Select a route" />
             </SelectTrigger>

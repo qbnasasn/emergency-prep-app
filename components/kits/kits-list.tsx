@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Package, Car, Home, Building, Backpack, Shield, Wrench, Package2, Loader2 } from "lucide-react"
+import { Package, Car, Home, Building, Backpack, Shield, Wrench, Package2, Loader2, MapPin } from "lucide-react"
 import { Kit } from "@/lib/data/kits"
 import { format } from 'date-fns'
 import { KitCardActions } from "./kit-card-actions"
@@ -100,9 +100,6 @@ export function KitsList({ kits, isLoading, onEditKit, onDataChange }: KitsListP
                   <Button variant="outline" size="sm" className="flex-1 bg-transparent">
                     <Package className="h-4 w-4 mr-2" />
                     View Items
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <MapPin className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
