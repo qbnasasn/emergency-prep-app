@@ -20,13 +20,11 @@ interface MapProps {
   waypoints?: Location[];
   locations?: Location[];
   kits?: Kit[];
-  showWeather?: boolean;
 }
 
-const Map: React.FC<MapProps> = ({ waypoints, locations, kits, showWeather }) => {
+const Map: React.FC<MapProps> = ({ waypoints, locations, kits }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
-  const weatherLayer = useRef<google.maps.weather.WeatherLayer | null>(null);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]); // Store markers for cleanup
   const [isMapInitialized, setMapInitialized] = useState(false);
@@ -143,28 +141,6 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits, showWeather }) =>
       console.error("Failed to load Google Maps Routes", e);
     });
   }, [waypoints, isMapInitialized]);
-
-  useEffect(() => {
-    if (!mapInstance.current) return;
-
-    if (showWeather) {
-      mapsLoader.importLibrary('weather').then(() => {
-        if (!weatherLayer.current) {
-          weatherLayer.current = new google.maps.weather.WeatherLayer({
-            temperatureUnit: google.maps.weather.TemperatureUnit.FAHRENHEIT,
-            windSpeedUnit: google.maps.weather.WindSpeedUnit.MILES_PER_HOUR,
-          });
-        }
-        weatherLayer.current.setMap(mapInstance.current);
-      }).catch(e => {
-        console.error("Failed to load Google Maps Weather", e);
-      });
-    } else {
-      if (weatherLayer.current) {
-        weatherLayer.current.setMap(null);
-      }
-    }
-  }, [showWeather, mapInstance.current]);
 
   return <div ref={mapRef} style={{ height: '100%', width: '100%', borderRadius: '8px' }} />;
 };
