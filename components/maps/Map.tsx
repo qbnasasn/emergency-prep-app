@@ -10,45 +10,81 @@ export interface Location {
   longitude: number;
 }
 
+export interface Kit {
+  id: string;
+  name: string;
+  gps_location: { x: number, y: number } | null;
+}
+
 interface MapProps {
   waypoints?: Location[];
   locations?: Location[];
+  kits?: Kit[];
   showWeather?: boolean;
 }
 
-const Map: React.FC<MapProps> = ({ waypoints, locations, showWeather }) => {
+const Map: React.FC<MapProps> = ({ waypoints, locations, kits, showWeather }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
   const weatherLayer = useRef<google.maps.weather.WeatherLayer | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]); // Store markers for cleanup
   const [isMapInitialized, setMapInitialized] = useState(false);
 
   useEffect(() => {
     mapsLoader.importLibrary('maps').then(({ Map }) => {
       if (!mapRef.current) return;
 
-      mapInstance.current = new Map(mapRef.current, {
-        center: { lat: 40.7128, lng: -74.0060 }, // Default center
-        zoom: 8,
-        mapId: 'SAFEPREP_MAIN_MAP',
-      });
+      // Initialize map only once
+      if (!mapInstance.current) {
+        mapInstance.current = new Map(mapRef.current, {
+          center: { lat: 40.7128, lng: -74.0060 }, // Default center
+          zoom: 8,
+          mapId: 'SAFEPREP_MAIN_MAP',
+        });
+        setMapInitialized(true);
+      }
 
+      // Clear existing markers
+      markersRef.current.forEach(marker => marker.setMap(null));
+      markersRef.current = [];
+
+      // Locations (Standard Red Pins)
       if (locations) {
         locations.forEach(location => {
-          new google.maps.Marker({
+          const marker = new google.maps.Marker({
             map: mapInstance.current,
             position: { lat: location.latitude, lng: location.longitude },
             title: location.name,
           });
+          markersRef.current.push(marker);
         });
-        if (locations.length > 0) {
+
+        // Center map on first location if no waypoints or kits
+        if (locations.length > 0 && !waypoints && (!kits || kits.length === 0)) {
           mapInstance.current.setCenter({ lat: locations[0].latitude, lng: locations[0].longitude });
         }
       }
-      setMapInitialized(true);
+
+      // Kits (Blue Pins)
+      if (kits) {
+        kits.forEach(kit => {
+          if (kit.gps_location) {
+             // Based on user report (pins in Antarctica), the backend stores x=Lat, y=Lng.
+             const marker = new google.maps.Marker({
+              map: mapInstance.current,
+              position: { lat: kit.gps_location.x, lng: kit.gps_location.y },
+              title: `Kit: ${kit.name}`,
+              icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png' // Use HTTPS
+            });
+            markersRef.current.push(marker);
+          }
+        });
+      }
+
     }).catch(e => {
       console.error("Failed to load Google Maps", e);
     });
-  }, [locations]);
+  }, [locations, kits, waypoints]); // Re-run when data changes
 
   useEffect(() => {
     if (!isMapInitialized || !mapInstance.current || !waypoints || waypoints.length < 2) return;
