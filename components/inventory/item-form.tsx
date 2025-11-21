@@ -61,6 +61,12 @@ interface ItemFormProps {
 export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
   const formattedInitialData = initialData ? {
     ...initialData,
+    description: initialData.description || "",
+    location: initialData.location || "",
+    supplier: initialData.supplier || "",
+    upc: initialData.upc || "",
+    image: initialData.image || "",
+    category: initialData.category || "",
     purchase_date: initialData.purchase_date ? initialData.purchase_date.split('T')[0] : '',
     expiry_date: initialData.expiry_date ? initialData.expiry_date.split('T')[0] : '',
   } : undefined;
@@ -73,6 +79,12 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
       quantity: 0,
       category: "",
       is_food_item: false,
+      image: "",
+      upc: "",
+      location: "",
+      supplier: "",
+      purchase_date: "",
+      expiry_date: "",
     },
   })
 
@@ -91,13 +103,47 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      const reader = new FileReader()
+      // Create an image element to resize the image
+      const img = document.createElement('img');
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Max dimension (width or height)
+        const MAX_DIMENSION = 800;
+
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_DIMENSION) {
+            height *= MAX_DIMENSION / width;
+            width = MAX_DIMENSION;
+          }
+        } else {
+          if (height > MAX_DIMENSION) {
+            width *= MAX_DIMENSION / height;
+            height = MAX_DIMENSION;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          // Convert to base64 (JPEG with 0.7 quality for compression)
+          const base64String = canvas.toDataURL('image/jpeg', 0.7);
+          setImagePreview(base64String);
+          form.setValue("image", base64String);
+        }
+      };
+
+      const reader = new FileReader();
       reader.onloadend = () => {
-        const base64String = reader.result as string
-        setImagePreview(base64String)
-        form.setValue("image", base64String)
+        img.src = reader.result as string;
       }
-      reader.readAsDataURL(file)
+      reader.readAsDataURL(file);
     }
   }
 
