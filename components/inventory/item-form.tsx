@@ -18,23 +18,7 @@ import type { InventoryItem } from "@/components/inventory/inventory-table"
 import { useState } from "react"
 import Image from "next/image"
 import { X } from "lucide-react"
-
-const categories = [
-  "Water & Hydration",
-  "Food & Nutrition",
-  "First Aid & Medical",
-  "Communication & Information",
-  "Tools & Utilities",
-  "Clothing",
-  "Shelter & Warmth",
-  "Documents & Records",
-  "Energy & Power",
-  "Sanitation & Hygiene",
-  "Navigation",
-  "Vehicle Preparedness",
-  "Specialized Gear",
-  "Miscellaneous",
-]
+import { INVENTORY_CATEGORIES } from "@/lib/constants"
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -205,7 +189,7 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {categories.map(category => (
+                  {INVENTORY_CATEGORIES.map(category => (
                     <SelectItem key={category} value={category}>{category}</SelectItem>
                   ))}
                 </SelectContent>

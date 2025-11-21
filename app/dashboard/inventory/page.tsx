@@ -5,6 +5,7 @@ import { InventoryHeader } from "@/components/inventory/inventory-header"
 import { InventoryStats } from "@/components/inventory/inventory-stats"
 import { InventoryTable, InventoryItem } from "@/components/inventory/inventory-table"
 import { InventoryFilters, FilterState, initialFilterState } from "@/components/inventory/inventory-filters"
+import { INVENTORY_CATEGORIES } from "@/lib/constants"
 
 export default function InventoryPage() {
   const [filters, setFilters] = useState<FilterState>(initialFilterState)
@@ -23,9 +24,14 @@ export default function InventoryPage() {
       const data: InventoryItem[] = await response.json()
       setItems(data)
 
-      // Extract unique categories and locations
-      const uniqueCategories = [...new Set(data.map((item) => item.category).filter(Boolean) as string[])]
-      const uniqueLocations = [...new Set(data.map((item) => item.location).filter(Boolean) as string[])]
+      // Extract unique categories and locations, merging with standard categories
+      const uniqueCategories = [...new Set([
+        ...INVENTORY_CATEGORIES,
+        ...data.map((item) => item.category).filter(Boolean) as string[]
+      ])].sort();
+
+      const uniqueLocations = [...new Set(data.map((item) => item.location).filter(Boolean) as string[])].sort();
+
       setCategories(uniqueCategories)
       setLocations(uniqueLocations)
     } catch (error) {
