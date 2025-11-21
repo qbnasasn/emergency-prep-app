@@ -17,6 +17,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^3.10.0
         version: 3.10.0(react-hook-form@7.60.0(react@19.0.0))
+      '@jtarrio/webrtlsdr':
+        specifier: ^2.0.4
+        version: 2.0.4
       '@neondatabase/serverless':
         specifier: ^1.0.1
         version: 1.0.1
@@ -491,6 +494,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.30':
     resolution: {integrity: sha512-GQ7Nw5G2lTu/BtHTKfXhKHok2WGetd4XYcVKGx00SjAk8GMwgJM3zr6zORiPGuOE+/vkc90KtTosSSvaCjKb2Q==}
+
+  '@jtarrio/webrtlsdr@2.0.4':
+    resolution: {integrity: sha512-RJY+6eNYDwMMeo0CI+ENHbkQdyrgLpau6OPBbs/kLs3a0Aqdndin1afZ5nH/hGwBB6/l2eb0JbnnanvBy9dTkQ==}
 
   '@neondatabase/serverless@1.0.1':
     resolution: {integrity: sha512-O6yC5TT0jbw86VZVkmnzCZJB0hfxBl0JJz6f+3KHoZabjb/X08r9eFA+vuY06z1/qaovykvdkrXYq3SPUuvogA==}
@@ -1370,6 +1376,9 @@ packages:
 
   '@types/uuid@10.0.0':
     resolution: {integrity: sha512-7gqG38EyHgyP1S+7+xomFtL+ZNHcKv6DwNaCZmJmo1vgMugyF3TCnXVg4t1uk89mLNwnLtnY3TpOpCOyp1/xHQ==}
+
+  '@types/w3c-web-usb@1.0.13':
+    resolution: {integrity: sha512-N2nSl3Xsx8mRHZBvMSdNGtzMyeleTvtlEw+ujujgXalPqOjIA6UtrqcB6OzyUjkTbDm3J7P1RNK1lgoO7jxtsw==}
 
   aria-hidden@1.2.6:
     resolution: {integrity: sha512-ik3ZgC9dY/lYVVM++OISsaYDeg1tb0VtP5uL3ouh1koGOaUMDPpbFIei4JkFimWUFPn90sbMNMXQAIVOlnYKJA==}
@@ -2545,6 +2554,10 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  '@jtarrio/webrtlsdr@2.0.4':
+    dependencies:
+      '@types/w3c-web-usb': 1.0.13
+
   '@neondatabase/serverless@1.0.1':
     dependencies:
       '@types/node': 22.18.0
@@ -3419,6 +3432,8 @@ snapshots:
     optional: true
 
   '@types/uuid@10.0.0': {}
+
+  '@types/w3c-web-usb@1.0.13': {}
 
   aria-hidden@1.2.6:
     dependencies:

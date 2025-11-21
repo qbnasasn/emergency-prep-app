@@ -2,7 +2,7 @@ import { CommunicationsHeader } from "@/components/communications/communications
 import { CommunicationsOverview } from "@/components/communications/communications-overview"
 import { MeshtasticInterface } from "@/components/communications/meshtastic-interface"
 import { RadioGuides } from "@/components/communications/radio-guides"
-import { EmergencyChannels } from "@/components/communications/emergency-channels"
+import { WebRtlsdrInterface } from "@/components/communications/web-rtlsdr-interface"
 
 export default function CommunicationsPage() {
   return (
@@ -12,9 +12,9 @@ export default function CommunicationsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
           <MeshtasticInterface />
-          <EmergencyChannels />
         </div>
-        <div>
+        <div className="space-y-6">
+          <WebRtlsdrInterface />
           <RadioGuides />
         </div>
       </div>

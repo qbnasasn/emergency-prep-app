@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Wifi, Send, Users, MapPin } from "lucide-react"
+import { Wifi, Send, Users, MapPin, ExternalLink } from "lucide-react"
 
 interface MeshtasticNode {
   id: string
@@ -17,9 +17,11 @@ interface MeshtasticNode {
 }
 
 export function MeshtasticInterface() {
-  const [connected, setConnected] = useState(false)
-  const [message, setMessage] = useState("")
+  // We keep the mock data for display purposes when not "connected" to the real client,
+  // or as a preview of what the interface manages.
+  // The "Connect" button will now launch the external client.
   const [nodes, setNodes] = useState<MeshtasticNode[]>([])
+  const [message, setMessage] = useState("")
 
   useEffect(() => {
     // Mock Meshtastic nodes data
@@ -40,28 +42,12 @@ export function MeshtasticInterface() {
         lastSeen: "2024-12-22T15:28:00Z",
         status: "online",
       },
-      {
-        id: "!i9j0k1l2",
-        name: "Repeater North",
-        distance: 5.7,
-        battery: 45,
-        lastSeen: "2024-12-22T15:25:00Z",
-        status: "online",
-      },
     ]
     setNodes(mockNodes)
   }, [])
 
-  const connectToMeshtastic = () => {
-    setConnected(!connected)
-  }
-
-  const sendMessage = () => {
-    if (message.trim()) {
-      // TODO: Send message via Meshtastic
-      console.log("Sending message:", message)
-      setMessage("")
-    }
+  const launchClient = () => {
+    window.open("https://client.meshtastic.org", "_blank")
   }
 
   const formatDistance = (distance: number) => {
@@ -83,18 +69,16 @@ export function MeshtasticInterface() {
           <CardTitle className="font-heading text-xl">Meshtastic Network</CardTitle>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge className={connected ? "bg-green-100 text-green-800" : "bg-muted text-foreground"}>
-            {connected ? "Connected" : "Disconnected"}
+          <Badge className="bg-muted text-foreground">
+            Preview Mode
           </Badge>
-          <Button size="sm" onClick={connectToMeshtastic} className="font-body">
-            {connected ? "Disconnect" : "Connect"}
+          <Button size="sm" onClick={launchClient} className="font-body">
+            Launch Client <ExternalLink className="ml-2 h-3 w-3" />
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {connected ? (
-          <>
-            <div className="space-y-3">
+            <div className="space-y-3 opacity-70 pointer-events-none select-none blur-[0.5px]">
               <h3 className="font-body font-semibold text-foreground flex items-center">
                 <Users className="h-4 w-4 mr-2" />
                 Active Nodes ({nodes.length})
@@ -128,33 +112,30 @@ export function MeshtasticInterface() {
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 opacity-70 pointer-events-none select-none blur-[0.5px]">
               <h3 className="font-body font-semibold text-foreground">Send Message</h3>
               <div className="flex space-x-2">
                 <Input
                   placeholder="Type your message..."
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                  readOnly
                   className="font-body"
                 />
-                <Button onClick={sendMessage} disabled={!message.trim()} className="font-body">
+                <Button disabled className="font-body">
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-          </>
-        ) : (
-          <div className="text-center py-8">
-            <Wifi className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="font-body text-muted-foreground mb-4">Connect to Meshtastic network to access mesh communication</p>
-            <div className="text-sm font-body text-muted-foreground space-y-1">
-              <p>• Long-range, low-power mesh networking</p>
-              <p>• Works without internet or cell towers</p>
-              <p>• Perfect for emergency communications</p>
+
+            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+               {/* Overlay content can go here if needed, but the buttons are in header */}
             </div>
-          </div>
-        )}
+
+            <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 p-4 mt-4">
+              <p className="text-sm text-blue-800 dark:text-blue-200 font-body">
+                <strong>Note:</strong> To interact with your Meshtastic device (Web Serial/Bluetooth), please launch the official web client. This preview shows the interface layout.
+              </p>
+            </div>
       </CardContent>
     </Card>
   )
