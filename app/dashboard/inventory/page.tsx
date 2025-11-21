@@ -22,6 +22,10 @@ export default function InventoryPage() {
         throw new Error("Failed to fetch inventory items")
       }
       const data: InventoryItem[] = await response.json()
+
+      // Sort items by name to ensure consistent order
+      data.sort((a, b) => a.name.localeCompare(b.name));
+
       setItems(data)
 
       // Extract unique categories and locations, merging with standard categories
