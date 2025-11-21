@@ -137,7 +137,7 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
   }
 
   const buyNowAmazon = (itemName: string) => {
-    const searchUrl = `https://www.amazon.com/s?k=${encodeURIComponent(itemName)}`;
+    const searchUrl = `https://www.amazon.com/s?k=${encodeURIComponent(itemName)}&tag=prepsafe-20`;
     window.open(searchUrl, "_blank");
   }
 
