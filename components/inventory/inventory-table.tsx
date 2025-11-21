@@ -65,8 +65,16 @@ export function InventoryTable({ filters, items, searchQuery = "" }: InventoryTa
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       // Search Query
-      if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-        return false
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const matchesName = item.name.toLowerCase().includes(query)
+        const matchesCategory = (item.category || "").toLowerCase().includes(query)
+        const matchesLocation = (item.location || "").toLowerCase().includes(query)
+        const matchesDescription = (item.description || "").toLowerCase().includes(query)
+
+        if (!matchesName && !matchesCategory && !matchesLocation && !matchesDescription) {
+          return false
+        }
       }
 
       // Category filter

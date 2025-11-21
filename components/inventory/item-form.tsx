@@ -13,9 +13,11 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { InventoryItem } from "@/components/inventory/inventory-table"
+import { useState } from "react"
+import Image from "next/image"
+import { X } from "lucide-react"
 
 const categories = [
   "Water & Hydration",
@@ -45,7 +47,6 @@ const formSchema = z.object({
   purchase_date: z.string().optional(),
   expiry_date: z.string().optional(),
   min_stock: z.coerce.number().int().optional(),
-  is_food_item: z.boolean().default(false),
   calories: z.coerce.number().int().optional(),
   upc: z.string().optional(),
   image: z.string().optional(),
@@ -59,6 +60,12 @@ interface ItemFormProps {
 export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
   const formattedInitialData = initialData ? {
     ...initialData,
+    description: initialData.description || "",
+    location: initialData.location || "",
+    supplier: initialData.supplier || "",
+    upc: initialData.upc || "",
+    image: initialData.image || "",
+    category: initialData.category || "",
     purchase_date: initialData.purchase_date ? initialData.purchase_date.split('T')[0] : '',
     expiry_date: initialData.expiry_date ? initialData.expiry_date.split('T')[0] : '',
   } : undefined;
@@ -70,9 +77,68 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
       description: "",
       quantity: 0,
       category: "",
-      is_food_item: false,
+      image: "",
+      upc: "",
+      location: "",
+      supplier: "",
+      purchase_date: "",
+      expiry_date: "",
     },
   })
+
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image || null)
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Create an image element to resize the image
+      const img = document.createElement('img');
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Max dimension (width or height)
+        const MAX_DIMENSION = 800;
+
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_DIMENSION) {
+            height *= MAX_DIMENSION / width;
+            width = MAX_DIMENSION;
+          }
+        } else {
+          if (height > MAX_DIMENSION) {
+            width *= MAX_DIMENSION / height;
+            height = MAX_DIMENSION;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          // Convert to base64 (JPEG with 0.7 quality for compression)
+          const base64String = canvas.toDataURL('image/jpeg', 0.7);
+          setImagePreview(base64String);
+          form.setValue("image", base64String);
+        }
+      };
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        img.src = reader.result as string;
+      }
+      reader.readAsDataURL(file);
+    }
+  }
+
+  const removeImage = () => {
+    setImagePreview(null)
+    form.setValue("image", "")
+  }
 
   const isEditMode = !!initialData;
 
@@ -161,25 +227,7 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="is_food_item"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Is this a food item?
-                </FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -291,19 +339,43 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="image"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image URL</FormLabel>
+              <FormLabel>Image</FormLabel>
               <FormControl>
-                <Input placeholder="https://..." {...field} />
+                {imagePreview ? (
+                  <div className="relative w-32 h-32 border rounded-md overflow-hidden group">
+                    <Image
+                      src={imagePreview}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                )}
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
         <Button type="submit" className="w-full">{isEditMode ? 'Save Changes' : 'Add Item'}</Button>
       </form>
     </Form>

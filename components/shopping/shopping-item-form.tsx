@@ -48,9 +48,16 @@ interface ShoppingItemFormProps {
 }
 
 export function ShoppingItemForm({ shoppingListId, onFormSubmit, initialData }: ShoppingItemFormProps) {
+  const formattedInitialData = initialData ? {
+    ...initialData,
+    category: initialData.category || "",
+    preferred_store: initialData.preferred_store || "",
+    estimated_cost: initialData.estimated_cost || 0,
+  } : undefined;
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
+    defaultValues: formattedInitialData || {
       item_name: "",
       quantity: 1,
       category: "",

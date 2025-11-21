@@ -26,7 +26,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         }
 
         const fields = [
-            'name', 'description', 'quantity', 'is_food_item', 'expiry_date',
+            'name', 'description', 'quantity', 'expiry_date',
             'category', 'location', 'min_stock', 'cost_per_unit', 'purchase_date',
             'calories', 'supplier', 'upc', 'image'
         ];
@@ -38,7 +38,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         fields.forEach(field => {
             if (body[field] !== undefined) {
                 setClauses.push(`${field} = $${valueCount++}`);
-                values.push(body[field]);
+                // Handle empty strings for nullable fields to avoid DB errors
+                // Especially important for date and numeric fields
+                const val = body[field];
+                values.push(val === "" ? null : val);
             }
         });
 
