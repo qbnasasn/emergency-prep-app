@@ -17,12 +17,19 @@ import { ShoppingItemForm } from "./shopping-item-form"
 interface ShoppingHeaderProps {
   shoppingListId: string;
   onListUpdate: () => void;
+  onSearch: (query: string) => void;
 }
 
-export function ShoppingHeader({ shoppingListId, onListUpdate }: ShoppingHeaderProps) {
+export function ShoppingHeader({ shoppingListId, onListUpdate, onSearch }: ShoppingHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isPopulating, setIsPopulating] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    onSearch(query);
+  };
 
   const populateFromInventory = async () => {
     setIsPopulating(true);
@@ -57,7 +64,7 @@ export function ShoppingHeader({ shoppingListId, onListUpdate }: ShoppingHeaderP
           <Input
             placeholder="Search items..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             className="pl-10 w-64 font-body"
           />
         </div>

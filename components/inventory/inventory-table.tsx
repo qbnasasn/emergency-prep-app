@@ -33,9 +33,10 @@ export interface InventoryItem {
 interface InventoryTableProps {
   filters: FilterState
   items: InventoryItem[]
+  searchQuery?: string
 }
 
-export function InventoryTable({ filters, items }: InventoryTableProps) {
+export function InventoryTable({ filters, items, searchQuery = "" }: InventoryTableProps) {
   const [error, setError] = useState<string | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -63,6 +64,11 @@ export function InventoryTable({ filters, items }: InventoryTableProps) {
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
+      // Search Query
+      if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false
+      }
+
       // Category filter
       if (filters.category !== "all" && item.category !== filters.category) {
         return false

@@ -32,9 +32,10 @@ interface PlansListProps {
   isLoading: boolean;
   error: string | null;
   fetchPlans: () => void;
+  searchQuery?: string;
 }
 
-export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, isLoading, error, fetchPlans }: PlansListProps) {
+export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, isLoading, error, fetchPlans, searchQuery = "" }: PlansListProps) {
   const getStatus = (isActive: boolean) => {
     return isActive ? "Active" : "Draft"
   }
@@ -75,6 +76,11 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
     )
   }
 
+  const filteredPlans = plans.filter((plan) => {
+    if (!searchQuery) return true;
+    return plan.name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -86,9 +92,13 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
             <p>You haven&apos;t created any plans yet.</p>
             <p className="text-sm">Click &quot;New Plan&quot; to get started.</p>
           </div>
+        ) : filteredPlans.length === 0 ? (
+          <div className="text-center text-muted-foreground py-10">
+            <p>No plans found matching &quot;{searchQuery}&quot;.</p>
+          </div>
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {plans.map((plan) => (
+          {filteredPlans.map((plan) => (
             <Card key={plan.id} className="border border-border flex flex-col">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">

@@ -9,6 +9,7 @@ import { ShoppingFilters } from "@/components/shopping/shopping-filters"
 export default function ShoppingPage() {
   const [shoppingList, setShoppingList] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchShoppingList = async () => {
     setLoading(true);
@@ -37,14 +38,19 @@ export default function ShoppingPage() {
 
   return (
     <div className="space-y-6">
-      <ShoppingHeader shoppingListId={shoppingList.id} onListUpdate={fetchShoppingList} />
+      <ShoppingHeader shoppingListId={shoppingList.id} onListUpdate={fetchShoppingList} onSearch={setSearchQuery} />
       <ShoppingStats />
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
           <ShoppingFilters />
         </div>
         <div className="lg:col-span-3">
-          <ShoppingList shoppingListId={shoppingList.id} items={shoppingList.items} onListUpdate={fetchShoppingList} />
+          <ShoppingList
+            shoppingListId={shoppingList.id}
+            items={shoppingList.items}
+            onListUpdate={fetchShoppingList}
+            searchQuery={searchQuery}
+          />
         </div>
       </div>
     </div>
