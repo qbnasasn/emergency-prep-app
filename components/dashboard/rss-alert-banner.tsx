@@ -74,11 +74,8 @@ export function RssAlertBanner() {
 
       results.forEach((res: any) => {
           if (res.data && res.data.items && res.data.items.length > 0) {
-              // Take the top 1 from each feed? Or top 3?
-              // User said "cycle through the channels". So maybe just the latest from each channel.
-              // Let's take top 2 from each channel to ensure we have some content to cycle if only 1 feed.
-              // Actually, mixing them by date is better.
-              res.data.items.slice(0, 2).forEach((item: any) => {
+              // Increased from 2 to 10 to allow more items from a single feed if active
+              res.data.items.slice(0, 10).forEach((item: any) => {
                   aggregatedItems.push({
                       title: item.title,
                       link: item.link,
@@ -97,8 +94,8 @@ export function RssAlertBanner() {
           return dateB - dateA
       })
 
-      // Limit to top 10 items total
-      const finalItems = aggregatedItems.slice(0, 10)
+      // Limit to top 25 items total to match Manager view expectation
+      const finalItems = aggregatedItems.slice(0, 25)
 
       if (finalItems.length > 0) {
           setItems(finalItems)
@@ -122,7 +119,7 @@ export function RssAlertBanner() {
         if (res.ok) {
             const data = await res.json()
             if (data.items && data.items.length > 0) {
-                 const newItems = data.items.slice(0, 5).map((item: any) => ({
+                 const newItems = data.items.slice(0, 10).map((item: any) => ({
                     title: item.title,
                     link: item.link,
                     feedName: feed.name,
