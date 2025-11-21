@@ -12,9 +12,9 @@ export default function CommunicationsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
           <MeshtasticInterface />
-        </div>
-        <div className="space-y-6">
           <WebRtlsdrInterface />
+        </div>
+        <div>
           <RadioGuides />
         </div>
       </div>

@@ -5,11 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Radio, Play, Square, Activity, Volume2, VolumeX, AlertTriangle } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Radio, Play, Square, Activity, Volume2, VolumeX, AlertTriangle, Settings2 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 // Import from the library
+// Using deep imports as permitted by package exports
 import { Demodulator } from "@jtarrio/webrtlsdr/demod/demodulator.js"
 import { getMode } from "@jtarrio/webrtlsdr/demod/modes.js"
 import { Radio as RtlRadio } from "@jtarrio/webrtlsdr/radio.js"
@@ -24,8 +32,10 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   const [frequency, setFrequency] = useState(88.5)
   const [volume, setVolume] = useState(1)
   const [mode, setMode] = useState("WBFM")
+  const [gain, setGain] = useState<number | "auto">("auto")
   const [error, setError] = useState<string | null>(null)
   const [supported, setSupported] = useState(true)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const radioRef = useRef<any>(null)
   const demodulatorRef = useRef<any>(null)
@@ -50,6 +60,9 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
       await radio.setFrequency(Math.floor(frequency * 1000000))
       demodulator.setVolume(volume)
       demodulator.setMode(getMode(mode))
+
+      const gainValue = gain === "auto" ? null : gain
+      await radio.setGain(gainValue)
 
       await radio.start()
       setIsPlaying(true)
@@ -107,6 +120,22 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
     }
   }
 
+  const handleGainChange = async (value: number[]) => {
+    const newGain = value[0]
+    setGain(newGain)
+    if (radioRef.current && isPlaying) {
+       await radioRef.current.setGain(newGain)
+    }
+  }
+
+  const toggleAutoGain = async (auto: boolean) => {
+    const newGain = auto ? "auto" : 0
+    setGain(newGain)
+    if (radioRef.current && isPlaying) {
+      await radioRef.current.setGain(auto ? null : 0)
+    }
+  }
+
   // Handle cleanup
   useEffect(() => {
     return () => {
@@ -145,9 +174,11 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
           <Radio className="h-5 w-5 text-primary" />
           <CardTitle className="font-heading text-xl">RTL-SDR Receiver</CardTitle>
         </div>
-        <Badge variant={isPlaying ? "default" : "secondary"}>
-          {isPlaying ? "Live" : "Standby"}
-        </Badge>
+        <div className="flex items-center space-x-2">
+             <Badge variant={isPlaying ? "default" : "secondary"}>
+            {isPlaying ? "Live" : "Standby"}
+            </Badge>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {error && (
@@ -238,6 +269,46 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
             </div>
           </div>
         </div>
+
+        <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen} className="space-y-2">
+            <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold font-body">Advanced Settings</h4>
+                <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-9 p-0">
+                        <Settings2 className="h-4 w-4" />
+                        <span className="sr-only">Toggle Settings</span>
+                    </Button>
+                </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent className="space-y-4 pt-2">
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+                     <div className="flex items-center justify-between">
+                        <Label htmlFor="auto-gain" className="font-body">Automatic Gain Control</Label>
+                        <Switch
+                            id="auto-gain"
+                            checked={gain === "auto"}
+                            onCheckedChange={toggleAutoGain}
+                        />
+                    </div>
+
+                    {gain !== "auto" && (
+                        <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <Label className="font-body text-xs">RF Gain (dB)</Label>
+                                <span className="text-xs text-muted-foreground">{gain} dB</span>
+                            </div>
+                             <Slider
+                                value={[gain]}
+                                min={0}
+                                max={50}
+                                step={1}
+                                onValueChange={handleGainChange}
+                            />
+                        </div>
+                    )}
+                </div>
+            </CollapsibleContent>
+        </Collapsible>
 
         <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
           <p className="text-xs text-blue-800 dark:text-blue-200 font-body flex items-start">
