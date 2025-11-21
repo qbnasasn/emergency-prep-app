@@ -13,9 +13,11 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { InventoryItem } from "@/components/inventory/inventory-table"
+import { useState, useEffect } from "react"
+import Image from "next/image"
+import { X } from "lucide-react"
 
 const categories = [
   "Water & Hydration",
@@ -73,6 +75,36 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
       is_food_item: false,
     },
   })
+
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image || null)
+
+  // Auto-set is_food_item based on category
+  const category = form.watch("category")
+  useEffect(() => {
+    if (category === "Food & Nutrition") {
+      form.setValue("is_food_item", true)
+    } else {
+      form.setValue("is_food_item", false)
+    }
+  }, [category, form])
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setImagePreview(base64String)
+        form.setValue("image", base64String)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeImage = () => {
+    setImagePreview(null)
+    form.setValue("image", "")
+  }
 
   const isEditMode = !!initialData;
 
@@ -161,25 +193,15 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
             </FormItem>
           )}
         />
+        {/* Hidden field for is_food_item */}
         <FormField
           control={form.control}
           name="is_food_item"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Is this a food item?
-                </FormLabel>
-              </div>
-            </FormItem>
+            <input type="hidden" {...field} value={field.value ? "true" : "false"} />
           )}
         />
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -291,19 +313,35 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="image"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image URL</FormLabel>
-              <FormControl>
-                <Input placeholder="https://..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+
+        <div className="space-y-2">
+          <FormLabel>Image</FormLabel>
+          {imagePreview ? (
+            <div className="relative w-32 h-32 border rounded-md overflow-hidden group">
+              <Image
+                src={imagePreview}
+                alt="Preview"
+                fill
+                className="object-cover"
+              />
+              <button
+                type="button"
+                onClick={removeImage}
+                className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+            />
           )}
-        />
+          <FormMessage />
+        </div>
+
         <Button type="submit" className="w-full">{isEditMode ? 'Save Changes' : 'Add Item'}</Button>
       </form>
     </Form>
