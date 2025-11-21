@@ -34,7 +34,6 @@ export async function POST(req: Request) {
       name,
       description,
       quantity,
-      is_food_item,
       expiry_date,
       category,
       location,
@@ -54,10 +53,10 @@ export async function POST(req: Request) {
 
     const insertQuery = `
       INSERT INTO inventory_items (
-        user_id, name, description, quantity, is_food_item, expiry_date, category,
+        user_id, name, description, quantity, expiry_date, category,
         location, min_stock, cost_per_unit, purchase_date, calories, supplier, upc, image
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *;
     `;
 
@@ -66,7 +65,6 @@ export async function POST(req: Request) {
       name,
       description || null,
       quantity,
-      is_food_item || false,
       expiry_date || null,
       category,
       location || null,
@@ -77,7 +75,7 @@ export async function POST(req: Request) {
       supplier || null,
       upc || null,
       image || null,
-    ];
+    ].map(val => val === "" ? null : val);
 
     const client = await pool.connect();
     try {
