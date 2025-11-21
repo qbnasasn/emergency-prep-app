@@ -5,9 +5,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Rss, Plus, Trash2, ExternalLink, RefreshCw, Loader2, Pencil, Check, X } from "lucide-react"
+import { Rss, Plus, Trash2, ExternalLink, RefreshCw, Loader2, Pencil, Check, Filter } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+import { formatDistanceToNow, parseISO, isToday, isAfter, subDays } from "date-fns"
 
 export interface FeedItem {
   title?: string
@@ -40,6 +42,9 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
   const [editingId, setEditingId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
+  // Filter State
+  const [filter, setFilter] = useState("all")
+
   // Load feeds from API
   useEffect(() => {
     fetchFeeds()
@@ -53,7 +58,6 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
             const data = await res.json()
             setFeeds(data)
             if (data.length > 0) {
-                // If we were editing/active, keep it, otherwise default to first
                 if (!activeFeed) setActiveFeed(data[0])
             } else {
                 const defaultFeed = { name: "FEMA National News", url: DEFAULT_FEED_URL }
@@ -79,7 +83,6 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
   useEffect(() => {
     if (activeFeed) {
       fetchFeedContent(activeFeed.url)
-      // Reset edit form when switching active feeds (unless explicitly editing)
       if (!isEditing) {
          setFeedName("")
          setFeedUrl("")
@@ -128,7 +131,6 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
 
     try {
         if (isEditing && editingId) {
-            // UPDATE existing
             const res = await fetch(`/api/communications/feeds/${editingId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -145,7 +147,6 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
                 toast.error("Failed to update feed")
             }
         } else {
-            // CREATE new
             const res = await fetch('/api/communications/feeds', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -191,6 +192,22 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
     toast.success("Feed removed")
   }
 
+  const filteredItems = feedData?.items?.filter(item => {
+      if (!item.pubDate) return true
+      const date = new Date(item.pubDate)
+
+      switch (filter) {
+          case "today":
+              return isToday(date)
+          case "24h":
+              return isAfter(date, subDays(new Date(), 1))
+          case "7days":
+               return isAfter(date, subDays(new Date(), 7))
+          default:
+              return true
+      }
+  })
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -199,13 +216,13 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
           <span>Manage Feeds</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-heading">RSS Feed Manager</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full overflow-hidden pt-4">
-          {/* Sidebar: Feed List */}
+          {/* Sidebar */}
           <div className="flex flex-col space-y-4 border-r pr-4">
             <div className="space-y-2">
                 <h3 className="text-sm font-medium font-body">Your Feeds</h3>
@@ -271,10 +288,25 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
             </div>
           </div>
 
-          {/* Main Content: Feed Items */}
+          {/* Main Content */}
           <div className="md:col-span-2 flex flex-col h-full overflow-hidden">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="font-heading font-semibold text-lg truncate">{feedData?.name || activeFeed?.name || "Select a feed"}</h3>
+                <div className="flex items-center gap-4 overflow-hidden">
+                     <h3 className="font-heading font-semibold text-lg truncate max-w-[200px]">{feedData?.name || activeFeed?.name || "Select a feed"}</h3>
+                     <div className="w-[140px]">
+                        <Select value={filter} onValueChange={setFilter}>
+                            <SelectTrigger className="h-8 text-xs font-body">
+                                <SelectValue placeholder="Filter" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Items</SelectItem>
+                                <SelectItem value="today">Today</SelectItem>
+                                <SelectItem value="24h">Last 24 Hours</SelectItem>
+                                <SelectItem value="7days">Last 7 Days</SelectItem>
+                            </SelectContent>
+                        </Select>
+                     </div>
+                </div>
                 <Button variant="ghost" size="icon" onClick={() => activeFeed && fetchFeedContent(activeFeed.url)} disabled={loading || !activeFeed}>
                     <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                 </Button>
@@ -285,10 +317,10 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
                     <div className="flex items-center justify-center h-40 text-muted-foreground font-body">
                         <Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading feed...
                     </div>
-                ) : feedData?.items?.length ? (
+                ) : filteredItems?.length ? (
                     <div className="space-y-4 pb-4">
-                        {feedData.items.map((item, idx) => (
-                            <div key={idx} className="border rounded-lg p-3 space-y-2">
+                        {filteredItems.map((item, idx) => (
+                            <div key={idx} className="border rounded-lg p-3 space-y-2 bg-background">
                                 <div className="flex justify-between items-start gap-2">
                                     <h4 className="font-semibold text-sm font-body text-foreground">
                                         <a href={item.link} target="_blank" rel="noopener noreferrer" className="hover:underline decoration-primary">
@@ -296,7 +328,7 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
                                         </a>
                                     </h4>
                                     <Badge variant="outline" className="text-[10px] shrink-0">
-                                        {item.pubDate ? new Date(item.pubDate).toLocaleDateString() : 'Recent'}
+                                        {item.pubDate ? formatDistanceToNow(new Date(item.pubDate), { addSuffix: true }) : 'Recent'}
                                     </Badge>
                                 </div>
                                 <p className="text-xs text-muted-foreground font-body line-clamp-3">
@@ -314,7 +346,7 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
                     </div>
                 ) : (
                     <div className="text-center text-muted-foreground py-8 font-body">
-                        {activeFeed ? "No items found or failed to load." : "Select a feed to view items."}
+                        {activeFeed ? `No items found matching filter "${filter}".` : "Select a feed to view items."}
                     </div>
                 )}
             </ScrollArea>

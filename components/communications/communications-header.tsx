@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Power, Settings, AlertTriangle } from "lucide-react"
+import { Power, AlertTriangle } from "lucide-react"
 import { useState } from "react"
 
 export function CommunicationsHeader() {
@@ -22,11 +22,6 @@ export function CommunicationsHeader() {
             {emergencyMode ? "Emergency Mode" : "Normal Mode"}
           </Badge>
         </div>
-
-        <Button variant="outline" size="sm" className="font-body bg-transparent">
-          <Settings className="h-4 w-4 mr-2" />
-          Radio Settings
-        </Button>
 
         <Button
           onClick={() => setEmergencyMode(!emergencyMode)}
