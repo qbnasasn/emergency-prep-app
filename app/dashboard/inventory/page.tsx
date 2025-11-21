@@ -8,6 +8,7 @@ import { InventoryFilters, FilterState, initialFilterState } from "@/components/
 
 export default function InventoryPage() {
   const [filters, setFilters] = useState<FilterState>(initialFilterState)
+  const [searchQuery, setSearchQuery] = useState("")
   const [items, setItems] = useState<InventoryItem[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [locations, setLocations] = useState<string[]>([])
@@ -40,14 +41,14 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <InventoryHeader fetchItems={fetchItems} />
+      <InventoryHeader fetchItems={fetchItems} onSearch={setSearchQuery} />
       <InventoryStats items={items} />
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
           <InventoryFilters onFilterChange={setFilters} categories={categories} locations={locations} />
         </div>
         <div className="lg:col-span-3">
-          <InventoryTable filters={filters} items={items} />
+          <InventoryTable filters={filters} items={items} searchQuery={searchQuery} />
         </div>
       </div>
     </div>

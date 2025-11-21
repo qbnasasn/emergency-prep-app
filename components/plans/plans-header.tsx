@@ -8,10 +8,17 @@ import { Plus, Search, FileText } from "lucide-react"
 interface PlansHeaderProps {
   onCreate: () => void;
   plans: any[]; // Assuming plans are passed as a prop
+  onSearch: (query: string) => void;
 }
 
-export function PlansHeader({ onCreate, plans }: PlansHeaderProps) {
+export function PlansHeader({ onCreate, plans, onSearch }: PlansHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    onSearch(query);
+  };
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
@@ -26,7 +33,7 @@ export function PlansHeader({ onCreate, plans }: PlansHeaderProps) {
           <Input
             placeholder="Search plans..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             className="pl-10 w-64 font-body"
           />
         </div>

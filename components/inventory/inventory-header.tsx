@@ -17,11 +17,18 @@ import { ImportDialog } from "@/components/inventory/import-dialog"
 
 interface InventoryHeaderProps {
   fetchItems: () => void;
+  onSearch: (query: string) => void;
 }
 
-export function InventoryHeader({ fetchItems }: InventoryHeaderProps) {
+export function InventoryHeader({ fetchItems, onSearch }: InventoryHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    onSearch(query);
+  };
 
   const handleFormSubmit = () => {
     setIsDialogOpen(false);
@@ -45,7 +52,7 @@ export function InventoryHeader({ fetchItems }: InventoryHeaderProps) {
           <Input
             placeholder="Search inventory..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             className="pl-10 w-64 font-body"
           />
         </div>

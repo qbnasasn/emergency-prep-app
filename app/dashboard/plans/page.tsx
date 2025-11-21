@@ -16,6 +16,7 @@ export default function PlansPage() {
   const [selectedPlan, setSelectedPlan] = useState<EmergencyPlan | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isNewPlan, setIsNewPlan] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const fetchPlans = async () => {
     setIsLoading(true)
@@ -200,7 +201,7 @@ export default function PlansPage() {
 
   return (
     <div className="space-y-6">
-      <PlansHeader onCreate={handleCreate} plans={plans} />
+      <PlansHeader onCreate={handleCreate} plans={plans} onSearch={setSearchQuery} />
       <PlansOverview plans={plans} />
       <PlansList
         plans={plans}
@@ -211,6 +212,7 @@ export default function PlansPage() {
         isLoading={isLoading}
         error={error}
         fetchPlans={fetchPlans}
+        searchQuery={searchQuery}
       />
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

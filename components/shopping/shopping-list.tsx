@@ -32,11 +32,17 @@ interface ShoppingListProps {
   shoppingListId: string;
   items: ShoppingItem[];
   onListUpdate: () => void;
+  searchQuery?: string;
 }
 
-export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingListProps) {
+export function ShoppingList({ shoppingListId, items, onListUpdate, searchQuery = "" }: ShoppingListProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<ShoppingItem | null>(null)
+
+  const filteredItems = items.filter((item) => {
+    if (!searchQuery) return true;
+    return item.item_name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   const handleEdit = (item: ShoppingItem) => {
     setSelectedItem(item)
@@ -178,7 +184,7 @@ export function ShoppingList({ shoppingListId, items, onListUpdate }: ShoppingLi
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => (
+                {filteredItems.map((item) => (
                   <TableRow key={item.id} className={item.is_purchased ? "bg-primary/10" : ""}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
