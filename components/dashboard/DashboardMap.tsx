@@ -21,7 +21,7 @@ export function DashboardMap() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
   const [kits, setKits] = useState<Kit[]>([]);
-  const [selectedRoute, setSelectedRoute] = useState<Route | undefined>(undefined);
+  const [selectedRouteId, setSelectedRouteId] = useState<string>("all");
   const [selectedKitId, setSelectedKitId] = useState<string>("all");
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export function DashboardMap() {
         setRoutes(userRoutes);
         setKits(userKits);
         if (userRoutes.length > 0) {
-          setSelectedRoute(userRoutes[0]);
+          setSelectedRouteId(userRoutes[0].id);
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -55,16 +55,11 @@ export function DashboardMap() {
     fetchData();
   }, []);
 
-  const handleRouteChange = (routeId: string) => {
-    const route = routes.find(r => r.id === routeId);
-    setSelectedRoute(route);
-  };
-
   return (
     <div className="relative h-96 bg-muted rounded-lg overflow-hidden">
       <Map
         locations={locations}
-        waypoints={selectedRoute?.waypoints}
+        waypoints={selectedRouteId === 'all' ? undefined : routes.find(r => r.id === selectedRouteId)?.waypoints}
         kits={selectedKitId === 'all' ? kits : kits.filter(k => k.id === selectedKitId)}
       />
       <div className="absolute top-4 right-4 flex space-x-2">
@@ -85,12 +80,13 @@ export function DashboardMap() {
           </Select>
         )}
         {routes.length > 0 && (
-          <Select onValueChange={handleRouteChange} defaultValue={selectedRoute?.id}>
+          <Select onValueChange={setSelectedRouteId} defaultValue={routes[0]?.id}>
             <SelectTrigger className="w-[180px] bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <RouteIcon className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Select a route" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">All Routes</SelectItem>
               {routes.map(route => (
                 <SelectItem key={route.id} value={route.id}>
                   {route.name}

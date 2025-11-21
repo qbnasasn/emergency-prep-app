@@ -27,21 +27,9 @@ export const getUserLocations = async () => {
       [userId]
     );
 
-    // Fetch Kit locations
-    const kitsRes = await client.query(
-      'SELECT id, name, gps_location FROM kits WHERE user_id = $1 AND gps_location IS NOT NULL',
-      [userId]
-    );
-
     const allLocations = [
       ...noaaLocationsRes.rows.map(loc => ({ ...loc, latitude: Number(loc.latitude), longitude: Number(loc.longitude) })),
       ...planLocationsRes.rows.map(loc => ({ ...loc, latitude: Number(loc.latitude), longitude: Number(loc.longitude) })),
-      ...kitsRes.rows.map(kit => ({
-        id: kit.id,
-        name: kit.name,
-        latitude: kit.gps_location.y,
-        longitude: kit.gps_location.x,
-      }))
     ];
 
     return allLocations;
