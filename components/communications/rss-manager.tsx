@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Rss, Plus, Trash2, ExternalLink, RefreshCw, Loader2 } from "lucide-react"
+import { Rss, Plus, Trash2, ExternalLink, RefreshCw, Loader2, Pencil, Check, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 
@@ -32,9 +32,13 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
   const [feedData, setFeedData] = useState<Feed | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadingFeeds, setLoadingFeeds] = useState(true)
-  const [newFeedUrl, setNewFeedUrl] = useState("")
-  const [newFeedName, setNewFeedName] = useState("")
-  const [adding, setAdding] = useState(false)
+
+  // Form State
+  const [feedUrl, setFeedUrl] = useState("")
+  const [feedName, setFeedName] = useState("")
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   // Load feeds from API
   useEffect(() => {
@@ -47,22 +51,16 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
         const res = await fetch('/api/communications/feeds')
         if (res.ok) {
             const data = await res.json()
-            // If user has no feeds, maybe suggest adding defaults?
-            // Or just show empty state.
-            // If database is empty, we can default to FEMA on the client side *display* but not save it?
-            // Better: If empty, show FEMA as a "default" option or auto-add it.
-            // Let's just use the data.
             setFeeds(data)
             if (data.length > 0) {
-                setActiveFeed(data[0])
+                // If we were editing/active, keep it, otherwise default to first
+                if (!activeFeed) setActiveFeed(data[0])
             } else {
-                // Fallback if no feeds exist in DB
                 const defaultFeed = { name: "FEMA National News", url: DEFAULT_FEED_URL }
                 setFeeds([defaultFeed])
                 setActiveFeed(defaultFeed)
             }
         } else {
-            // If API fails (e.g. table missing), fallback to local default for demo
             console.warn("Failed to fetch feeds, falling back to default")
             const defaultFeed = { name: "FEMA National News", url: DEFAULT_FEED_URL }
             setFeeds([defaultFeed])
@@ -70,7 +68,6 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
         }
     } catch (e) {
         console.error(e)
-        // Fallback
         const defaultFeed = { name: "FEMA National News", url: DEFAULT_FEED_URL }
         setFeeds([defaultFeed])
         setActiveFeed(defaultFeed)
@@ -82,6 +79,11 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
   useEffect(() => {
     if (activeFeed) {
       fetchFeedContent(activeFeed.url)
+      // Reset edit form when switching active feeds (unless explicitly editing)
+      if (!isEditing) {
+         setFeedName("")
+         setFeedUrl("")
+      }
     }
   }, [activeFeed])
 
@@ -106,38 +108,68 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
     }
   }
 
-  const addFeed = async () => {
-    if (newFeedUrl && newFeedName) {
-      setAdding(true)
-      try {
-        const res = await fetch('/api/communications/feeds', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: newFeedName, url: newFeedUrl })
-        })
+  const startEditing = (feed: Feed) => {
+      setIsEditing(true)
+      setEditingId(feed.id || null)
+      setFeedName(feed.name)
+      setFeedUrl(feed.url)
+  }
 
-        if (res.ok) {
-            const newFeed = await res.json()
-            setFeeds([...feeds, newFeed])
-            setNewFeedUrl("")
-            setNewFeedName("")
-            setActiveFeed(newFeed)
-            toast.success("Feed added successfully")
+  const cancelEditing = () => {
+      setIsEditing(false)
+      setEditingId(null)
+      setFeedName("")
+      setFeedUrl("")
+  }
+
+  const handleSave = async () => {
+    if (!feedUrl || !feedName) return
+    setSubmitting(true)
+
+    try {
+        if (isEditing && editingId) {
+            // UPDATE existing
+            const res = await fetch(`/api/communications/feeds/${editingId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: feedName, url: feedUrl })
+            })
+            if (res.ok) {
+                const updatedFeed = await res.json()
+                const updatedFeeds = feeds.map(f => f.id === editingId ? updatedFeed : f)
+                setFeeds(updatedFeeds)
+                setActiveFeed(updatedFeed)
+                toast.success("Feed updated")
+                cancelEditing()
+            } else {
+                toast.error("Failed to update feed")
+            }
         } else {
-            toast.error("Failed to save feed")
+            // CREATE new
+            const res = await fetch('/api/communications/feeds', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: feedName, url: feedUrl })
+            })
+            if (res.ok) {
+                const newFeed = await res.json()
+                setFeeds([...feeds, newFeed])
+                setActiveFeed(newFeed)
+                toast.success("Feed added")
+                cancelEditing()
+            } else {
+                toast.error("Failed to add feed")
+            }
         }
-      } catch (e) {
-          console.error(e)
-          toast.error("Error adding feed")
-      } finally {
-          setAdding(false)
-      }
+    } catch(e) {
+        console.error(e)
+        toast.error("Error saving feed")
+    } finally {
+        setSubmitting(false)
     }
   }
 
   const removeFeed = async (feed: Feed) => {
-    // If it's a database feed (has ID), delete it.
-    // If it's the default fallback (no ID), just remove from state.
     if (feed.id) {
         try {
             const res = await fetch(`/api/communications/feeds/${feed.id}`, { method: 'DELETE' })
@@ -189,13 +221,23 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
                         feeds.map((feed) => (
                         <div
                             key={feed.id || feed.url}
-                            className={`flex items-center justify-between p-2 rounded-md cursor-pointer text-sm ${activeFeed?.url === feed.url ? 'bg-secondary' : 'hover:bg-muted'}`}
-                            onClick={() => setActiveFeed(feed)}
+                            className={`group flex items-center justify-between p-2 rounded-md cursor-pointer text-sm ${activeFeed?.url === feed.url ? 'bg-secondary' : 'hover:bg-muted'}`}
+                            onClick={() => {
+                                setActiveFeed(feed)
+                                if(isEditing && editingId !== feed.id) cancelEditing()
+                            }}
                         >
-                            <span className="truncate font-body">{feed.name}</span>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); removeFeed(feed) }}>
-                                <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                            </Button>
+                            <span className="truncate font-body max-w-[100px]">{feed.name}</span>
+                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                {feed.id && (
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); startEditing(feed) }}>
+                                        <Pencil className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                                    </Button>
+                                )}
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); removeFeed(feed) }}>
+                                    <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                                </Button>
+                            </div>
                         </div>
                         ))
                     )}
@@ -204,22 +246,27 @@ export function RssFeedManager({ onUpdateCount }: { onUpdateCount: (count: numbe
             </div>
 
             <div className="space-y-2 pt-4 border-t">
-                <h3 className="text-sm font-medium font-body">Add New Feed</h3>
+                <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium font-body">{isEditing ? "Edit Feed" : "Add New Feed"}</h3>
+                    {isEditing && (
+                        <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={cancelEditing}>Cancel</Button>
+                    )}
+                </div>
                 <Input
                     placeholder="Feed Name"
-                    value={newFeedName}
-                    onChange={e => setNewFeedName(e.target.value)}
+                    value={feedName}
+                    onChange={e => setFeedName(e.target.value)}
                     className="h-8 font-body text-xs"
                 />
                 <Input
                     placeholder="Feed URL"
-                    value={newFeedUrl}
-                    onChange={e => setNewFeedUrl(e.target.value)}
+                    value={feedUrl}
+                    onChange={e => setFeedUrl(e.target.value)}
                     className="h-8 font-body text-xs"
                 />
-                <Button onClick={addFeed} size="sm" className="w-full font-body" disabled={!newFeedUrl || !newFeedName || adding}>
-                    {adding ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Plus className="h-3 w-3 mr-2" />}
-                    Add Feed
+                <Button onClick={handleSave} size="sm" className="w-full font-body" disabled={!feedUrl || !feedName || submitting}>
+                    {submitting ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : isEditing ? <Check className="h-3 w-3 mr-2" /> : <Plus className="h-3 w-3 mr-2" />}
+                    {isEditing ? "Update Feed" : "Add Feed"}
                 </Button>
             </div>
           </div>
