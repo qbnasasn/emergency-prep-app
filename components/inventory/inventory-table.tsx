@@ -107,7 +107,7 @@ export function InventoryTable({ filters, items, searchQuery = "" }: InventoryTa
 
       return true
     })
-  }, [items, filters])
+  }, [items, filters, searchQuery])
 
   const handleEdit = (item: InventoryItem) => {
     setSelectedItem(item)
