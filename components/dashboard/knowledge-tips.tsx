@@ -3,6 +3,7 @@ import { Lightbulb, ExternalLink, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { getDailyTip } from "@/lib/actions/knowledge"
+import { TipContent } from "@/components/dashboard/tip-content"
 
 export async function KnowledgeTips() {
   const tip = await getDailyTip()
@@ -28,9 +29,7 @@ export async function KnowledgeTips() {
                 <h3 className="font-heading font-semibold text-foreground text-xs uppercase tracking-wide text-yellow-700 dark:text-yellow-500 mb-1">
                     {tip.category || "General Tip"}
                 </h3>
-                <p className="font-body text-sm text-muted-foreground leading-relaxed">
-                    {tip.content}
-                </p>
+                <TipContent content={tip.content || ""} />
               </div>
             </div>
         ) : (
