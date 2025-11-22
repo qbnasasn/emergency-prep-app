@@ -1,67 +1,52 @@
-"use client"
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Lightbulb, ExternalLink } from "lucide-react"
+import { Lightbulb, ExternalLink, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useEffect, useState } from "react"
+import Link from "next/link"
+import { getDailyTip } from "@/lib/actions/knowledge"
+import { TipContent } from "@/components/dashboard/tip-content"
 
-interface Tip {
-  id: string
-  tip: string
-  category: string
-}
-
-export function KnowledgeTips() {
-  const [tips, setTips] = useState<Tip[]>([])
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchTips = async () => {
-      try {
-        const response = await fetch("/api/tips")
-        if (!response.ok) {
-          throw new Error("Failed to fetch tips")
-        }
-        const data = await response.json()
-        setTips(data)
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message)
-        } else {
-          setError("An unknown error occurred")
-        }
-        console.error(err)
-      }
-    }
-
-    fetchTips()
-  }, [])
+export async function KnowledgeTips() {
+  const tip = await getDailyTip()
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
         <div className="flex items-center space-x-2">
-          <Lightbulb className="h-5 w-5 text-primary" />
-          <CardTitle className="font-heading text-lg">Knowledge Tips</CardTitle>
+          <Lightbulb className="h-4 w-4 text-yellow-600" />
+          <CardTitle className="font-heading text-base">Daily Knowledge Tip</CardTitle>
         </div>
-        <Button variant="ghost" size="sm">
-          <ExternalLink className="h-4 w-4" />
-        </Button>
+        <Link href="/dashboard/knowledge">
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                <ExternalLink className="h-3 w-3" />
+                <span className="sr-only">Go to Knowledge Base</span>
+            </Button>
+        </Link>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {error && <p className="text-destructive-foreground bg-destructive p-2 rounded-md">{error}</p>}
-          {!error && tips.length === 0 && <p>No tips available at the moment.</p>}
-          {tips.map((tip) => (
-            <div key={tip.id} className="border-l-4 border-primary pl-4">
-              <h3 className="font-body font-semibold text-foreground text-sm">{tip.category}</h3>
-              <p className="font-body text-sm text-muted-foreground mt-1">{tip.tip}</p>
+        {tip ? (
+            <div className="space-y-3">
+              <div className="border-l-4 border-yellow-500 pl-3 py-1 bg-yellow-50/50 dark:bg-yellow-900/10 rounded-r-md">
+                <h3 className="font-heading font-semibold text-foreground text-xs uppercase tracking-wide text-yellow-700 dark:text-yellow-500 mb-1">
+                    {tip.category || "General Tip"}
+                </h3>
+                <TipContent content={tip.content || ""} />
+              </div>
             </div>
-          ))}
+        ) : (
+            <div className="text-center py-4 text-muted-foreground text-sm">
+                <p>No tips available yet.</p>
+                <p className="text-xs mt-0.5">Check back later or add your own!</p>
+            </div>
+        )}
+
+        <div className="mt-4 pt-3 border-t">
+            <Link href="/dashboard/knowledge" className="w-full block">
+                <Button variant="ghost" size="sm" className="w-full justify-between group h-8 text-xs">
+                  Browse Knowledge Base
+                  <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
+                </Button>
+            </Link>
         </div>
-        <Button variant="outline" className="w-full mt-4 font-body bg-transparent">
-          View All Tips
-        </Button>
       </CardContent>
     </Card>
   )
