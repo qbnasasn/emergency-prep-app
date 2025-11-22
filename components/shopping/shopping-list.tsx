@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ShoppingItemForm } from "./shopping-item-form"
+import { ShoppingFilterState } from "./shopping-filters";
+import { useMemo } from "react";
 
 
 export interface ShoppingItem {
@@ -33,16 +35,55 @@ interface ShoppingListProps {
   items: ShoppingItem[];
   onListUpdate: () => void;
   searchQuery?: string;
+  filters?: ShoppingFilterState;
 }
 
-export function ShoppingList({ shoppingListId, items, onListUpdate, searchQuery = "" }: ShoppingListProps) {
+export function ShoppingList({ shoppingListId, items, onListUpdate, searchQuery = "", filters }: ShoppingListProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<ShoppingItem | null>(null)
 
-  const filteredItems = items.filter((item) => {
-    if (!searchQuery) return true;
-    return item.item_name.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      // Search Query
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = item.item_name.toLowerCase().includes(query);
+        const matchesCategory = (item.category || "").toLowerCase().includes(query);
+
+        if (!matchesName && !matchesCategory) {
+          return false;
+        }
+      }
+
+      // Filters
+      if (filters) {
+        // Category filter
+        if (filters.category !== "all" && item.category !== filters.category) {
+          return false;
+        }
+
+        // Store filter
+        if (filters.store !== "all" && item.preferred_store !== filters.store) {
+          return false;
+        }
+
+        // Priority filters
+        const { priority } = filters;
+        const anyPriorityChecked = priority.urgent || priority.lowStock || priority.expiring || priority.manual;
+
+        if (anyPriorityChecked) {
+          const reason = item.reason || "";
+          if (priority.urgent && reason === "out-of-stock") return true;
+          if (priority.lowStock && reason === "low-stock") return true;
+          if (priority.expiring && reason === "expiring") return true;
+          if (priority.manual && !reason) return true;
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [items, searchQuery, filters]);
 
   const handleEdit = (item: ShoppingItem) => {
     setSelectedItem(item)
