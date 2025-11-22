@@ -41,7 +41,7 @@ export async function getDocuments(filters?: {
       d.*,
       EXISTS(SELECT 1 FROM kb_favorites f WHERE f.doc_id = d.id AND f.user_id = $1) as is_favorite
     FROM knowledge_base_docs d
-    WHERE (d.user_id = $1 OR d.is_public = true)
+    WHERE d.user_id = $1
   `
   const params: any[] = [userId]
   let paramIndex = 2
@@ -89,7 +89,7 @@ export async function getDocument(id: string) {
         d.*,
         EXISTS(SELECT 1 FROM kb_favorites f WHERE f.doc_id = d.id AND f.user_id = $2) as is_favorite
       FROM knowledge_base_docs d
-      WHERE d.id = $1 AND (d.user_id = $2 OR d.is_public = true)
+      WHERE d.id = $1 AND d.user_id = $2
       `,
       [id, session.user.id]
     )
@@ -239,15 +239,37 @@ export async function toggleFavorite(docId: string) {
   }
 }
 
-// Get Random Tip for Dashboard
-export async function getRandomTip() {
+// Get Daily Tip for Dashboard
+export async function getDailyTip() {
+  const session = await auth()
+  const userId = session?.user?.id
+
   try {
-    const result = await pool.query(
-      "SELECT * FROM knowledge_base_docs WHERE type = 'tip' ORDER BY RANDOM() LIMIT 1"
-    )
-    return result.rows[0] as KnowledgeDocument | null
+    // Set seed based on the day of the year (0.0 to 1.0)
+    // We use a transaction to set the seed locally for this query
+    const client = await pool.connect()
+    try {
+        await client.query("BEGIN")
+        await client.query("SELECT setseed(extract(doy from current_date) / 366.0)")
+
+        // Fetch tips that belong to the user (since we seed them)
+        // If no user (public dashboard?), we might fallback to system tips if we kept them,
+        // but for now we assume authenticated dashboard.
+        const query = "SELECT * FROM knowledge_base_docs WHERE type = 'tip' AND user_id = $1 ORDER BY RANDOM() LIMIT 1"
+
+        const params = [userId]
+        const result = await client.query(query, params)
+
+        await client.query("COMMIT")
+        return result.rows[0] as KnowledgeDocument | null
+    } catch (e) {
+        await client.query("ROLLBACK")
+        throw e
+    } finally {
+        client.release()
+    }
   } catch (error) {
-    console.error("Failed to get random tip:", error)
+    console.error("Failed to get daily tip:", error)
     return null
   }
 }

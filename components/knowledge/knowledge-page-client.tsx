@@ -15,6 +15,8 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { KNOWLEDGE_CATEGORIES, getCategoryById } from "@/lib/knowledge-config"
 import DOMPurify from "isomorphic-dompurify"
+import { seedUserKnowledgeBase } from "@/lib/actions/seed-knowledge"
+import { useEffect } from "react"
 
 interface KnowledgePageProps {
     documents: KnowledgeDocument[]
@@ -22,6 +24,18 @@ interface KnowledgePageProps {
 
 export default function KnowledgePageClient({ documents }: KnowledgePageProps) {
   const [searchQuery, setSearchQuery] = useState("")
+
+  // Auto-seed if empty
+  useEffect(() => {
+    if (documents.length === 0) {
+        seedUserKnowledgeBase().then((res) => {
+            if (res.success) {
+                router.refresh()
+                toast.success("Loaded default knowledge base articles")
+            }
+        })
+    }
+  }, [documents.length])
   const [activeType, setActiveType] = useState("all")
   const [activeCategory, setActiveCategory] = useState("all")
   const [selectedDoc, setSelectedDoc] = useState<KnowledgeDocument | null>(null)
