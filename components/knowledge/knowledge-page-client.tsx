@@ -7,11 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { KnowledgeDocument, toggleFavorite, deleteDocument } from "@/lib/actions/knowledge"
 import { DocumentDialog } from "@/components/knowledge/document-dialog"
 import { DocumentViewer } from "@/components/knowledge/document-viewer"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { KNOWLEDGE_CATEGORIES, getCategoryById } from "@/lib/knowledge-config"
+import DOMPurify from "isomorphic-dompurify"
 
 interface KnowledgePageProps {
     documents: KnowledgeDocument[]
@@ -19,7 +22,8 @@ interface KnowledgePageProps {
 
 export default function KnowledgePageClient({ documents }: KnowledgePageProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("all")
+  const [activeType, setActiveType] = useState("all")
+  const [activeCategory, setActiveCategory] = useState("all")
   const [selectedDoc, setSelectedDoc] = useState<KnowledgeDocument | null>(null)
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
@@ -28,10 +32,17 @@ export default function KnowledgePageClient({ documents }: KnowledgePageProps) {
 
   const filteredDocs = useMemo(() => {
     let docs = documents
-    if (activeTab === "favorites") {
+
+    // Filter by Type (Article, Guide, Tip, Favorites)
+    if (activeType === "favorites") {
         docs = docs.filter(d => d.is_favorite)
-    } else if (activeTab !== "all") {
-        docs = docs.filter(d => d.type === activeTab)
+    } else if (activeType !== "all") {
+        docs = docs.filter(d => d.type === activeType)
+    }
+
+    // Filter by Category
+    if (activeCategory !== "all") {
+        docs = docs.filter(d => d.category === activeCategory)
     }
 
     if (searchQuery) {
@@ -43,17 +54,13 @@ export default function KnowledgePageClient({ documents }: KnowledgePageProps) {
         )
     }
     return docs
-  }, [documents, activeTab, searchQuery])
+  }, [documents, activeType, activeCategory, searchQuery])
 
   const handleFavorite = async (e: React.MouseEvent, doc: KnowledgeDocument) => {
     e.stopPropagation()
     try {
         await toggleFavorite(doc.id)
         toast.success(doc.is_favorite ? "Removed from bookmarks" : "Added to bookmarks")
-        // Optimistic update handled by parent refresh or we rely on router.refresh()
-        // But since we pass props from server component, we need to refresh.
-        // Actually, props are static unless refreshed.
-        // revalidatePath in action handles cache, but client needs refresh.
         router.refresh()
     } catch (err) {
         toast.error("Failed to update bookmark")
@@ -82,6 +89,14 @@ export default function KnowledgePageClient({ documents }: KnowledgePageProps) {
       setIsEditorOpen(true)
   }
 
+  // Helper to strip HTML for preview
+  const stripHtml = (html: string) => {
+      if (!html) return ""
+      // Sanitize first to be safe, then strip
+      const clean = DOMPurify.sanitize(html, { ALLOWED_TAGS: [] })
+      return clean.substring(0, 150) + (clean.length > 150 ? "..." : "")
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -98,23 +113,42 @@ export default function KnowledgePageClient({ documents }: KnowledgePageProps) {
       </div>
 
       {/* Search and Filter */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-         <div className="relative flex-1 w-full md:max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-                placeholder="Search articles and guides..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+         <div className="flex-1 w-full flex flex-col sm:flex-row gap-4">
+             <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                    placeholder="Search..."
+                    className="pl-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
+            <div className="w-full sm:w-64">
+                <Select value={activeCategory} onValueChange={setActiveCategory}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {KNOWLEDGE_CATEGORIES.map(cat => (
+                            <SelectItem key={cat.id} value={cat.id}>
+                                <div className="flex items-center gap-2">
+                                    <cat.icon className={`h-4 w-4 ${cat.color}`} />
+                                    <span>{cat.label}</span>
+                                </div>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+         </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-            <TabsList className="grid w-full grid-cols-5 md:w-auto">
+          <Tabs value={activeType} onValueChange={setActiveType} className="w-full lg:w-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:w-auto">
                 <TabsTrigger value="all">All</TabsTrigger>
                 <TabsTrigger value="article">Articles</TabsTrigger>
                 <TabsTrigger value="guide">Guides</TabsTrigger>
-                <TabsTrigger value="tip">Tips</TabsTrigger>
                 <TabsTrigger value="favorites" className="text-yellow-600 data-[state=active]:text-yellow-700">
                     <Bookmark className="h-4 w-4 mr-1" />
                     <span className="hidden sm:inline">Saved</span>
@@ -126,61 +160,64 @@ export default function KnowledgePageClient({ documents }: KnowledgePageProps) {
       {/* Content Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredDocs.length > 0 ? (
-            filteredDocs.map((doc) => (
-                <Card
-                    key={doc.id}
-                    className="cursor-pointer hover:shadow-md transition-shadow group flex flex-col"
-                    onClick={() => openViewer(doc)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant={doc.type === 'tip' ? 'secondary' : 'outline'}>
-                        {doc.type === 'article' && <FileText className="h-3 w-3 mr-1" />}
-                        {doc.type === 'guide' && <BookOpen className="h-3 w-3 mr-1" />}
-                        {doc.type === 'tip' && <Lightbulb className="h-3 w-3 mr-1" />}
-                        {doc.type.charAt(0).toUpperCase() + doc.type.slice(1)}
-                      </Badge>
-                      {doc.category && <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{doc.category}</span>}
-                    </div>
-                    <CardTitle className="text-lg font-sans line-clamp-2">{doc.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <p className="text-sm text-muted-foreground line-clamp-3">
-                        {doc.content}
-                    </p>
-                  </CardContent>
-                  <CardFooter className="pt-0 flex justify-between items-center text-sm text-muted-foreground">
-                      <div className="flex gap-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className={`h-8 w-8 hover:text-yellow-600 ${doc.is_favorite ? "text-yellow-500" : ""}`}
-                            onClick={(e) => handleFavorite(e, doc)}
-                        >
-                            <Bookmark className={`h-4 w-4 ${doc.is_favorite ? "fill-current" : ""}`} />
-                        </Button>
-                      </div>
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                         {/* Only show edit/delete if user owns it (doc.user_id is not null) */}
-                         {doc.user_id && (
-                             <>
-                                <Button variant="ghost" size="xs" onClick={(e) => { e.stopPropagation(); openEditor(doc); }}>
-                                    Edit
-                                </Button>
-                                <Button variant="ghost" size="xs" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={(e) => handleDelete(e, doc)}>
-                                    Delete
-                                </Button>
-                             </>
-                         )}
-                      </div>
-                  </CardFooter>
-                </Card>
-              ))
+            filteredDocs.map((doc) => {
+                const category = getCategoryById(doc.category || "other")
+                return (
+                    <Card
+                        key={doc.id}
+                        className="cursor-pointer hover:shadow-md transition-shadow group flex flex-col overflow-hidden"
+                        onClick={() => openViewer(doc)}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${category.bg} ${category.color} border ${category.border}`}>
+                             <category.icon className="h-3.5 w-3.5" />
+                             {category.label}
+                          </div>
+                          <Badge variant={doc.type === 'tip' ? 'secondary' : 'outline'} className="capitalize">
+                            {doc.type}
+                          </Badge>
+                        </div>
+                        <CardTitle className="text-lg font-sans line-clamp-2 leading-tight">{doc.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-1">
+                        <div className="text-sm text-muted-foreground line-clamp-3">
+                             {stripHtml(doc.content || "")}
+                        </div>
+                      </CardContent>
+                      <CardFooter className="pt-0 flex justify-between items-center text-sm text-muted-foreground mt-auto">
+                          <div className="flex gap-2">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className={`h-8 w-8 hover:text-yellow-600 ${doc.is_favorite ? "text-yellow-500" : ""}`}
+                                onClick={(e) => handleFavorite(e, doc)}
+                            >
+                                <Bookmark className={`h-4 w-4 ${doc.is_favorite ? "fill-current" : ""}`} />
+                            </Button>
+                          </div>
+                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                             {/* Only show edit/delete if user owns it (doc.user_id is not null) */}
+                             {doc.user_id && (
+                                 <>
+                                    <Button variant="ghost" size="xs" onClick={(e) => { e.stopPropagation(); openEditor(doc); }}>
+                                        Edit
+                                    </Button>
+                                    <Button variant="ghost" size="xs" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={(e) => handleDelete(e, doc)}>
+                                        Delete
+                                    </Button>
+                                 </>
+                             )}
+                          </div>
+                      </CardFooter>
+                    </Card>
+                  )
+            })
         ) : (
             <div className="col-span-full py-12 text-center text-muted-foreground">
                 <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-20" />
                 <p>No documents found matching your criteria.</p>
-                {searchQuery && <Button variant="link" onClick={() => setSearchQuery("")}>Clear search</Button>}
+                {(searchQuery || activeCategory !== 'all') && <Button variant="link" onClick={() => { setSearchQuery(""); setActiveCategory("all"); }}>Clear filters</Button>}
             </div>
         )}
       </div>

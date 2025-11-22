@@ -1,18 +1,26 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Loader2, Upload, FileText } from "lucide-react"
+import { Loader2, Upload } from "lucide-react"
 import { createDocument, updateDocument, KnowledgeDocument } from "@/lib/actions/knowledge"
 import { toast } from "sonner"
+import { KNOWLEDGE_CATEGORIES } from "@/lib/knowledge-config"
+import dynamic from "next/dynamic"
+
+// Dynamically import ReactQuill to avoid SSR issues
+const ReactQuill = dynamic(() => import("react-quill-new"), {
+    ssr: false,
+    loading: () => <div className="h-64 w-full bg-muted animate-pulse rounded-md" />
+})
+import "react-quill-new/dist/quill.snow.css"
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -35,33 +43,31 @@ export function DocumentDialog({ open, onOpenChange, document, onSuccess }: Docu
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: document?.title || "",
-      type: (document?.type as "article" | "guide" | "tip") || "article",
-      category: document?.category || "",
-      content: document?.content || "",
+      title: "",
+      type: "article",
+      category: "basics-planning",
+      content: "",
     },
   })
 
   // Reset form when document changes
-  const { reset } = form
-  // useEffect(() => {
-  //   if (document) {
-  //     reset({
-  //       title: document.title,
-  //       type: document.type as any,
-  //       category: document.category || "",
-  //       content: document.content || "",
-  //     })
-  //   } else {
-  //     reset({
-  //       title: "",
-  //       type: "article",
-  //       category: "",
-  //       content: "",
-  //     })
-  //   }
-  // }, [document, reset])
-  // Using key on Dialog in parent is better to reset state
+  useEffect(() => {
+    if (document) {
+      form.reset({
+        title: document.title,
+        type: (document.type as "article" | "guide" | "tip") || "article",
+        category: document.category || "basics-planning",
+        content: document.content || "",
+      })
+    } else {
+      form.reset({
+        title: "",
+        type: "article",
+        category: "basics-planning",
+        content: "",
+      })
+    }
+  }, [document, form, open])
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true)
@@ -96,8 +102,12 @@ export function DocumentDialog({ open, onOpenChange, document, onSuccess }: Docu
     const reader = new FileReader()
     reader.onload = (event) => {
       const text = event.target?.result as string
-      form.setValue("content", text)
-      // Also guess title from filename if empty
+      // Append or replace content? Let's append if not empty, or just replace.
+      // For rich text, we just put the text in.
+      // If it's markdown, we might want to parse it? But for now, raw text is safer.
+      const current = form.getValues("content") || ""
+      form.setValue("content", current + (current ? "\n\n" : "") + text)
+
       if (!form.getValues("title")) {
         form.setValue("title", file.name.replace(/\.[^/.]+$/, ""))
       }
@@ -109,9 +119,20 @@ export function DocumentDialog({ open, onOpenChange, document, onSuccess }: Docu
     reader.readAsText(file)
   }
 
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['blockquote', 'code-block'],
+      ['link'],
+      ['clean'],
+    ],
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
         <DialogHeader>
           <DialogTitle>{document ? "Edit Document" : "Create New Document"}</DialogTitle>
           <DialogDescription>
@@ -120,7 +141,7 @@ export function DocumentDialog({ open, onOpenChange, document, onSuccess }: Docu
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 flex-1">
             <FormField
               control={form.control}
               name="title"
@@ -142,7 +163,7 @@ export function DocumentDialog({ open, onOpenChange, document, onSuccess }: Docu
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
@@ -165,9 +186,23 @@ export function DocumentDialog({ open, onOpenChange, document, onSuccess }: Docu
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Water, First Aid" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Category" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {KNOWLEDGE_CATEGORIES.map(cat => (
+                                <SelectItem key={cat.id} value={cat.id}>
+                                    <div className="flex items-center gap-2">
+                                        <cat.icon className={`h-4 w-4 ${cat.color}`} />
+                                        <span>{cat.label}</span>
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -178,8 +213,8 @@ export function DocumentDialog({ open, onOpenChange, document, onSuccess }: Docu
               control={form.control}
               name="content"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex justify-between items-center">
+                <FormItem className="flex flex-col flex-1">
+                  <FormLabel className="flex justify-between items-center mb-1">
                     <span>Content</span>
                     <Button
                         type="button"
@@ -187,7 +222,7 @@ export function DocumentDialog({ open, onOpenChange, document, onSuccess }: Docu
                         size="xs"
                         onClick={() => fileInputRef.current?.click()}
                     >
-                        <Upload className="h-3 w-3 mr-1" /> Import File
+                        <Upload className="h-3 w-3 mr-1" /> Import Text
                     </Button>
                     <input
                         type="file"
@@ -198,18 +233,22 @@ export function DocumentDialog({ open, onOpenChange, document, onSuccess }: Docu
                     />
                   </FormLabel>
                   <FormControl>
-                    <Textarea
-                        placeholder="Write your content here..."
-                        className="min-h-[300px] font-mono text-sm"
-                        {...field}
-                    />
+                    <div className="h-64 sm:h-80">
+                         <ReactQuill
+                            theme="snow"
+                            value={field.value}
+                            onChange={field.onChange}
+                            modules={modules}
+                            className="h-full pb-10"
+                         />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <DialogFooter>
+            <DialogFooter className="mt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
