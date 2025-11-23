@@ -9,82 +9,70 @@ import { Calculator, Users, Calendar } from "lucide-react"
 
 interface FamilyMember {
   id: string
-  name: string
-  age: number
-  weight: number
-  height: number
-  activityLevel: "sedentary" | "light" | "moderate" | "active"
-  gender: "male" | "female"
+  first_name: string
+  birth_date: string | null
+  weight_lbs: number | null
+  height_inches: number | null
+  // We might not have these in DB, so we handle defaults or calculate
 }
 
-export function RationingCalculator() {
-  const [familyMembers] = useState<FamilyMember[]>([
-    {
-      id: "1",
-      name: "John Doe",
-      age: 35,
-      weight: 180,
-      height: 72,
-      activityLevel: "moderate",
-      gender: "male",
-    },
-    {
-      id: "2",
-      name: "Jane Doe",
-      age: 32,
-      weight: 140,
-      height: 66,
-      activityLevel: "light",
-      gender: "female",
-    },
-    {
-      id: "3",
-      name: "Child 1",
-      age: 12,
-      weight: 90,
-      height: 58,
-      activityLevel: "active",
-      gender: "male",
-    },
-    {
-      id: "4",
-      name: "Child 2",
-      age: 8,
-      weight: 65,
-      height: 52,
-      activityLevel: "active",
-      gender: "female",
-    },
-  ])
+interface RationingCalculatorProps {
+    initialFamilyMembers: any[]
+    initialTotalCalories: number
+}
 
-  const [totalCaloriesAvailable, setTotalCaloriesAvailable] = useState(87240)
+export function RationingCalculator({ initialFamilyMembers, initialTotalCalories }: RationingCalculatorProps) {
+  const [familyMembers, setFamilyMembers] = useState<any[]>(initialFamilyMembers)
+  const [totalCaloriesAvailable, setTotalCaloriesAvailable] = useState(initialTotalCalories)
   const [rationingLevel, setRationingLevel] = useState("normal")
   const [calculatedDays, setCalculatedDays] = useState(0)
   const [dailyCaloriesNeeded, setDailyCaloriesNeeded] = useState(0)
 
-  // Calculate BMR using Mifflin-St Jeor Equation
-  const calculateBMR = (member: FamilyMember) => {
-    const { weight, height, age, gender } = member
-    const weightKg = weight * 0.453592 // Convert lbs to kg
-    const heightCm = height * 2.54 // Convert inches to cm
+  // Helper to calculate age from birthdate
+  const calculateAge = (birthDate: string | null) => {
+      if (!birthDate) return 30; // Default
+      const today = new Date();
+      const birth = new Date(birthDate);
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+          age--;
+      }
+      return age;
+  }
 
-    if (gender === "male") {
-      return 10 * weightKg + 6.25 * heightCm - 5 * age + 5
-    } else {
-      return 10 * weightKg + 6.25 * heightCm - 5 * age - 161
-    }
+  // Calculate BMR using Mifflin-St Jeor Equation
+  const calculateBMR = (member: any) => {
+    const weight = member.weight_lbs || 150
+    const height = member.height_inches || 68
+    const age = calculateAge(member.birth_date)
+    // Default to Male logic if unknown, or try to infer. For now, we don't have gender in DB, assume mix or average.
+    // Let's just use Male formula as base or a simplified average.
+    // Or adds UI to select gender/activity?
+    // Since we can't edit DB here easily, let's use a standard assumption or client-side only override.
+    // For this implementation, I'll use a simplified average BMR if gender unknown.
+    // Actually, user wants to "pull family info".
+    // I'll assume Male for calculation to be safe (higher calorie need).
+
+    const weightKg = weight * 0.453592
+    const heightCm = height * 2.54
+
+    // Male formula: 10W + 6.25H - 5A + 5
+    return 10 * weightKg + 6.25 * heightCm - 5 * age + 5
   }
 
   // Calculate TDEE (Total Daily Energy Expenditure)
-  const calculateTDEE = (member: FamilyMember) => {
+  const calculateTDEE = (member: any) => {
     const bmr = calculateBMR(member)
-    const activityMultipliers = {
+    // Default to moderate if not set
+    const activityLevel = member.activityLevel || "moderate"
+    const activityMultipliers: Record<string, number> = {
       sedentary: 1.2,
       light: 1.375,
       moderate: 1.55,
       active: 1.725,
     }
-    return bmr * activityMultipliers[member.activityLevel]
+    return bmr * (activityMultipliers[activityLevel] || 1.55)
   }
 
   // Calculate rationing multiplier
@@ -110,7 +98,11 @@ export function RationingCalculator() {
     const adjustedDailyCalories = totalDailyCalories * rationingMultiplier
 
     setDailyCaloriesNeeded(Math.round(adjustedDailyCalories))
-    setCalculatedDays(Math.floor(totalCaloriesAvailable / adjustedDailyCalories))
+    if (adjustedDailyCalories > 0) {
+        setCalculatedDays(Math.floor(totalCaloriesAvailable / adjustedDailyCalories))
+    } else {
+        setCalculatedDays(0)
+    }
   }, [familyMembers, totalCaloriesAvailable, rationingLevel])
 
   return (
@@ -153,24 +145,30 @@ export function RationingCalculator() {
             Family Members ({familyMembers.length})
           </h3>
           <div className="space-y-3">
-            {familyMembers.map((member) => (
-              <div key={member.id} className="border border-border rounded-lg p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-body font-medium text-foreground">{member.name}</div>
-                    <div className="font-body text-sm text-muted-foreground">
-                      {member.age} years, {member.weight} lbs, {Math.floor(member.height / 12)}'{member.height % 12}"
+            {familyMembers.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No family members found in settings.</div>
+            ) : (
+                familyMembers.map((member) => (
+                <div key={member.id} className="border border-border rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                    <div>
+                        <div className="font-body font-medium text-foreground">{member.first_name || "Unknown"}</div>
+                        <div className="font-body text-sm text-muted-foreground">
+                        {calculateAge(member.birth_date)} years, {member.weight_lbs || "?"} lbs
+                        </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-body font-medium text-foreground">
-                      {Math.round(calculateTDEE(member))} cal/day
+                    <div className="text-right">
+                        <div className="font-body font-medium text-foreground">
+                        ~{Math.round(calculateTDEE(member))} cal/day
+                        </div>
+                        <div className="font-body text-xs text-muted-foreground capitalize">
+                            Moderate (Est.)
+                        </div>
                     </div>
-                    <div className="font-body text-xs text-muted-foreground capitalize">{member.activityLevel} activity</div>
-                  </div>
+                    </div>
                 </div>
-              </div>
-            ))}
+                ))
+            )}
           </div>
         </div>
 

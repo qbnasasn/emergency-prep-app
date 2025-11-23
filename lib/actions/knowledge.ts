@@ -10,7 +10,7 @@ const DocumentSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required"),
   content: z.string().optional(),
-  type: z.enum(["article", "guide", "tip"]),
+  type: z.enum(["article", "guide", "tip", "menu"]),
   category: z.string().optional(),
   tags: z.array(z.string()).optional(),
   is_public: z.boolean().default(false),

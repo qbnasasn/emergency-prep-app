@@ -39,7 +39,8 @@ CREATE TABLE inventory_items (
     calories INTEGER,
     supplier TEXT,
     upc TEXT,
-    image TEXT
+    image TEXT,
+    nutrition_type TEXT
 );
 
 -- Plans Table

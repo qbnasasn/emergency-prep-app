@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
@@ -14,61 +13,11 @@ interface FoodCategory {
   status: "good" | "low" | "critical"
 }
 
-const foodCategories: FoodCategory[] = [
-  {
-    name: "Grains & Carbohydrates",
-    items: 32,
-    calories: 28450,
-    percentage: 32.6,
-    status: "good",
-  },
-  {
-    name: "Proteins",
-    items: 24,
-    calories: 18720,
-    percentage: 21.5,
-    status: "good",
-  },
-  {
-    name: "Canned Vegetables",
-    items: 28,
-    calories: 12880,
-    percentage: 14.8,
-    status: "good",
-  },
-  {
-    name: "Fruits & Snacks",
-    items: 18,
-    calories: 11340,
-    percentage: 13.0,
-    status: "low",
-  },
-  {
-    name: "Dairy & Alternatives",
-    items: 12,
-    calories: 8760,
-    percentage: 10.0,
-    status: "low",
-  },
-  {
-    name: "Fats & Oils",
-    items: 8,
-    calories: 5280,
-    percentage: 6.1,
-    status: "critical",
-  },
-  {
-    name: "Beverages",
-    items: 5,
-    calories: 1810,
-    percentage: 2.1,
-    status: "critical",
-  },
-]
+interface FoodInventoryAnalysisProps {
+    categories: FoodCategory[]
+}
 
-export function FoodInventoryAnalysis() {
-  const [categories] = useState<FoodCategory[]>(foodCategories)
-
+export function FoodInventoryAnalysis({ categories }: FoodInventoryAnalysisProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "good":
@@ -79,19 +28,6 @@ export function FoodInventoryAnalysis() {
         return "bg-red-100 text-red-800"
       default:
         return "bg-muted text-foreground"
-    }
-  }
-
-  const getProgressColor = (status: string) => {
-    switch (status) {
-      case "good":
-        return "bg-primary/100"
-      case "low":
-        return "bg-yellow-500"
-      case "critical":
-        return "bg-destructive"
-      default:
-        return "bg-gray-500"
     }
   }
 
@@ -124,26 +60,32 @@ export function FoodInventoryAnalysis() {
             Food Categories
           </h3>
           <div className="space-y-4">
-            {categories.map((category) => (
-              <div key={category.name} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-body font-medium text-foreground">{category.name}</span>
-                    <Badge className={getStatusColor(category.status)}>{category.status}</Badge>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-body text-sm font-medium text-foreground">{category.items} items</div>
-                    <div className="font-body text-xs text-muted-foreground">{category.calories.toLocaleString()} cal</div>
-                  </div>
+            {categories.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-4">
+                    No food inventory data found. Add items to "Food & Water" category with a "Nutrition Type" to see analysis.
                 </div>
-                <div className="space-y-1">
-                  <Progress value={category.percentage} className="h-2" />
-                  <div className="flex justify-between text-xs font-body text-muted-foreground">
-                    <span>{category.percentage}% of total calories</span>
-                  </div>
+            ) : (
+                categories.map((category) => (
+                <div key={category.name} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                        <span className="font-body font-medium text-foreground">{category.name}</span>
+                        <Badge className={getStatusColor(category.status)}>{category.status}</Badge>
+                    </div>
+                    <div className="text-right">
+                        <div className="font-body text-sm font-medium text-foreground">{category.items} items</div>
+                        <div className="font-body text-xs text-muted-foreground">{category.calories.toLocaleString()} cal</div>
+                    </div>
+                    </div>
+                    <div className="space-y-1">
+                    <Progress value={category.percentage} className="h-2" />
+                    <div className="flex justify-between text-xs font-body text-muted-foreground">
+                        <span>{category.percentage.toFixed(1)}% of total calories</span>
+                    </div>
+                    </div>
                 </div>
-              </div>
-            ))}
+                ))
+            )}
           </div>
         </div>
 
