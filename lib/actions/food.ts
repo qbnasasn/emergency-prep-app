@@ -78,10 +78,30 @@ export async function getFoodPageData() {
             }
         })
 
+        // Calculate stats for overview
+        const foodItemsCountRes = await client.query(
+            "SELECT COUNT(*) as count FROM inventory_items WHERE user_id = $1 AND category = 'Food & Nutrition'",
+            [userId]
+        )
+        const foodItemsCount = parseInt(foodItemsCountRes.rows[0].count || "0")
+
+        // Estimate days of food (simple calculation: 2000 cal/person/day)
+        // This is a rough estimate for the overview, the calculator is more precise.
+        // If 0 people, assume 1 for calculation to avoid division by zero or set to 0.
+        const peopleCount = familyMembers.length > 0 ? familyMembers.length : 1
+        const dailyNeedEstimate = peopleCount * 2000
+        const daysOfFood = dailyNeedEstimate > 0 ? totalCalories / dailyNeedEstimate : 0
+
         return {
             familyMembers,
             totalCalories,
-            foodAnalysis: categories
+            foodAnalysis: categories,
+            stats: {
+                daysOfFood,
+                totalCalories,
+                familyMemberCount: familyMembers.length,
+                foodItemsCount
+            }
         }
 
     } finally {
@@ -92,7 +112,13 @@ export async function getFoodPageData() {
     return {
         familyMembers: [],
         totalCalories: 0,
-        foodAnalysis: []
+        foodAnalysis: [],
+        stats: {
+            daysOfFood: 0,
+            totalCalories: 0,
+            familyMemberCount: 0,
+            foodItemsCount: 0
+        }
     }
   }
 }

@@ -6,13 +6,13 @@ import { MenuPlanner } from "@/components/food/menu-planner"
 import { getFoodPageData, getMenus } from "@/lib/actions/food"
 
 export default async function FoodPlanningPage() {
-  const { familyMembers, totalCalories, foodAnalysis } = await getFoodPageData()
+  const { familyMembers, totalCalories, foodAnalysis, stats } = await getFoodPageData()
   const menus = await getMenus()
 
   return (
     <div className="space-y-6">
       <FoodPlanningHeader />
-      <FoodPlanningOverview />
+      <FoodPlanningOverview stats={stats} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
           <RationingCalculator
