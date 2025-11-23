@@ -1,45 +1,55 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UtensilsCrossed, Calendar, Users, TrendingUp } from "lucide-react"
 
-const stats = [
-  {
-    title: "Days of Food",
-    value: "14.5",
-    change: "For 4 people",
-    icon: Calendar,
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  {
-    title: "Total Calories",
-    value: "87,240",
-    change: "Available in stock",
-    icon: TrendingUp,
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  {
-    title: "Family Members",
-    value: "4",
-    change: "Planned for",
-    icon: Users,
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  {
-    title: "Food Items",
-    value: "127",
-    change: "In food inventory",
-    icon: UtensilsCrossed,
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-]
+interface FoodPlanningOverviewProps {
+  stats: {
+    daysOfFood: number;
+    totalCalories: number;
+    familyMemberCount: number;
+    foodItemsCount: number;
+  }
+}
 
-export function FoodPlanningOverview() {
+export function FoodPlanningOverview({ stats }: FoodPlanningOverviewProps) {
+  const statItems = [
+    {
+      title: "Days of Food",
+      value: stats.daysOfFood.toFixed(1),
+      change: `For ${stats.familyMemberCount} people`,
+      icon: Calendar,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      title: "Total Calories",
+      value: stats.totalCalories.toLocaleString(),
+      change: "Available in stock",
+      icon: TrendingUp,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      title: "Family Members",
+      value: stats.familyMemberCount.toString(),
+      change: "Planned for",
+      icon: Users,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      title: "Food Items",
+      value: stats.foodItemsCount.toString(),
+      change: "In food inventory",
+      icon: UtensilsCrossed,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+  ]
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map((stat) => (
+      {statItems.map((stat) => (
         <Card key={stat.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="font-body text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>

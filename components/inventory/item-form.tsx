@@ -18,7 +18,7 @@ import type { InventoryItem } from "@/components/inventory/inventory-table"
 import { useState } from "react"
 import Image from "next/image"
 import { X } from "lucide-react"
-import { INVENTORY_CATEGORIES } from "@/lib/constants"
+import { INVENTORY_CATEGORIES, NUTRITION_TYPES } from "@/lib/constants"
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -32,6 +32,7 @@ const formSchema = z.object({
   expiry_date: z.string().optional(),
   min_stock: z.coerce.number().int().optional(),
   calories: z.coerce.number().int().optional(),
+  nutrition_type: z.string().optional(),
   upc: z.string().optional(),
   image: z.string().optional(),
 })
@@ -50,6 +51,7 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
     upc: initialData.upc || "",
     image: initialData.image || "",
     category: initialData.category || "",
+    nutrition_type: initialData.nutrition_type || "",
     purchase_date: initialData.purchase_date ? initialData.purchase_date.split('T')[0] : '',
     expiry_date: initialData.expiry_date ? initialData.expiry_date.split('T')[0] : '',
   } : undefined;
@@ -61,6 +63,7 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
       description: "",
       quantity: 0,
       category: "",
+      nutrition_type: "",
       image: "",
       upc: "",
       location: "",
@@ -198,6 +201,30 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
             </FormItem>
           )}
         />
+        {form.watch("category") === "Food & Nutrition" && (
+        <FormField
+          control={form.control}
+          name="nutrition_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nutrition Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select nutrition type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {NUTRITION_TYPES.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        )}
         <FormField
           control={form.control}
           name="description"

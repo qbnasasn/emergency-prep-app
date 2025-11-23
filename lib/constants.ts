@@ -15,3 +15,16 @@ export const INVENTORY_CATEGORIES = [
   "Specialized Gear",
   "Miscellaneous",
 ];
+
+export const NUTRITION_TYPES = [
+  "Grains & Carbohydrates",
+  "Proteins",
+  "Canned Vegetables",
+  "Fruits & Snacks",
+  "Dairy & Alternatives",
+  "Fats & Oils",
+  "Beverages",
+  "Prepared Meals",
+  "Spices & Condiments",
+  "Other",
+];

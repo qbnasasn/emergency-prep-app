@@ -24,7 +24,7 @@ import "react-quill-new/dist/quill.snow.css"
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  type: z.enum(["article", "guide", "tip"]),
+  type: z.enum(["article", "guide", "tip", "menu"]),
   category: z.string().optional(),
   content: z.string().optional(),
 })
@@ -55,7 +55,7 @@ export function DocumentDialog({ open, onOpenChange, document, onSuccess }: Docu
     if (document) {
       form.reset({
         title: document.title,
-        type: (document.type as "article" | "guide" | "tip") || "article",
+        type: (document.type as "article" | "guide" | "tip" | "menu") || "article",
         category: document.category || "basics-planning",
         content: document.content || "",
       })
@@ -173,6 +173,7 @@ export function DocumentDialog({ open, onOpenChange, document, onSuccess }: Docu
                         <SelectItem value="article">Article</SelectItem>
                         <SelectItem value="guide">Guide</SelectItem>
                         <SelectItem value="tip">Tip</SelectItem>
+                        <SelectItem value="menu">Menu</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
