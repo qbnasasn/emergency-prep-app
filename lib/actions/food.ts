@@ -24,19 +24,16 @@ export async function getFoodPageData() {
         const familyMembers = familyRes.rows
 
         // 2. Get Inventory Items for Calculation (Total Calories)
-        // Only items with calories defined
+        // STRICTLY from 'Food & Nutrition' category to match analysis
         const calorieRes = await client.query(
-            "SELECT SUM(COALESCE(calories, 0) * quantity) as total_calories FROM inventory_items WHERE user_id = $1",
+            "SELECT SUM(COALESCE(calories, 0) * quantity) as total_calories FROM inventory_items WHERE user_id = $1 AND category = 'Food & Nutrition'",
             [userId]
         )
         const totalCalories = parseInt(calorieRes.rows[0].total_calories || "0")
 
         // 3. Get Food Inventory Analysis
-        // Group by nutrition_type (or map from categories if nutrition_type is null but category is food?)
-        // The user specifically asked for "categories under the food inventory analysis" which we map to nutrition_type
-        // We will fetch all food items and aggregate in JS or SQL. SQL is better.
-        // We need to match the NUTRITION_TYPES.
-
+        // Group by nutrition_type
+        // Map NULL nutrition_type to "Other"
         const analysisRes = await client.query(
             `SELECT
                 nutrition_type,
@@ -52,12 +49,13 @@ export async function getFoodPageData() {
         // Process analysis results to match the format expected by the component
         const analysisMap = new Map()
         analysisRes.rows.forEach(row => {
-            if (row.nutrition_type) {
-                analysisMap.set(row.nutrition_type, {
-                    items: parseInt(row.items),
-                    calories: parseInt(row.calories)
-                })
-            }
+            const type = row.nutrition_type || "Other" // Map NULL/Empty to "Other"
+
+            const existing = analysisMap.get(type) || { items: 0, calories: 0 }
+            analysisMap.set(type, {
+                items: existing.items + parseInt(row.items),
+                calories: existing.calories + parseInt(row.calories)
+            })
         })
 
         const categories = NUTRITION_TYPES.map(type => {
