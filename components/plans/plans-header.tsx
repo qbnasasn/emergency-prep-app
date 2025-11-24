@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, FileText } from "lucide-react"
+import { Plus, Search } from "lucide-react"
 
 interface PlansHeaderProps {
   onCreate: () => void;
@@ -37,11 +37,6 @@ export function PlansHeader({ onCreate, plans, onSearch }: PlansHeaderProps) {
             className="pl-10 w-64 font-body"
           />
         </div>
-
-        <Button variant="outline" size="sm" className="font-body bg-transparent">
-          <FileText className="h-4 w-4 mr-2" />
-          Templates
-        </Button>
 
         <Button className="font-body bg-gray-900 hover:bg-gray-800" onClick={onCreate}>
           <Plus className="h-4 w-4 mr-2" />
