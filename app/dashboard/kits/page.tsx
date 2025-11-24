@@ -13,9 +13,16 @@ import { createKit, updateKit } from "@/lib/actions/kits"
 export default function KitsPage() {
   const { data: session } = useSession()
   const [kits, setKits] = useState<Kit[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedKit, setSelectedKit] = useState<Kit | null>(null)
+
+  const filteredKits = kits.filter(kit =>
+    kit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (kit.description && kit.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (kit.category && kit.category.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
 
   const fetchKits = async () => {
     if (!session?.user?.id) return;
@@ -81,9 +88,9 @@ export default function KitsPage() {
 
   return (
     <div className="space-y-6">
-      <KitsHeader onNewKit={() => handleOpenModal()} />
+      <KitsHeader onNewKit={() => handleOpenModal()} onSearch={setSearchQuery} />
       <KitsOverview kits={kits} isLoading={isLoading} />
-      <KitsList kits={kits} isLoading={isLoading} onEditKit={handleOpenModal} onDataChange={fetchKits} />
+      <KitsList kits={filteredKits} isLoading={isLoading} onEditKit={handleOpenModal} onDataChange={fetchKits} />
       {isModalOpen && (
         <KitBuilderModal
           isOpen={isModalOpen}

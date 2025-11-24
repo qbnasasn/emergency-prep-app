@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, ListPlus, Settings } from "lucide-react"
+import { Plus, Search, Settings } from "lucide-react"
 import { useState } from "react"
 import {
   Dialog,
@@ -22,28 +22,12 @@ interface ShoppingHeaderProps {
 
 export function ShoppingHeader({ shoppingListId, onListUpdate, onSearch }: ShoppingHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [isPopulating, setIsPopulating] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
     onSearch(query);
-  };
-
-  const populateFromInventory = async () => {
-    setIsPopulating(true);
-    try {
-      const response = await fetch('/api/shopping-lists/populate-from-inventory', {
-        method: 'POST',
-      });
-      // TODO: Show a toast with the message from the response
-      onListUpdate();
-    } catch (error) {
-      console.error("Failed to populate shopping list", error);
-    } finally {
-      setIsPopulating(false);
-    }
   };
 
   const handleFormSubmit = () => {
@@ -68,17 +52,6 @@ export function ShoppingHeader({ shoppingListId, onListUpdate, onSearch }: Shopp
             className="pl-10 w-64 font-body"
           />
         </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={populateFromInventory}
-          disabled={isPopulating}
-          className="font-body bg-transparent"
-        >
-          <ListPlus className={`h-4 w-4 mr-2 ${isPopulating ? "animate-spin" : ""}`} />
-          Check for Low Stock
-        </Button>
 
         <Button variant="outline" size="sm" className="font-body bg-transparent">
           <Settings className="h-4 w-4 mr-2" />
