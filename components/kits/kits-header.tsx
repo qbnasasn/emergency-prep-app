@@ -21,7 +21,7 @@ export function KitsHeader({ onNewKit, onSearch }: KitsHeaderProps) {
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight font-heading">Emergency Kits</h1>
-        <p className="text-muted-foreground">Build and manage your emergency preparedness kits with GPS tracking</p>
+        <p className="text-muted-foreground">Build and manage your emergency preparedness kits</p>
       </div>
       <div className="flex items-center gap-2">
         <div className="relative">
