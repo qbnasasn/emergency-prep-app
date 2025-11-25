@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
+import { sendNotification } from '@/lib/notifications';
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -51,6 +52,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
         values.push(itemId, userId);
 
+        // Get the current state of the item BEFORE updating
+        const currentStateResult = await client.query('SELECT quantity, min_stock FROM inventory_items WHERE id = $1', [itemId]);
+        const currentState = currentStateResult.rows[0];
+
         const updateQuery = `
           UPDATE inventory_items
           SET ${setClauses.join(', ')}
@@ -59,7 +64,30 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         `;
 
         const result = await client.query(updateQuery, values);
-        return NextResponse.json(result.rows[0]);
+        const updatedItem = result.rows[0];
+
+        // Check if a low stock notification should be sent
+        const newQuantity = updatedItem.quantity;
+        const minStock = updatedItem.min_stock;
+
+        // Condition:
+        // 1. min_stock is set.
+        // 2. The new quantity is below the min_stock threshold.
+        // 3. EITHER the old quantity was at or above the threshold (it just crossed)
+        //    OR the old quantity was already below and the new quantity is even lower.
+        if (minStock !== null && newQuantity < minStock) {
+            const oldQuantity = currentState.quantity;
+            if (oldQuantity >= minStock || newQuantity < oldQuantity) {
+                 await sendNotification(
+                    userId,
+                    'Low Stock Alert',
+                    `Your supply of ${updatedItem.name} is running low. You have ${newQuantity} remaining.`,
+                    'inventory'
+                );
+            }
+        }
+
+        return NextResponse.json(updatedItem);
     } finally {
         client.release();
     }
