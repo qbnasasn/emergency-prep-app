@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator"
 import { AlertCircle, Mail, Lock, User } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-export function SignInForm() {
+export function SignInForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "signup" }) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
@@ -143,7 +143,7 @@ export function SignInForm() {
           </span>
         </div>
 
-        <Tabs defaultValue="signin" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="signin" className="font-body">
               Sign In
