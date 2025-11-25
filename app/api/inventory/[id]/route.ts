@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
+import { sendNotification } from '@/lib/notifications';
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -59,7 +60,25 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         `;
 
         const result = await client.query(updateQuery, values);
-        return NextResponse.json(result.rows[0]);
+        const updatedItem = result.rows[0];
+
+        // Check for low stock alert if quantity or min_stock was updated
+        if (body.quantity !== undefined || body.min_stock !== undefined) {
+            const quantity = updatedItem.quantity;
+            const minStock = updatedItem.min_stock;
+
+            if (minStock !== null && quantity <= minStock) {
+                 await sendNotification(
+                    userId,
+                    'Low Stock Alert',
+                    `Your inventory item "${updatedItem.name}" is low on stock (${quantity} remaining, min: ${minStock}).`,
+                    'inventory',
+                    '/dashboard/inventory'
+                  );
+            }
+        }
+
+        return NextResponse.json(updatedItem);
     } finally {
         client.release();
     }

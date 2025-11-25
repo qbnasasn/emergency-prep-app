@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
+import { sendNotification } from '@/lib/notifications';
 
 export async function POST(req: Request, { params }: { params: { listId: string } }) {
   const session = await getServerSession(authOptions);
@@ -52,7 +53,18 @@ export async function POST(req: Request, { params }: { params: { listId: string 
         ]
       );
 
-      return NextResponse.json(result.rows[0], { status: 201 });
+      const newItem = result.rows[0];
+
+      // Send notification
+      await sendNotification(
+        userId,
+        'Shopping List Update',
+        `"${item_name}" has been added to your shopping list.`,
+        'shopping',
+        '/dashboard/shopping'
+      );
+
+      return NextResponse.json(newItem, { status: 201 });
 
     } finally {
       client.release();
