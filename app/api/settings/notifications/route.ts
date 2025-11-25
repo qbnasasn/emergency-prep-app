@@ -59,8 +59,8 @@ export async function PUT(request: Request) {
     // Upsert settings
     const query = `
       INSERT INTO notification_settings (
-        user_id, email_alerts, weather_alerts, inventory_alerts, plan_reminders, shopping_updates, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        user_id, email_alerts, weather_alerts, inventory_alerts, plan_reminders, shopping_updates, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
       ON CONFLICT (user_id) DO UPDATE SET
         email_alerts = EXCLUDED.email_alerts,
         weather_alerts = EXCLUDED.weather_alerts,
