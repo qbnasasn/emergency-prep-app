@@ -7,7 +7,18 @@ import { drizzle } from 'drizzle-orm/neon-http';
 let pool: Pool;
 
 // Ensure the connection string has the required sslmode
-const connectionString = `${process.env.POSTGRES_URL}?sslmode=require`;
+// Fallback to a dummy URL if POSTGRES_URL is not set (e.g. in sandbox) to prevent crash on startup
+const baseUrl = process.env.POSTGRES_URL || 'postgres://dummy:dummy@localhost:5432/dummy';
+let connectionString: string;
+
+try {
+  const url = new URL(baseUrl);
+  url.searchParams.set('sslmode', 'require');
+  connectionString = url.toString();
+} catch (e) {
+  // If baseUrl is invalid, fallback to dummy again with params
+  connectionString = 'postgres://dummy:dummy@localhost:5432/dummy?sslmode=require';
+}
 
 if (process.env.NODE_ENV === 'production') {
   pool = new Pool({ connectionString });
