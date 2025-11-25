@@ -64,7 +64,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="relative py-20 md:py-32 overflow-hidden bg-slate-900 text-white">
           <div className="absolute inset-0 opacity-20">
-             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1454789476662-b432d65d88c9?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center" />
+             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1511497584788-876760111969')] bg-cover bg-center" />
              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent" />
           </div>
 
@@ -335,37 +335,11 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-
-        {/* CTA Section */}
-        <section className="py-24 bg-slate-900 text-white text-center">
-          <div className="container px-4 mx-auto max-w-4xl">
-            <h2 className="font-heading text-3xl md:text-5xl font-black mb-6">
-              Peace of Mind is Priceless.
-            </h2>
-            <p className="text-xl text-slate-300 mb-10">
-              Join thousands of proactive families who have chosen safety over chance.
-              Get started with PrepSafe today.
-            </p>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-100 px-10 py-6 text-lg font-bold rounded-full">
-                  Create Free Account
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-md">
-                <SignInForm />
-              </DialogContent>
-            </Dialog>
-            <p className="mt-6 text-sm text-slate-500">
-              No credit card required for basic plan. Secure & Encrypted.
-            </p>
-          </div>
-        </section>
       </main>
 
       <footer className="bg-white border-t border-slate-200 py-12">
         <div className="container px-4 md:px-6 mx-auto max-w-7xl">
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <Image src="/images/LOGO.png" alt="PrepSafe" width={24} height={24} className="h-6 w-auto grayscale opacity-80" />
@@ -374,15 +348,6 @@ export default function LandingPage() {
               <p className="text-slate-500 text-sm max-w-xs">
                 The ultimate emergency preparedness platform for individuals and families. Be ready for anything.
               </p>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4 text-slate-900">Product</h4>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li><Link href="/dashboard/inventory" className="hover:text-primary">Inventory</Link></li>
-                <li><Link href="/dashboard/kits" className="hover:text-primary">Kits</Link></li>
-                <li><Link href="/dashboard/plans" className="hover:text-primary">Plans</Link></li>
-                <li><Link href="#pricing" className="hover:text-primary">Pricing</Link></li>
-              </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4 text-slate-900">Resources</h4>
