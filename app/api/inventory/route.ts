@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
-import { sendNotification } from '@/lib/notifications';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -83,19 +82,7 @@ export async function POST(req: Request) {
     const client = await pool.connect();
     try {
         const result = await client.query(insertQuery, values);
-        const newItem = result.rows[0];
-
-        // Check for low stock alert
-        if (newItem.min_stock !== null && newItem.quantity < newItem.min_stock) {
-          await sendNotification(
-            session.user.id,
-            'Low Stock Alert',
-            `Your supply of ${newItem.name} is running low. You have ${newItem.quantity} remaining.`,
-            'inventory'
-          );
-        }
-
-        return NextResponse.json(newItem, { status: 201 });
+        return NextResponse.json(result.rows[0], { status: 201 });
     } finally {
         client.release();
     }

@@ -5,15 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Bell, Loader2 } from "lucide-react"
+import { Bell, Loader2, Mail } from "lucide-react"
 import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
 
 interface NotificationSettingsData {
+  in_app_alerts: boolean
   email_alerts: boolean
   weather_alerts: boolean
   inventory_alerts: boolean
   plan_reminders: boolean
   shopping_updates: boolean
+  plan_reminder_frequency: string
 }
 
 export function NotificationSettings() {
@@ -37,7 +40,7 @@ export function NotificationSettings() {
     fetchSettings()
   }, [])
 
-  const updateSetting = async (key: keyof NotificationSettingsData, value: boolean) => {
+  const updateSetting = async (key: keyof NotificationSettingsData, value: boolean | string) => {
     if (!settings) return
 
     const newSettings = { ...settings, [key]: value }
@@ -77,10 +80,25 @@ export function NotificationSettings() {
     )
   }
 
+  const handleTestNotification = async () => {
+    try {
+      const res = await fetch('/api/notifications/test', { method: 'POST' });
+      if (!res.ok) throw new Error('Server error');
+      toast.success("Test email sent!", {
+        description: "Please check your inbox."
+      });
+    } catch (error) {
+      toast.error("Failed to send test email.", {
+        description: "Please check the server logs."
+      });
+    }
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-heading text-xl flex items-center">
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-heading text-xl flex items-center">
           <Bell className="h-5 w-5 mr-2 text-primary" />
           Notification Settings
         </CardTitle>
@@ -120,6 +138,25 @@ export function NotificationSettings() {
             />
           </div>
 
+          {settings?.plan_reminders && (
+            <div className="flex items-center justify-between">
+              <Label className="font-body font-medium">Reminder Frequency</Label>
+              <Select
+                value={settings?.plan_reminder_frequency || 'monthly'}
+                onValueChange={(value) => updateSetting('plan_reminder_frequency', value)}
+              >
+                <SelectTrigger className="w-[180px] font-body">
+                  <SelectValue placeholder="Frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="font-body font-medium">Shopping Updates</Label>
@@ -135,22 +172,57 @@ export function NotificationSettings() {
         <div className="space-y-2">
           <Label className="font-body font-medium">Notification Method</Label>
           <Select
-            value={settings?.email_alerts ? "email" : "none"}
-            onValueChange={(value) => updateSetting('email_alerts', value === 'email')}
+            value={
+              settings?.email_alerts && settings?.in_app_alerts
+                ? 'both'
+                : settings?.email_alerts
+                ? 'email'
+                : 'in-app'
+            }
+            onValueChange={(value) => {
+              if (value === 'both') {
+                updateSetting('email_alerts', true);
+                updateSetting('in_app_alerts', true);
+              } else if (value === 'email') {
+                updateSetting('email_alerts', true);
+                updateSetting('in_app_alerts', false);
+              } else {
+                updateSetting('email_alerts', false);
+                updateSetting('in_app_alerts', true);
+              }
+            }}
           >
             <SelectTrigger className="font-body">
               <SelectValue placeholder="Select method" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="in-app">In-App Only</SelectItem>
               <SelectItem value="email">Email Only</SelectItem>
-              <SelectItem value="none">None (In-App Only)</SelectItem>
+              <SelectItem value="both">Both</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground mt-1">
-            Push notifications are not currently available.
+            Configure how you receive general alerts.
           </p>
         </div>
       </CardContent>
     </Card>
+    <Card>
+        <CardHeader>
+          <CardTitle className="font-heading text-xl flex items-center">
+            <Mail className="h-5 w-5 mr-2 text-primary" />
+            Test Email Notifications
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="font-body text-sm text-muted-foreground mb-4">
+            Click the button below to send a test email to your account. This will verify that your email notification service is configured correctly.
+          </p>
+          <Button onClick={handleTestNotification} className="font-body">
+            Send Test Email
+          </Button>
+        </CardContent>
+      </Card>
+    </>
   )
 }

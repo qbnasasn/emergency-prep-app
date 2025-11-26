@@ -43,11 +43,13 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const {
+      in_app_alerts,
       email_alerts,
       weather_alerts,
       inventory_alerts,
       plan_reminders,
-      shopping_updates
+      shopping_updates,
+      plan_reminder_frequency
     } = body;
 
     const userIdRes = await pool.query('SELECT id FROM users WHERE email = $1', [session.user.email]);
@@ -59,25 +61,29 @@ export async function PUT(request: Request) {
     // Upsert settings
     const query = `
       INSERT INTO notification_settings (
-        user_id, email_alerts, weather_alerts, inventory_alerts, plan_reminders, shopping_updates, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        user_id, in_app_alerts, email_alerts, weather_alerts, inventory_alerts, plan_reminders, shopping_updates, plan_reminder_frequency, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
       ON CONFLICT (user_id) DO UPDATE SET
+        in_app_alerts = EXCLUDED.in_app_alerts,
         email_alerts = EXCLUDED.email_alerts,
         weather_alerts = EXCLUDED.weather_alerts,
         inventory_alerts = EXCLUDED.inventory_alerts,
         plan_reminders = EXCLUDED.plan_reminders,
         shopping_updates = EXCLUDED.shopping_updates,
+        plan_reminder_frequency = EXCLUDED.plan_reminder_frequency,
         updated_at = NOW()
       RETURNING *;
     `;
 
     const res = await pool.query(query, [
       userId,
+      in_app_alerts,
       email_alerts,
       weather_alerts,
       inventory_alerts,
       plan_reminders,
-      shopping_updates
+      shopping_updates,
+      plan_reminder_frequency
     ]);
 
     return NextResponse.json(res.rows[0]);

@@ -70,14 +70,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         const newQuantity = updatedItem.quantity;
         const minStock = updatedItem.min_stock;
 
-        // Condition:
-        // 1. min_stock is set.
-        // 2. The new quantity is below the min_stock threshold.
-        // 3. EITHER the old quantity was at or above the threshold (it just crossed)
-        //    OR the old quantity was already below and the new quantity is even lower.
         if (minStock !== null && newQuantity < minStock) {
             const oldQuantity = currentState.quantity;
-            if (oldQuantity >= minStock || newQuantity < oldQuantity) {
+            if (oldQuantity >= minStock) { // Only trigger when crossing the threshold
                  await sendNotification(
                     userId,
                     'Low Stock Alert',
