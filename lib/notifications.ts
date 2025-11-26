@@ -70,12 +70,22 @@ export async function sendNotification(
     // 3. Send Email via Resend
     if (shouldEmail && email) {
       console.log(`Sending email to ${email} for ${type} alert`);
-      try {
-        await resend.emails.send({
-          from: 'alerts@prepsafe.app',
-          to: email,
-          subject: `PrepSafe Alert: ${title}`,
-          html: `
+
+      const isTestEmail = type === 'system';
+      const subject = isTestEmail ? 'PrepSafe Test Notification' : `PrepSafe Alert: ${title}`;
+      const htmlContent = isTestEmail
+        ? `
+            <div style="font-family: sans-serif; color: #333;">
+              <h1>PrepSafe Test Email</h1>
+              <p>This is a test email to confirm that your notification settings are working correctly.</p>
+              <p>You can safely ignore this email.</p>
+              <hr />
+              <p style="font-size: 12px; color: #666;">
+                <a href="https://prepsafe.app/dashboard/settings">Manage Settings</a>
+              </p>
+            </div>
+          `
+        : `
             <div style="font-family: sans-serif; color: #333;">
               <h1>${title}</h1>
               <p>${message}</p>
@@ -85,7 +95,14 @@ export async function sendNotification(
                 <a href="https://prepsafe.app/dashboard/settings">Manage Settings</a>
               </p>
             </div>
-          `
+          `;
+
+      try {
+        await resend.emails.send({
+          from: 'alerts@prepsafe.app',
+          to: email,
+          subject: subject,
+          html: htmlContent,
         });
       } catch (emailError) {
         console.error('Failed to send email via Resend:', emailError);
