@@ -77,7 +77,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
                     userId,
                     'Low Stock Alert',
                     `Your supply of ${updatedItem.name} is running low. You have ${newQuantity} remaining.`,
-                    'inventory'
+                    'inventory',
+                    `/dashboard/inventory?itemId=${updatedItem.id}`
                 );
             }
         }

@@ -10,7 +10,8 @@ export async function sendNotification(
   userId: string,
   title: string,
   message: string,
-  type: NotificationType
+  type: NotificationType,
+  link?: string
 ) {
   let email: string | undefined;
   let settings: any;
@@ -31,8 +32,8 @@ export async function sendNotification(
       // Insert into notifications table (for the in-app bell)
       // This is always done so the user sees it in the dashboard
       await client.query(
-        'INSERT INTO notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4)',
-        [userId, title, message, type]
+        'INSERT INTO notifications (user_id, title, message, type, link) VALUES ($1, $2, $3, $4, $5)',
+        [userId, title, message, type, link]
       );
     } finally {
       client.release(); // Release connection BEFORE external API call
