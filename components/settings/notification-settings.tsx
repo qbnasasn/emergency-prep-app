@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
 import { Bell, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -19,6 +20,23 @@ interface NotificationSettingsData {
 export function NotificationSettings() {
   const [settings, setSettings] = useState<NotificationSettingsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isSending, setIsSending] = useState(false)
+
+  const handleSendTestEmail = async () => {
+    setIsSending(true)
+    toast.info("Sending test email...")
+
+    try {
+      const res = await fetch('/api/settings/test-email', { method: 'POST' })
+      if (!res.ok) throw new Error('Server error')
+      toast.success("Test email sent successfully!")
+    } catch (error) {
+      console.error("Failed to send test email", error)
+      toast.error("Failed to send test email.")
+    } finally {
+      setIsSending(false)
+    }
+  }
 
   useEffect(() => {
     async function fetchSettings() {
@@ -149,6 +167,23 @@ export function NotificationSettings() {
           <p className="text-xs text-muted-foreground mt-1">
             Push notifications are not currently available.
           </p>
+        </div>
+        <div className="pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSendTestEmail}
+            disabled={isSending}
+          >
+            {isSending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              'Send Test Email'
+            )}
+          </Button>
         </div>
       </CardContent>
     </Card>
