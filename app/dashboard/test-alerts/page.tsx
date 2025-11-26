@@ -3,13 +3,12 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 
 
 export default function TestAlertsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const handleTestClick = async () => {
     setIsLoading(true);
@@ -23,16 +22,13 @@ export default function TestAlertsPage() {
       }
 
       setResult(JSON.stringify(data, null, 2));
-       toast({
-        title: "Test Complete",
+      toast.success("Test Complete", {
         description: data.message,
       });
     } catch (error: any) {
       setResult(`Error: ${error.message}`);
-      toast({
-        title: "Test Failed",
+      toast.error("Test Failed", {
         description: error.message,
-        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
