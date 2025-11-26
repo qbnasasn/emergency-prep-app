@@ -31,12 +31,6 @@ export async function GET() {
       LIMIT 20
     `, [userId]);
 
-    console.log(`[GET /api/notifications] Fetched for user ${userId}:`, {
-      unreadCount,
-      notificationCount: notificationsRes.rows.length,
-      notifications: notificationsRes.rows,
-    });
-
     return NextResponse.json({
       notifications: notificationsRes.rows,
       unreadCount: unreadCount

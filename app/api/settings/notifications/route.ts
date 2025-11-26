@@ -20,11 +20,13 @@ export async function GET() {
 
     // Return empty object if no settings found (client will handle defaults) or default row
     const settings = res.rows[0] || {
+      in_app_alerts: true, // Default to true for new users
       email_alerts: false,
-      weather_alerts: false,
-      inventory_alerts: false,
-      plan_reminders: false,
-      shopping_updates: false
+      weather_alerts: true,
+      inventory_alerts: true,
+      plan_reminders: true,
+      shopping_updates: true,
+      plan_reminder_frequency: 'monthly'
     };
 
     return NextResponse.json(settings);

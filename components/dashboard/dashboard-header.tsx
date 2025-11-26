@@ -32,13 +32,13 @@ interface NotificationResponse {
   unreadCount: number
 }
 
-export function DashboardHeader({ mockNotifications }: { mockNotifications?: NotificationResponse }) {
+export function DashboardHeader() {
   const { data: session } = useSession()
   const user = session?.user
   const initials = user?.name?.split(' ').map(n => n[0]).join('') ?? ''
 
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications?.notifications || [])
-  const [unreadCount, setUnreadCount] = useState(mockNotifications?.unreadCount || 0)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const fetchNotifications = async () => {
     try {
@@ -54,13 +54,13 @@ export function DashboardHeader({ mockNotifications }: { mockNotifications?: Not
   }
 
   useEffect(() => {
-    if (session && !mockNotifications) {
+    if (session) {
       fetchNotifications()
       // Poll every minute
       const interval = setInterval(fetchNotifications, 60000)
       return () => clearInterval(interval)
     }
-  }, [session, mockNotifications])
+  }, [session])
 
   const markAsRead = async (id: string) => {
     try {
