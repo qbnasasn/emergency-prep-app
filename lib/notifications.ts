@@ -1,7 +1,6 @@
 import { Resend } from 'resend';
 import pool from '@/lib/db';
 
-// Initialize Resend with API key from environment
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export type NotificationType = 'weather' | 'inventory' | 'plan' | 'shopping' | 'system';
@@ -13,86 +12,80 @@ export async function sendNotification(
   type: NotificationType,
   link?: string
 ) {
-  let email: string | undefined;
-  let settings: any;
+  console.log(`[sendNotification] Starting notification process for user ${userId}, type ${type}`);
 
   try {
-    // 1. Fetch user settings and email, and insert notification
     const client = await pool.connect();
     try {
-      const settingsRes = await client.query(
-        'SELECT * FROM notification_settings WHERE user_id = $1',
-        [userId]
-      );
+      // 1. Fetch user's settings and email first
+      const settingsRes = await client.query('SELECT * FROM notification_settings WHERE user_id = $1', [userId]);
       const userRes = await client.query('SELECT email FROM users WHERE id = $1', [userId]);
 
-      settings = settingsRes.rows[0];
-      email = userRes.rows[0]?.email;
+      const settings = settingsRes.rows[0];
+      const email = userRes.rows[0]?.email;
 
-      // Insert into notifications table (for the in-app bell)
-      // This is always done so the user sees it in the dashboard
-      await client.query(
-        'INSERT INTO notifications (user_id, title, message, type, link) VALUES ($1, $2, $3, $4, $5)',
-        [userId, title, message, type, link]
-      );
-    } finally {
-      client.release(); // Release connection BEFORE external API call
-    }
-
-    // 2. Check if email should be sent
-    let shouldEmail = false;
-
-    // Only send if user exists, has email, and has settings
-    if (email && settings) {
-      // Must have global email_alerts enabled
-      if (settings.email_alerts) {
-        // Check specific category
-        switch (type) {
-          case 'weather':
-            if (settings.weather_alerts) shouldEmail = true;
-            break;
-          case 'inventory':
-            if (settings.inventory_alerts) shouldEmail = true;
-            break;
-          case 'plan':
-            if (settings.plan_reminders) shouldEmail = true;
-            break;
-          case 'shopping':
-            if (settings.shopping_updates) shouldEmail = true;
-            break;
-          case 'system':
-            shouldEmail = true;
-            break;
-        }
+      // If we have no settings for the user, we can't proceed.
+      if (!settings) {
+        console.log(`[sendNotification] No notification settings found for user ${userId}. Aborting.`);
+        return;
       }
-    }
 
-    // 3. Send Email via Resend
-    if (shouldEmail && email) {
-      console.log(`Sending email to ${email} for ${type} alert`);
-      try {
+      console.log(`[sendNotification] User settings for ${userId}:`, settings);
+
+      let shouldSendInApp = settings.in_app_alerts;
+      let shouldSendEmail = settings.email_alerts;
+
+      // 2. Check category-specific toggles
+      // If the master toggle is on, check the specific category toggle.
+      // If the category is off, we don't send that type of alert.
+      switch (type) {
+        case 'weather':
+          if (!settings.weather_alerts) { shouldSendInApp = false; shouldSendEmail = false; }
+          break;
+        case 'inventory':
+          if (!settings.inventory_alerts) { shouldSendInApp = false; shouldSendEmail = false; }
+          break;
+        case 'plan':
+          if (!settings.plan_reminders) { shouldSendInApp = false; shouldSendEmail = false; }
+          break;
+        case 'shopping':
+          if (!settings.shopping_updates) { shouldSendInApp = false; shouldSendEmail = false; }
+          break;
+        case 'system':
+          // System messages are always sent if the master toggles are on.
+          break;
+      }
+
+      // 3. Create In-App Notification if required
+      if (shouldSendInApp) {
+        console.log(`[sendNotification] Creating in-app notification for user ${userId}`);
+        const insertResult = await client.query(
+          'INSERT INTO notifications (user_id, title, message, type, link) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+          [userId, title, message, type, link]
+        );
+        console.log('[sendNotification] In-app notification created:', insertResult.rows[0]);
+      } else {
+        console.log(`[sendNotification] In-app notification skipped for user ${userId} based on settings.`);
+      }
+
+      // 4. Send Email Notification if required
+      if (shouldSendEmail && email) {
+        console.log(`[sendNotification] Sending email notification to ${email}`);
         await resend.emails.send({
           from: 'alerts@prepsafe.app',
           to: email,
           subject: `PrepSafe Alert: ${title}`,
-          html: `
-            <div style="font-family: sans-serif; color: #333;">
-              <h1>${title}</h1>
-              <p>${message}</p>
-              <hr />
-              <p style="font-size: 12px; color: #666;">
-                You are receiving this email because you have enabled notifications for PrepSafe.
-                <a href="https://prepsafe.app/dashboard/settings">Manage Settings</a>
-              </p>
-            </div>
-          `
+          html: `<p>${message}</p>`
         });
-      } catch (emailError) {
-        console.error('Failed to send email via Resend:', emailError);
+        console.log(`[sendNotification] Email sent successfully to ${email}`);
+      } else {
+        console.log(`[sendNotification] Email notification skipped for user ${userId} based on settings or missing email.`);
       }
-    }
 
+    } finally {
+      client.release();
+    }
   } catch (error) {
-    console.error('Error in sendNotification:', error);
+    console.error(`[sendNotification] A critical error occurred for user ${userId}:`, error);
   }
 }
