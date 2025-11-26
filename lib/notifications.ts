@@ -10,8 +10,10 @@ export async function sendNotification(
   userId: string,
   title: string,
   message: string,
-  type: NotificationType
+  type: NotificationType,
+  link?: string
 ) {
+  console.log(`[Notification] Starting notification process for user: ${userId}, type: ${type}`);
   let email: string | undefined;
   let settings: any;
 
@@ -19,21 +21,25 @@ export async function sendNotification(
     // 1. Fetch user settings and email, and insert notification
     const client = await pool.connect();
     try {
+      console.log(`[Notification] Fetching settings for user: ${userId}`);
       const settingsRes = await client.query(
         'SELECT * FROM notification_settings WHERE user_id = $1',
         [userId]
       );
-      const userRes = await client.query('SELECT email FROM users WHERE id = $1', [userId]);
-
       settings = settingsRes.rows[0];
+      console.log(`[Notification] Settings found:`, settings);
+
+      const userRes = await client.query('SELECT email FROM users WHERE id = $1', [userId]);
       email = userRes.rows[0]?.email;
+      console.log(`[Notification] User email found: ${email}`);
 
       // Insert into notifications table (for the in-app bell)
-      // This is always done so the user sees it in the dashboard
+      console.log(`[Notification] Inserting in-app notification into database...`);
       await client.query(
-        'INSERT INTO notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4)',
-        [userId, title, message, type]
+        'INSERT INTO notifications (user_id, title, message, type, link, created_at) VALUES ($1, $2, $3, $4, $5, NOW())',
+        [userId, title, message, type, link]
       );
+      console.log(`[Notification] In-app notification inserted successfully.`);
     } finally {
       client.release(); // Release connection BEFORE external API call
     }
