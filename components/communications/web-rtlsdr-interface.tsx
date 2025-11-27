@@ -289,7 +289,7 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
                 <Slider
                   value={[volume]}
                   min={0}
-                  max={1}
+                  max={3}
                   step={0.1}
                   onValueChange={handleVolumeChange}
                   className="flex-1"
