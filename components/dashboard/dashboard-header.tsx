@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, Settings, User, LogOut, HelpCircle, Check } from "lucide-react"
+import { Bell, Settings, User, LogOut, HelpCircle, Check, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -72,6 +72,20 @@ export function DashboardHeader() {
     }
   }
 
+  const deleteNotification = async (id: string) => {
+    try {
+      await fetch(`/api/notifications/${id}`, { method: 'DELETE' })
+      // Decrement unread count if the deleted item was unread
+      const notif = notifications.find(n => n.id === id)
+      if (notif && !notif.read) {
+        setUnreadCount(prev => Math.max(0, prev - 1))
+      }
+      setNotifications(prev => prev.filter(n => n.id !== id))
+    } catch (error) {
+      console.error("Failed to delete notification", error)
+    }
+  }
+
   return (
     <header className="border-b border-border px-6 py-4 bg-card">
       <div className="flex items-center justify-between">
@@ -116,28 +130,43 @@ export function DashboardHeader() {
                       )}
                     >
                       <div className="flex justify-between items-start gap-2">
-                        <div>
+                        <div className="flex-1">
                           <p className="text-sm font-medium leading-none mb-1">{notification.title}</p>
                           <p className="text-xs text-muted-foreground">{notification.message}</p>
                           <p className="text-[10px] text-muted-foreground mt-1">
                             {new Date(notification.created_at).toLocaleDateString()}
                           </p>
                         </div>
-                        {!notification.read && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              markAsRead(notification.id)
-                            }}
-                            title="Mark as read"
-                          >
-                            <Check className="h-3 w-3" />
-                          </Button>
-                        )}
-                        {!notification.read && <span className="h-2 w-2 bg-blue-500 rounded-full shrink-0 mt-1" />}
+
+                        <div className="flex items-center gap-1">
+                            {!notification.read && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  markAsRead(notification.id)
+                                }}
+                                title="Mark as read"
+                              >
+                                <Check className="h-3 w-3" />
+                              </Button>
+                            )}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  deleteNotification(notification.id)
+                                }}
+                                title="Remove"
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                            {!notification.read && <span className="h-2 w-2 bg-blue-500 rounded-full shrink-0 ml-1" />}
+                        </div>
                       </div>
                     </div>
                   ))

@@ -43,9 +43,7 @@ export async function sendNotification(
           case 'plan':
             settingVal = settings.plan_reminders;
             break;
-          case 'shopping':
-            settingVal = settings.shopping_updates;
-            break;
+          // Shopping alerts removed as per requirements
           case 'system':
             // System alerts (tests) bypass settings
             shouldInApp = true;

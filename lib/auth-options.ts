@@ -5,6 +5,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcrypt';
 import { checkUserInventory } from '@/lib/inventory-check';
+import { checkPlanReminders } from '@/lib/plan-check';
 
 export const authOptions: AuthOptions = {
   adapter: PgAdapter(pool),
@@ -52,21 +53,18 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      // Handle Google Sign-In specific logic (Family Member creation)
       if (account?.provider === 'google') {
         const { name, email } = user;
         const userId = user.id;
 
         const client = await pool.connect();
         try {
-          // Check if the user already exists in the family_members table
           const existingMemberResult = await client.query(
             'SELECT * FROM family_members WHERE user_id = $1',
             [userId]
           );
 
           if (existingMemberResult.rows.length === 0) {
-            // If the user doesn't exist, insert them
             const fullName = name || '';
             const nameParts = fullName.split(' ');
             const firstName = nameParts[0];
@@ -80,23 +78,22 @@ export const authOptions: AuthOptions = {
           }
         } catch (error) {
           console.error('Error in signIn callback:', error);
-          // We don't block sign-in here, but maybe we should?
-          // Returning false prevents sign-in.
-          // return false;
         } finally {
           client.release();
         }
       }
 
-      // Trigger Inventory Check for Low Stock
+      // Trigger Alert Checks
       if (user.id) {
-        // Run in background (don't await) to speed up sign-in response
         checkUserInventory(user.id).catch(err =>
           console.error(`Inventory check failed during sign-in for user ${user.id}:`, err)
         );
+        checkPlanReminders(user.id).catch(err =>
+          console.error(`Plan check failed during sign-in for user ${user.id}:`, err)
+        );
       }
 
-      return true; // Continue with the sign-in process
+      return true;
     },
     async jwt({ token, user }) {
       if (user) {
