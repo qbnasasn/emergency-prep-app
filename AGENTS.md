@@ -9,18 +9,22 @@ This project uses **Neon DB** with a **Manual Schema Workflow**.
     3.  **STOP and ASK:** After providing the SQL, ask the user: *"Please run this in the Neon Console and confirm when done."*
     4.  **Implement Code:** Only after the user confirms, write the React/Next.js code.
 
-## 2. Technical Stack & Style
-* **Frontend:** React, Next.js (App Router), Tailwind CSS.
+## 2. Technical Stack
+* **Framework:** Next.js 15 (App Router) & React 19.
+    * *Note:* `params` and `searchParams` in pages/layouts are Promises in Next.js 15. Await them before using.
 * **Database:** Neon (PostgreSQL).
-* **Database Driver:** [CHECK YOUR PACKAGE.JSON AND PUT DRIVER HERE, e.g. 'pg' or '@vercel/postgres']
-* **Hosting:** Vercel.
+* **Database Driver:** `@neondatabase/serverless` (Preferred) or `pg`.
+* **Styling:** Tailwind CSS v4.
+* **Auth:** NextAuth.js v4.
+* **Validation:** Zod + React Hook Form.
 
 ## 3. Critical Constraints
 * **No Hallucinated Buttons:** Do not create UI elements (like "Submit Branch" buttons) in the chat or code.
 * **Maintain Scope:** Only edit files relevant to the current request.
-* **No Versioning:** Do not create new git branches or version folders (e.g., `v2/`) unless explicitly asked.
-* **Environment:** Assume `DATABASE_URL` is available in `.env`. Do not hardcode credentials.
+* **No Versioning:** Do not create new git branches or version folders unless explicitly asked.
+* **Environment:** Assume `DATABASE_URL` is available in `.env`.
 
 ## 4. Code Quality
 * **Atomic functions:** Keep components small.
+* **Server Actions:** Use Next.js Server Actions for data mutation (form submissions).
 * **Error Handling:** Wrap DB calls in try/catch blocks and return meaningful error messages.
