@@ -82,3 +82,19 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 12. Add plan reminder frequency
+ALTER TABLE notification_settings ADD COLUMN IF NOT EXISTS plan_reminder_frequency TEXT DEFAULT 'monthly';
+
+-- 13. Update trigger
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.notification_settings (
+    user_id, email_alerts, inventory_alerts, weather_alerts, plan_reminders, shopping_updates, inventory_check_frequency, plan_reminder_frequency, created_at, updated_at
+  )
+  VALUES (NEW.id, false, 'none', 'none', 'none', 'none', 'weekly', 'monthly', NOW(), NOW())
+  ON CONFLICT (user_id) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;

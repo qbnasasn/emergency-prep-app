@@ -14,7 +14,7 @@ interface NotificationSettingsData {
   inventory_alerts: string
   inventory_check_frequency: string
   plan_reminders: string
-  shopping_updates: string
+  plan_reminder_frequency: string
 }
 
 export function NotificationSettings() {
@@ -147,7 +147,7 @@ export function NotificationSettings() {
                         value={settings?.inventory_check_frequency || 'weekly'}
                         onValueChange={(val) => updateSetting('inventory_check_frequency', val)}
                     >
-                        <SelectTrigger className="w-[180px] h-8 font-body">
+                        <SelectTrigger className="w-[140px] h-8 font-body">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -160,12 +160,33 @@ export function NotificationSettings() {
             )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="font-body font-medium">Plan Reminders</Label>
-              <p className="font-body text-sm text-muted-foreground">Emergency plan review reminders</p>
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                <Label className="font-body font-medium">Plan Reminders</Label>
+                <p className="font-body text-sm text-muted-foreground">Emergency plan review reminders</p>
+                </div>
+                {renderSelect('plan_reminders')}
             </div>
-            {renderSelect('plan_reminders')}
+            {/* Frequency Sub-setting */}
+            {(settings?.plan_reminders !== 'none') && (
+                <div className="flex items-center justify-between ml-4 pl-4 border-l">
+                    <Label className="font-body text-sm">Frequency</Label>
+                    <Select
+                        value={settings?.plan_reminder_frequency || 'monthly'}
+                        onValueChange={(val) => updateSetting('plan_reminder_frequency', val)}
+                    >
+                        <SelectTrigger className="w-[140px] h-8 font-body">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="weekly">Weekly (Mondays)</SelectItem>
+                            <SelectItem value="monthly">Monthly (1st)</SelectItem>
+                            <SelectItem value="yearly">Yearly (Jan 1st)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
           </div>
         </div>
 
