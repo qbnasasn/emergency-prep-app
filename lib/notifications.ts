@@ -1,9 +1,6 @@
 import { Resend } from 'resend';
 import pool from '@/lib/db';
 
-// Initialize Resend with API key from environment
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export type NotificationType = 'weather' | 'inventory' | 'plan' | 'shopping' | 'system';
 
 export async function sendNotification(
@@ -70,6 +67,14 @@ export async function sendNotification(
     // 3. Send Email via Resend
     if (shouldEmail && email) {
       console.log(`Sending email to ${email} for ${type} alert`);
+
+      const apiKey = process.env.RESEND_API_KEY;
+      if (!apiKey) {
+        console.warn('RESEND_API_KEY is not set. Skipping email sending.');
+        return;
+      }
+
+      const resend = new Resend(apiKey);
 
       const isTestEmail = type === 'system';
       const subject = isTestEmail ? 'PrepSafe Test Notification' : `PrepSafe Alert: ${title}`;
