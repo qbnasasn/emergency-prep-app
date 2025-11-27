@@ -21,10 +21,11 @@ export async function GET() {
     // Return empty object if no settings found (client will handle defaults) or default row
     const settings = res.rows[0] || {
       email_alerts: false,
-      weather_alerts: false,
-      inventory_alerts: false,
-      plan_reminders: false,
-      shopping_updates: false
+      weather_alerts: 'none',
+      inventory_alerts: 'none',
+      plan_reminders: 'none',
+      shopping_updates: 'none',
+      inventory_check_frequency: 'weekly'
     };
 
     return NextResponse.json(settings);
@@ -47,7 +48,8 @@ export async function PUT(request: Request) {
       weather_alerts,
       inventory_alerts,
       plan_reminders,
-      shopping_updates
+      shopping_updates,
+      inventory_check_frequency
     } = body;
 
     const userIdRes = await pool.query('SELECT id FROM users WHERE email = $1', [session.user.email]);
@@ -59,14 +61,15 @@ export async function PUT(request: Request) {
     // Upsert settings
     const query = `
       INSERT INTO notification_settings (
-        user_id, email_alerts, weather_alerts, inventory_alerts, plan_reminders, shopping_updates, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        user_id, email_alerts, weather_alerts, inventory_alerts, plan_reminders, shopping_updates, inventory_check_frequency, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
       ON CONFLICT (user_id) DO UPDATE SET
         email_alerts = EXCLUDED.email_alerts,
         weather_alerts = EXCLUDED.weather_alerts,
         inventory_alerts = EXCLUDED.inventory_alerts,
         plan_reminders = EXCLUDED.plan_reminders,
         shopping_updates = EXCLUDED.shopping_updates,
+        inventory_check_frequency = EXCLUDED.inventory_check_frequency,
         updated_at = NOW()
       RETURNING *;
     `;
@@ -77,7 +80,8 @@ export async function PUT(request: Request) {
       weather_alerts,
       inventory_alerts,
       plan_reminders,
-      shopping_updates
+      shopping_updates,
+      inventory_check_frequency || 'weekly'
     ]);
 
     return NextResponse.json(res.rows[0]);

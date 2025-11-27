@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Bell, Loader2 } from "lucide-react"
@@ -13,6 +12,7 @@ interface NotificationSettingsData {
   email_alerts: boolean
   weather_alerts: string
   inventory_alerts: string
+  inventory_check_frequency: string
   plan_reminders: string
   shopping_updates: string
 }
@@ -131,12 +131,33 @@ export function NotificationSettings() {
             {renderSelect('weather_alerts')}
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="font-body font-medium">Inventory Alerts</Label>
-              <p className="font-body text-sm text-muted-foreground">Low stock and expiration notifications</p>
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                <Label className="font-body font-medium">Inventory Alerts</Label>
+                <p className="font-body text-sm text-muted-foreground">Low stock and expiration notifications</p>
+                </div>
+                {renderSelect('inventory_alerts')}
             </div>
-            {renderSelect('inventory_alerts')}
+            {/* Frequency Sub-setting */}
+            {(settings?.inventory_alerts !== 'none') && (
+                <div className="flex items-center justify-between ml-4 pl-4 border-l">
+                    <Label className="font-body text-sm">Frequency</Label>
+                    <Select
+                        value={settings?.inventory_check_frequency || 'weekly'}
+                        onValueChange={(val) => updateSetting('inventory_check_frequency', val)}
+                    >
+                        <SelectTrigger className="w-[180px] h-8 font-body">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="daily">Daily</SelectItem>
+                            <SelectItem value="weekly">Weekly (Mondays)</SelectItem>
+                            <SelectItem value="monthly">Monthly (1st)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between">
@@ -145,14 +166,6 @@ export function NotificationSettings() {
               <p className="font-body text-sm text-muted-foreground">Emergency plan review reminders</p>
             </div>
             {renderSelect('plan_reminders')}
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="font-body font-medium">Shopping Updates</Label>
-              <p className="font-body text-sm text-muted-foreground">New items added to shopping list</p>
-            </div>
-            {renderSelect('shopping_updates')}
           </div>
         </div>
 

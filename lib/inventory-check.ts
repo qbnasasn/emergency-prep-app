@@ -6,48 +6,96 @@ export async function checkUserInventory(userId: string) {
   try {
     // Check if user wants inventory alerts
     const settingsRes = await client.query(
-        'SELECT inventory_alerts FROM notification_settings WHERE user_id = $1',
+        'SELECT inventory_alerts, inventory_check_frequency FROM notification_settings WHERE user_id = $1',
         [userId]
     );
 
     if (settingsRes.rows.length === 0 || settingsRes.rows[0].inventory_alerts === 'none') {
-        return; // No alerts configured or user disabled them
+        return; // No alerts configured
     }
 
-    // Find low stock items
-    // Logic: quantity <= min_stock (default 0)
-    const inventoryRes = await client.query(
+    const { inventory_check_frequency } = settingsRes.rows[0];
+    const now = new Date();
+    const isDaily = inventory_check_frequency === 'daily';
+    const isWeekly = inventory_check_frequency === 'weekly' && now.getDay() === 1; // Monday
+    const isMonthly = inventory_check_frequency === 'monthly' && now.getDate() === 1; // 1st of month
+
+    // If frequency is constrained and today doesn't match, skip
+    // NOTE: This applies to both Cron and Sign-in checks to respect user preference
+    if (!isDaily && !isWeekly && !isMonthly) {
+        return;
+    }
+
+    // 1. Low Stock Check
+    const lowStockRes = await client.query(
       `SELECT id, name, quantity, min_stock FROM inventory_items WHERE user_id = $1 AND quantity <= min_stock`,
       [userId]
     );
-    const lowStockItems = inventoryRes.rows;
 
-    console.log(`User ${userId}: Found ${lowStockItems.length} low stock items.`);
-
-    for (const item of lowStockItems) {
-      // Check if an unread notification for this item already exists to prevent spam
-      const itemLink = `/dashboard/inventory?itemId=${item.id}`;
-
-      // We check for *any* unread low stock notification for this item.
-      // This allows the alert to re-trigger if the previous one was read/dismissed but stock is STILL low.
-      const existingNotifRes = await client.query(
-        `SELECT id FROM notifications WHERE user_id = $1 AND link = $2 AND read = false`,
-        [userId, itemLink]
-      );
-
-      if (existingNotifRes.rows.length === 0) {
-        await sendNotification(
-          userId,
-          'Low Stock Alert',
-          `Your inventory item "${item.name}" is running low. Only ${item.quantity} left in stock.`,
-          'inventory',
-          itemLink
-        );
-      }
+    for (const item of lowStockRes.rows) {
+      await processAlert(client, userId, item, 'low_stock');
     }
+
+    // 2. Expiring Soon Check (30 days)
+    const expiringRes = await client.query(
+        `SELECT id, name, expiry_date FROM inventory_items
+         WHERE user_id = $1 AND expiry_date IS NOT NULL
+         AND expiry_date <= CURRENT_DATE + INTERVAL '30 days'
+         AND expiry_date >= CURRENT_DATE`,
+        [userId]
+    );
+
+    for (const item of expiringRes.rows) {
+        await processAlert(client, userId, item, 'expiring');
+    }
+
+    // 3. Expired Check
+    const expiredRes = await client.query(
+        `SELECT id, name, expiry_date FROM inventory_items
+         WHERE user_id = $1 AND expiry_date IS NOT NULL
+         AND expiry_date < CURRENT_DATE`,
+        [userId]
+    );
+
+    for (const item of expiredRes.rows) {
+        await processAlert(client, userId, item, 'expired');
+    }
+
   } catch (error) {
     console.error(`Error checking inventory for user ${userId}:`, error);
   } finally {
     client.release();
   }
+}
+
+async function processAlert(client: any, userId: string, item: any, type: 'low_stock' | 'expiring' | 'expired') {
+    const itemLink = `/dashboard/inventory?itemId=${item.id}&alert=${type}`;
+
+    // Check deduplication
+    // We append type to link to allow distinct alerts for Low Stock vs Expired for the same item
+    const existingNotifRes = await client.query(
+        `SELECT id FROM notifications WHERE user_id = $1 AND link = $2 AND read = false`,
+        [userId, itemLink]
+    );
+
+    if (existingNotifRes.rows.length > 0) return;
+
+    let title = '';
+    let message = '';
+
+    if (type === 'low_stock') {
+        title = 'Low Stock Alert';
+        message = `Item "${item.name}" is running low (${item.quantity} remaining).`;
+    } else if (type === 'expiring') {
+        title = 'Expiration Warning';
+        // Format date logic if needed, or just say it's soon
+        const dateStr = new Date(item.expiry_date).toLocaleDateString();
+        message = `Item "${item.name}" is expiring soon on ${dateStr}.`;
+    } else if (type === 'expired') {
+        title = 'Item Expired';
+        const dateStr = new Date(item.expiry_date).toLocaleDateString();
+        message = `Item "${item.name}" expired on ${dateStr}. Please discard or replace.`;
+    }
+
+    await sendNotification(userId, title, message, 'inventory', itemLink);
 }

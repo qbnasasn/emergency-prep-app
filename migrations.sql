@@ -66,3 +66,19 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 10. Add inventory check frequency
+ALTER TABLE notification_settings ADD COLUMN IF NOT EXISTS inventory_check_frequency TEXT DEFAULT 'weekly';
+
+-- 11. Update trigger to include default frequency
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.notification_settings (
+    user_id, email_alerts, inventory_alerts, weather_alerts, plan_reminders, shopping_updates, inventory_check_frequency, created_at, updated_at
+  )
+  VALUES (NEW.id, false, 'none', 'none', 'none', 'none', 'weekly', NOW(), NOW())
+  ON CONFLICT (user_id) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
