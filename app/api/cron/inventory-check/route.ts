@@ -11,9 +11,10 @@ export async function GET(req: Request) {
 
   const client = await pool.connect();
   try {
-    // Get all users who have enabled inventory alerts
+    // Get all users who have enabled inventory alerts (email or in-app)
+    // inventory_alerts is now a text field: 'none', 'in_app', 'email', 'both'
     const settingsRes = await client.query(
-      `SELECT user_id FROM notification_settings WHERE inventory_alerts = true`
+      `SELECT user_id FROM notification_settings WHERE inventory_alerts != 'none'`
     );
     const userIds = settingsRes.rows.map(row => row.user_id);
 

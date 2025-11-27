@@ -1,9 +1,6 @@
 import { Resend } from 'resend';
 import pool from '@/lib/db';
 
-// Initialize Resend with API key from environment
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export type NotificationType = 'weather' | 'inventory' | 'plan' | 'shopping' | 'system';
 
 export async function sendNotification(
@@ -17,7 +14,7 @@ export async function sendNotification(
   let settings: any;
 
   try {
-    // 1. Fetch user settings and email, and insert notification
+    // 1. Fetch user settings and email
     const client = await pool.connect();
     try {
       const settingsRes = await client.query(
@@ -29,84 +26,97 @@ export async function sendNotification(
       settings = settingsRes.rows[0];
       email = userRes.rows[0]?.email;
 
-      // Insert into notifications table (for the in-app bell)
-      // This is always done so the user sees it in the dashboard
-      await client.query(
-        'INSERT INTO notifications (user_id, title, message, type, link) VALUES ($1, $2, $3, $4, $5)',
-        [userId, title, message, type, link]
-      );
-    } finally {
-      client.release(); // Release connection BEFORE external API call
-    }
+      // Determine delivery methods
+      let shouldInApp = true; // Default to true for backward compatibility
+      let shouldEmail = false;
 
-    // 2. Check if email should be sent
-    let shouldEmail = false;
-
-    // Only send if user exists, has email, and has settings
-    if (email && settings) {
-      // Must have global email_alerts enabled
-      if (settings.email_alerts) {
-        // Check specific category
-        switch (type) {
-          case 'weather':
-            if (settings.weather_alerts) shouldEmail = true;
-            break;
-          case 'inventory':
-            if (settings.inventory_alerts) shouldEmail = true;
-            break;
-          case 'plan':
-            if (settings.plan_reminders) shouldEmail = true;
-            break;
-          case 'shopping':
-            if (settings.shopping_updates) shouldEmail = true;
-            break;
-          case 'system':
-            shouldEmail = true;
-            break;
+      if (settings) {
+        if (type === 'inventory') {
+          // New logic for inventory (string/enum setting)
+          const invSetting = settings.inventory_alerts || 'none';
+          shouldInApp = invSetting === 'in_app' || invSetting === 'both';
+          shouldEmail = (invSetting === 'email' || invSetting === 'both') && settings.email_alerts;
+        } else {
+          // Legacy logic for other types (boolean settings)
+          if (settings.email_alerts) {
+            switch (type) {
+              case 'weather':
+                if (settings.weather_alerts) shouldEmail = true;
+                break;
+              case 'plan':
+                if (settings.plan_reminders) shouldEmail = true;
+                break;
+              case 'shopping':
+                if (settings.shopping_updates) shouldEmail = true;
+                break;
+              case 'system':
+                shouldEmail = true;
+                break;
+            }
+          }
         }
       }
-    }
 
-    // 3. Send Email via Resend
-    if (shouldEmail && email) {
-      console.log(`Sending email to ${email} for ${type} alert`);
-
-      const isTestEmail = type === 'system';
-      const subject = isTestEmail ? 'PrepSafe Test Notification' : `PrepSafe Alert: ${title}`;
-      const htmlContent = isTestEmail
-        ? `
-            <div style="font-family: sans-serif; color: #333;">
-              <h1>PrepSafe Test Email</h1>
-              <p>This is a test email to confirm that your notification settings are working correctly.</p>
-              <p>You can safely ignore this email.</p>
-              <hr />
-              <p style="font-size: 12px; color: #666;">
-                <a href="https://prepsafe.app/dashboard/settings">Manage Settings</a>
-              </p>
-            </div>
-          `
-        : `
-            <div style="font-family: sans-serif; color: #333;">
-              <h1>${title}</h1>
-              <p>${message}</p>
-              <hr />
-              <p style="font-size: 12px; color: #666;">
-                You are receiving this email because you have enabled notifications for PrepSafe.
-                <a href="https://prepsafe.app/dashboard/settings">Manage Settings</a>
-              </p>
-            </div>
-          `;
-
-      try {
-        await resend.emails.send({
-          from: 'alerts@prepsafe.app',
-          to: email,
-          subject: subject,
-          html: htmlContent,
-        });
-      } catch (emailError) {
-        console.error('Failed to send email via Resend:', emailError);
+      // 2. Insert into notifications table (In-App) if enabled
+      if (shouldInApp) {
+        await client.query(
+          'INSERT INTO notifications (user_id, title, message, type, link) VALUES ($1, $2, $3, $4, $5)',
+          [userId, title, message, type, link]
+        );
       }
+
+      // 3. Send Email via Resend if enabled
+      if (shouldEmail && email) {
+        console.log(`Sending email to ${email} for ${type} alert`);
+
+        const apiKey = process.env.RESEND_API_KEY;
+        if (!apiKey) {
+          console.warn('RESEND_API_KEY is not set. Skipping email sending.');
+          return; // Early return to avoid Resend crash
+        }
+
+        const resend = new Resend(apiKey);
+
+        const isTestEmail = type === 'system';
+        const subject = isTestEmail ? 'PrepSafe Test Notification' : `PrepSafe Alert: ${title}`;
+        const htmlContent = isTestEmail
+          ? `
+              <div style="font-family: sans-serif; color: #333;">
+                <h1>PrepSafe Test Email</h1>
+                <p>This is a test email to confirm that your notification settings are working correctly.</p>
+                <p>You can safely ignore this email.</p>
+                <hr />
+                <p style="font-size: 12px; color: #666;">
+                  <a href="https://prepsafe.app/dashboard/settings">Manage Settings</a>
+                </p>
+              </div>
+            `
+          : `
+              <div style="font-family: sans-serif; color: #333;">
+                <h1>${title}</h1>
+                <p>${message}</p>
+                <hr />
+                <p style="font-size: 12px; color: #666;">
+                  You are receiving this email because you have enabled notifications for PrepSafe.
+                  <a href="https://prepsafe.app/dashboard/settings">Manage Settings</a>
+                </p>
+              </div>
+            `;
+
+        try {
+          await resend.emails.send({
+            from: 'alerts@prepsafe.app',
+            to: email,
+            subject: subject,
+            html: htmlContent,
+          });
+        } catch (emailError) {
+          console.error('Failed to send email via Resend:', emailError);
+        }
+      }
+
+    } finally {
+      client.release();
     }
 
   } catch (error) {
