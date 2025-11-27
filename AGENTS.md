@@ -5,7 +5,7 @@
 
 ## Coding Standards
 1. **Existing Patterns:** strict adherence to existing code style. Do not refactor unrelated code.
-2. **Neon DB:** Assume connection strings are in `.env`. Do not hardcode credentials.
+2. **Neon DB:** No automatic db update available. Please provide Postgres query.
 3. **React:** Use functional components and hooks.
 
 ## Interaction Rules
