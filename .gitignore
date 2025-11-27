@@ -15,8 +15,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-console.log
-dev_server.log
+*.log
 
 # env files
 .env*
