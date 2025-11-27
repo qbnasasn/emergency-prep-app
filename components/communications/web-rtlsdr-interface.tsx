@@ -78,10 +78,11 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
     if (radioRef.current) {
       try {
         await radioRef.current.stop()
-        setIsPlaying(false)
       } catch (err: any) {
         console.error("Failed to stop radio:", err)
       }
+      radioRef.current = null
+      setIsPlaying(false)
     }
   }
 
@@ -212,7 +213,7 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
         <div className="flex items-center justify-between bg-muted/50 p-4 rounded-lg">
           <div className="space-y-1">
             <div className="text-3xl font-heading font-bold text-primary">
-              {frequency.toFixed(3)} <span className="text-lg text-muted-foreground">MHz</span>
+              {frequency.toFixed(4)} <span className="text-lg text-muted-foreground">MHz</span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground font-body">
               <Activity className="h-4 w-4" />
@@ -240,7 +241,7 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
                 onBlur={handleFrequencyInputCommit}
                 onKeyDown={handleKeyDown}
                 className="w-32 h-8 font-mono text-right"
-                step="0.001"
+                step="0.0001"
               />
             </div>
             <Slider
