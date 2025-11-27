@@ -27,9 +27,10 @@ export async function GET(req: Request) {
 
       for (const item of lowStockItems) {
         // Check if an unread notification for this item already exists to prevent spam
+        const itemLink = `/dashboard/inventory?itemId=${item.id}`;
         const existingNotifRes = await client.query(
-          `SELECT id FROM notifications WHERE user_id = $1 AND message LIKE $2 AND read = false`,
-          [userId, `%item "${item.name}" is running low%`]
+          `SELECT id FROM notifications WHERE user_id = $1 AND link = $2 AND read = false`,
+          [userId, itemLink]
         );
 
         if (existingNotifRes.rows.length === 0) {
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
             'Low Stock Alert',
             `Your inventory item "${item.name}" is running low. Only ${item.quantity} left in stock.`,
             'inventory',
-            `/dashboard/inventory?itemId=${item.id}`
+            itemLink
           );
         }
       }
