@@ -11,10 +11,10 @@ import { toast } from "sonner"
 
 interface NotificationSettingsData {
   email_alerts: boolean
-  weather_alerts: boolean
-  inventory_alerts: boolean
-  plan_reminders: boolean
-  shopping_updates: boolean
+  weather_alerts: string
+  inventory_alerts: string
+  plan_reminders: string
+  shopping_updates: string
 }
 
 export function NotificationSettings() {
@@ -55,10 +55,11 @@ export function NotificationSettings() {
     fetchSettings()
   }, [])
 
-  const updateSetting = async (key: keyof NotificationSettingsData, value: boolean) => {
+  const updateSetting = async (key: keyof NotificationSettingsData, value: boolean | string) => {
     if (!settings) return
 
-    const newSettings = { ...settings, [key]: value }
+    // Cast to any to avoid TS union type issues with key assignment
+    const newSettings = { ...settings, [key]: value } as NotificationSettingsData
     setSettings(newSettings)
 
     try {
@@ -76,6 +77,23 @@ export function NotificationSettings() {
       setSettings(settings) // Revert on error
     }
   }
+
+  const renderSelect = (key: keyof NotificationSettingsData) => (
+    <Select
+        value={(settings?.[key] as string) || 'none'}
+        onValueChange={(val) => updateSetting(key, val)}
+    >
+        <SelectTrigger className="w-[180px] font-body">
+            <SelectValue placeholder="Select method" />
+        </SelectTrigger>
+        <SelectContent>
+            <SelectItem value="none">No Alerts</SelectItem>
+            <SelectItem value="in_app">In-App Only</SelectItem>
+            <SelectItem value="email">Email Only</SelectItem>
+            <SelectItem value="both">Both</SelectItem>
+        </SelectContent>
+    </Select>
+  )
 
   if (loading) {
     return (
@@ -110,10 +128,7 @@ export function NotificationSettings() {
               <Label className="font-body font-medium">Weather Alerts</Label>
               <p className="font-body text-sm text-muted-foreground">NOAA weather warnings and watches</p>
             </div>
-            <Switch
-              checked={settings?.weather_alerts}
-              onCheckedChange={(checked) => updateSetting('weather_alerts', checked)}
-            />
+            {renderSelect('weather_alerts')}
           </div>
 
           <div className="flex items-center justify-between">
@@ -121,10 +136,7 @@ export function NotificationSettings() {
               <Label className="font-body font-medium">Inventory Alerts</Label>
               <p className="font-body text-sm text-muted-foreground">Low stock and expiration notifications</p>
             </div>
-            <Switch
-              checked={settings?.inventory_alerts}
-              onCheckedChange={(checked) => updateSetting('inventory_alerts', checked)}
-            />
+            {renderSelect('inventory_alerts')}
           </div>
 
           <div className="flex items-center justify-between">
@@ -132,10 +144,7 @@ export function NotificationSettings() {
               <Label className="font-body font-medium">Plan Reminders</Label>
               <p className="font-body text-sm text-muted-foreground">Emergency plan review reminders</p>
             </div>
-            <Switch
-              checked={settings?.plan_reminders}
-              onCheckedChange={(checked) => updateSetting('plan_reminders', checked)}
-            />
+            {renderSelect('plan_reminders')}
           </div>
 
           <div className="flex items-center justify-between">
@@ -143,15 +152,12 @@ export function NotificationSettings() {
               <Label className="font-body font-medium">Shopping Updates</Label>
               <p className="font-body text-sm text-muted-foreground">New items added to shopping list</p>
             </div>
-            <Switch
-              checked={settings?.shopping_updates}
-              onCheckedChange={(checked) => updateSetting('shopping_updates', checked)}
-            />
+            {renderSelect('shopping_updates')}
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label className="font-body font-medium">Notification Method</Label>
+          <Label className="font-body font-medium">Global Email Settings</Label>
           <Select
             value={settings?.email_alerts ? "email" : "none"}
             onValueChange={(value) => updateSetting('email_alerts', value === 'email')}
@@ -160,12 +166,12 @@ export function NotificationSettings() {
               <SelectValue placeholder="Select method" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="email">Email Only</SelectItem>
-              <SelectItem value="none">None (In-App Only)</SelectItem>
+              <SelectItem value="email">Emails Enabled</SelectItem>
+              <SelectItem value="none">Emails Disabled (Global)</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground mt-1">
-            Push notifications are not currently available.
+            If disabled, no emails will be sent even if specific alerts are enabled.
           </p>
         </div>
         <div className="pt-2">
