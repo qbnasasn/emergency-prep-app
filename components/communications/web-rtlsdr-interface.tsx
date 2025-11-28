@@ -19,6 +19,64 @@ import { getMode } from "@jtarrio/webrtlsdr/demod/modes.js"
 import { Radio as RtlRadio } from "@jtarrio/webrtlsdr/radio.js"
 import { RTL2832U_Provider } from "@jtarrio/webrtlsdr/rtlsdr.js"
 
+class CustomAudioPlayer {
+  static OUT_RATE = 48000
+  static TIME_BUFFER = 0.05
+
+  lastPlayedAt = -1
+  ac: AudioContext | undefined
+  gainNode: GainNode | undefined
+  compressorNode: DynamicsCompressorNode | undefined
+  gain = 1
+
+  play(leftSamples: Float32Array, rightSamples: Float32Array) {
+    if (!this.ac || !this.gainNode || !this.compressorNode) {
+      this.ac = new (window.AudioContext || (window as any).webkitAudioContext)()
+      this.gainNode = this.ac.createGain()
+      this.gainNode.gain.value = this.gain
+
+      this.compressorNode = this.ac.createDynamicsCompressor()
+      this.compressorNode.threshold.value = -10
+      this.compressorNode.knee.value = 40
+      this.compressorNode.ratio.value = 12
+      this.compressorNode.attack.value = 0
+      this.compressorNode.release.value = 0.25
+
+      this.gainNode.connect(this.compressorNode)
+      this.compressorNode.connect(this.ac.destination)
+    }
+
+    const buffer = this.ac.createBuffer(2, leftSamples.length, CustomAudioPlayer.OUT_RATE)
+    buffer.getChannelData(0).set(leftSamples)
+    buffer.getChannelData(1).set(rightSamples)
+
+    const source = this.ac.createBufferSource()
+    source.buffer = buffer
+    source.connect(this.gainNode)
+
+    this.lastPlayedAt = Math.max(
+      this.lastPlayedAt + leftSamples.length / CustomAudioPlayer.OUT_RATE,
+      this.ac.currentTime + CustomAudioPlayer.TIME_BUFFER,
+    )
+    source.start(this.lastPlayedAt)
+  }
+
+  setVolume(volume: number) {
+    this.gain = volume
+    if (this.gainNode) {
+      this.gainNode.gain.value = volume
+    }
+  }
+
+  getVolume() {
+    return this.gain
+  }
+
+  get sampleRate() {
+    return this.ac ? this.ac.sampleRate : 48000
+  }
+}
+
 interface WebRtlsdrInterfaceProps {
   className?: string
 }
@@ -50,7 +108,7 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   const initRadio = async () => {
     try {
       const provider = new RTL2832U_Provider()
-      const demodulator = new Demodulator()
+      const demodulator = new Demodulator(new CustomAudioPlayer() as any)
       const radio = new RtlRadio(provider, demodulator)
 
       radioRef.current = radio
@@ -289,7 +347,7 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
                 <Slider
                   value={[volume]}
                   min={0}
-                  max={3}
+                  max={5}
                   step={0.1}
                   onValueChange={handleVolumeChange}
                   className="flex-1"
