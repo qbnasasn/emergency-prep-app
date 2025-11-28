@@ -17,7 +17,6 @@ import {
   ArrowRight,
   Radio,
   Users,
-  Lock,
   Check
 } from "lucide-react"
 
@@ -64,15 +63,11 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="relative py-20 md:py-32 overflow-hidden bg-slate-900 text-white">
           <div className="absolute inset-0 opacity-20">
-             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1511497584788-876760111969')] bg-cover bg-center" />
+             <div className="absolute inset-0 bg-[url('/images/hero-background.jpg')] bg-cover bg-center" />
              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent" />
           </div>
 
-          <div className="container relative z-10 px-4 md:px-6 mx-auto max-w-7xl text-center">
-            <div className="inline-flex items-center rounded-full border border-yellow-500/50 bg-yellow-500/10 px-3 py-1 text-sm font-medium text-yellow-500 mb-6 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
-              <AlertTriangle className="mr-2 h-4 w-4" />
-              Disasters Don't Wait. Neither Should You.
-            </div>
+          <div className="container relative z-10 px-4 md:px-6 mx-auto max-w-7xl text-center pt-10">
             <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-6 leading-tight animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
               When the Grid Goes Down,<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-600">
@@ -198,9 +193,9 @@ export default function LandingPage() {
                 <div className="mb-4 inline-block rounded-lg bg-slate-100 p-3 group-hover:bg-purple-100 transition-colors">
                   <ShieldCheck className="h-8 w-8 text-slate-700 group-hover:text-purple-600 transition-colors" />
                 </div>
-                <h3 className="font-heading text-xl font-bold mb-2 text-slate-900">Digital Vault</h3>
+                <h3 className="font-heading text-xl font-bold mb-2 text-slate-900">Secure Storage</h3>
                 <p className="text-slate-600">
-                  Securely store encrypted copies of IDs, insurance policies, and medical records accessible anywhere.
+                  Keep your critical information safe and accessible when you need it most.
                 </p>
               </div>
 
@@ -227,9 +222,9 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {/* Free Tier */}
-              <div className="relative rounded-2xl border border-slate-200 bg-white p-8 shadow-sm hover:shadow-md transition-all">
+            <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+              {/* Basic Scout (Free Tier) */}
+              <div className="relative rounded-2xl border border-slate-200 bg-white p-8 shadow-sm hover:shadow-md transition-all flex flex-col">
                 <div className="mb-6">
                   <h3 className="text-2xl font-bold text-slate-900 font-heading">Basic Scout</h3>
                   <div className="mt-4 flex items-baseline text-slate-900">
@@ -238,7 +233,7 @@ export default function LandingPage() {
                   </div>
                   <p className="mt-4 text-slate-600">Essential tools for individual preparedness.</p>
                 </div>
-                <ul className="space-y-4 mb-8">
+                <ul className="space-y-4 mb-8 flex-1">
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-green-500 mr-3 shrink-0" />
                     <span className="text-slate-700"><strong>Inventory Management</strong> (Up to 50 items)</span>
@@ -258,7 +253,7 @@ export default function LandingPage() {
                 </ul>
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full h-12 font-semibold border-slate-300 hover:bg-slate-50 text-slate-700">
+                    <Button variant="outline" className="w-full h-12 font-semibold border-slate-300 hover:bg-slate-50 text-slate-700 mt-auto">
                       Start for Free
                     </Button>
                   </DialogTrigger>
@@ -268,20 +263,20 @@ export default function LandingPage() {
                 </Dialog>
               </div>
 
-              {/* Paid Tier */}
-              <div className="relative rounded-2xl border-2 border-primary bg-white p-8 shadow-xl transform md:-translate-y-4">
+              {/* Prepper Pro (Paid Tier) */}
+              <div className="relative rounded-2xl border-2 border-primary bg-white p-8 shadow-xl transform md:-translate-y-4 flex flex-col z-10">
                 <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
-                  RECOMMENDED
+                  POPULAR
                 </div>
                 <div className="mb-6">
-                  <h3 className="text-2xl font-bold text-slate-900 font-heading">Survivalist Pro</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 font-heading">Prepper Pro</h3>
                   <div className="mt-4 flex items-baseline text-slate-900">
                     <span className="text-5xl font-extrabold tracking-tight">$5</span>
                     <span className="ml-1 text-xl font-semibold text-slate-500">/month</span>
                   </div>
-                  <p className="mt-4 text-slate-600">Full-spectrum preparedness for families.</p>
+                  <p className="mt-4 text-slate-600">Advanced tools for serious preppers.</p>
                 </div>
-                <ul className="space-y-4 mb-8">
+                <ul className="space-y-4 mb-8 flex-1">
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-3 shrink-0" />
                     <span className="text-slate-700 font-semibold">Everything in Basic, plus:</span>
@@ -292,15 +287,7 @@ export default function LandingPage() {
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-3 shrink-0" />
-                    <span className="text-slate-700"><strong>Family Sync</strong> (Share with household)</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-primary mr-3 shrink-0" />
                     <span className="text-slate-700"><strong>Food Rationing Calculator</strong></span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-primary mr-3 shrink-0" />
-                    <span className="text-slate-700"><strong>Secure Digital Vault</strong> (1GB Storage)</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-3 shrink-0" />
@@ -313,8 +300,48 @@ export default function LandingPage() {
                 </ul>
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button className="w-full h-12 font-semibold bg-primary hover:bg-primary/90 text-white shadow-lg">
+                    <Button className="w-full h-12 font-semibold bg-primary hover:bg-primary/90 text-white shadow-lg mt-auto">
                       Get Pro Access
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-md">
+                    <SignInForm />
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+               {/* Family Plan */}
+               <div className="relative rounded-2xl border border-slate-200 bg-white p-8 shadow-sm hover:shadow-md transition-all flex flex-col">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-slate-900 font-heading">Family Plan</h3>
+                  <div className="mt-4 flex items-baseline text-slate-900">
+                    <span className="text-5xl font-extrabold tracking-tight">$10</span>
+                    <span className="ml-1 text-xl font-semibold text-slate-500">/month</span>
+                  </div>
+                  <p className="mt-4 text-slate-600">Complete protection for your household.</p>
+                </div>
+                <ul className="space-y-4 mb-8 flex-1">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-blue-600 mr-3 shrink-0" />
+                    <span className="text-slate-700 font-semibold">Everything in Prepper Pro, plus:</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-blue-600 mr-3 shrink-0" />
+                    <span className="text-slate-700"><strong>Family Sync</strong> (3 Family Members)</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-blue-600 mr-3 shrink-0" />
+                    <span className="text-slate-700"><strong>Shared Emergency Plans</strong></span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-blue-600 mr-3 shrink-0" />
+                    <span className="text-slate-700"><strong>Real-time Location Sharing</strong></span>
+                  </li>
+                </ul>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button className="w-full h-12 font-semibold bg-blue-600 hover:bg-blue-700 text-white mt-auto">
+                      Get Family Plan
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-md">
@@ -337,30 +364,49 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="bg-white border-t border-slate-200 py-12">
+      <footer className="bg-slate-50 border-t border-slate-200 py-16">
         <div className="container px-4 md:px-6 mx-auto max-w-7xl">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center gap-2 mb-4">
-                <Image src="/images/LOGO.png" alt="PrepSafe" width={24} height={24} className="h-6 w-auto grayscale opacity-80" />
-                <span className="font-bold text-lg text-slate-700">PrepSafe</span>
+                <Image src="/images/LOGO.png" alt="PrepSafe" width={32} height={32} className="h-8 w-auto grayscale opacity-80" />
+                <span className="font-bold text-xl text-slate-700">PrepSafe</span>
               </div>
-              <p className="text-slate-500 text-sm max-w-xs">
-                The ultimate emergency preparedness platform for individuals and families. Be ready for anything.
+              <p className="text-slate-500 text-sm max-w-sm leading-relaxed">
+                The ultimate emergency preparedness platform for individuals and families.
+                Our mission is to ensure you're ready for anything, when it matters most.
               </p>
             </div>
+
             <div>
-              <h4 className="font-bold mb-4 text-slate-900">Resources</h4>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li><Link href="#" className="hover:text-primary">Survival Guide</Link></li>
-                <li><Link href="#" className="hover:text-primary">Blog</Link></li>
-                <li><Link href="#" className="hover:text-primary">Community</Link></li>
-                <li><Link href="#" className="hover:text-primary">Support</Link></li>
+              <h4 className="font-bold mb-6 text-slate-900">Product</h4>
+              <ul className="space-y-4 text-sm text-slate-600">
+                <li><Link href="#features" className="hover:text-primary transition-colors">Features</Link></li>
+                <li><Link href="#pricing" className="hover:text-primary transition-colors">Pricing</Link></li>
+                <li><Link href="#" className="hover:text-primary transition-colors">Testimonials</Link></li>
+                <li><Link href="#" className="hover:text-primary transition-colors">FAQ</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-bold mb-6 text-slate-900">Resources</h4>
+              <ul className="space-y-4 text-sm text-slate-600">
+                <li><Link href="#" className="hover:text-primary transition-colors">Survival Guide</Link></li>
+                <li><Link href="#" className="hover:text-primary transition-colors">Blog</Link></li>
+                <li><Link href="#" className="hover:text-primary transition-colors">Community</Link></li>
+                <li><Link href="#" className="hover:text-primary transition-colors">Support Center</Link></li>
               </ul>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t border-slate-200 text-center text-sm text-slate-500">
-            © {new Date().getFullYear()} PrepSafe. All rights reserved.
+
+          <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+            <div>
+              © {new Date().getFullYear()} PrepSafe. All rights reserved.
+            </div>
+            <div className="flex gap-8">
+              <Link href="#" className="hover:text-slate-900 transition-colors">Privacy Policy</Link>
+              <Link href="#" className="hover:text-slate-900 transition-colors">Terms of Service</Link>
+            </div>
           </div>
         </div>
       </footer>
