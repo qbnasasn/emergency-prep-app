@@ -331,7 +331,7 @@ export default function LandingPage() {
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-blue-600 mr-3 shrink-0" />
-                    <span className="text-slate-700"><strong>Family Sync</strong> (3 Family Members)</span>
+                    <span className="text-slate-700"><strong>Family Sync</strong> (4 Family Members)</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-blue-600 mr-3 shrink-0" />
