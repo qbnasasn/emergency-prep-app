@@ -115,7 +115,7 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
       if (typeof navigator !== "undefined" && navigator.mediaDevices) {
         try {
           const devs = await navigator.mediaDevices.enumerateDevices()
-          const outputs = devs.filter((d) => d.kind === "audiooutput")
+          const outputs = devs.filter((d) => d.kind === "audiooutput" && d.deviceId !== "")
           setOutputDevices(outputs)
         } catch (e) {
           console.error("Failed to enumerate devices", e)
