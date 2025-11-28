@@ -26,24 +26,14 @@ class CustomAudioPlayer {
   lastPlayedAt = -1
   ac: AudioContext | undefined
   gainNode: GainNode | undefined
-  compressorNode: DynamicsCompressorNode | undefined
   gain = 1
 
   play(leftSamples: Float32Array, rightSamples: Float32Array) {
-    if (!this.ac || !this.gainNode || !this.compressorNode) {
+    if (!this.ac || !this.gainNode) {
       this.ac = new (window.AudioContext || (window as any).webkitAudioContext)()
       this.gainNode = this.ac.createGain()
       this.gainNode.gain.value = this.gain
-
-      this.compressorNode = this.ac.createDynamicsCompressor()
-      this.compressorNode.threshold.value = -10
-      this.compressorNode.knee.value = 40
-      this.compressorNode.ratio.value = 12
-      this.compressorNode.attack.value = 0
-      this.compressorNode.release.value = 0.25
-
-      this.gainNode.connect(this.compressorNode)
-      this.compressorNode.connect(this.ac.destination)
+      this.gainNode.connect(this.ac.destination)
     }
 
     const buffer = this.ac.createBuffer(2, leftSamples.length, CustomAudioPlayer.OUT_RATE)
@@ -405,7 +395,7 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
                 <Slider
                   value={[volume]}
                   min={0}
-                  max={5}
+                  max={10}
                   step={0.1}
                   onValueChange={handleVolumeChange}
                   className="flex-1"
