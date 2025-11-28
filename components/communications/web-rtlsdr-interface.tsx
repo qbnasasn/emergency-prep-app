@@ -75,6 +75,16 @@ class CustomAudioPlayer {
   get sampleRate() {
     return this.ac ? this.ac.sampleRate : 48000
   }
+
+  async setOutputDevice(deviceId: string) {
+    if (this.ac && typeof (this.ac as any).setSinkId === "function") {
+      try {
+        await (this.ac as any).setSinkId(deviceId)
+      } catch (err) {
+        console.error("Failed to set audio output device:", err)
+      }
+    }
+  }
 }
 
 interface WebRtlsdrInterfaceProps {
@@ -90,6 +100,8 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   const [error, setError] = useState<string | null>(null)
   const [supported, setSupported] = useState(true)
   const [frequencyInput, setFrequencyInput] = useState("88.5")
+  const [outputDevices, setOutputDevices] = useState<MediaDeviceInfo[]>([])
+  const [selectedDevice, setSelectedDevice] = useState<string>("default")
 
   const radioRef = useRef<any>(null)
   const demodulatorRef = useRef<any>(null)
@@ -97,6 +109,23 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   useEffect(() => {
     setFrequencyInput(frequency.toString())
   }, [frequency])
+
+  useEffect(() => {
+    const getDevices = async () => {
+      if (typeof navigator !== "undefined" && navigator.mediaDevices) {
+        try {
+          const devs = await navigator.mediaDevices.enumerateDevices()
+          const outputs = devs.filter((d) => d.kind === "audiooutput")
+          setOutputDevices(outputs)
+        } catch (e) {
+          console.error("Failed to enumerate devices", e)
+        }
+      }
+    }
+    getDevices()
+    navigator.mediaDevices?.addEventListener("devicechange", getDevices)
+    return () => navigator.mediaDevices?.removeEventListener("devicechange", getDevices)
+  }, [])
 
   useEffect(() => {
     // Check for WebUSB support
@@ -184,6 +213,16 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
     setGain(newGain)
     if (radioRef.current && isPlaying) {
        await radioRef.current.setGain(newGain)
+    }
+  }
+
+  const handleDeviceChange = async (deviceId: string) => {
+    setSelectedDevice(deviceId)
+    if (demodulatorRef.current && demodulatorRef.current.player) {
+      const player = demodulatorRef.current.player as CustomAudioPlayer
+      if (player.setOutputDevice) {
+        await player.setOutputDevice(deviceId)
+      }
     }
   }
 
@@ -355,6 +394,24 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
               </div>
             </div>
           </div>
+
+          {outputDevices.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium font-body">Audio Output</label>
+              <Select value={selectedDevice} onValueChange={handleDeviceChange}>
+                <SelectTrigger className="font-body">
+                  <SelectValue placeholder="Select audio output" />
+                </SelectTrigger>
+                <SelectContent>
+                  {outputDevices.map((device) => (
+                    <SelectItem key={device.deviceId} value={device.deviceId}>
+                      {device.label || `Speaker ${device.deviceId.slice(0, 5)}...`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <div className="space-y-4 pt-2 border-t">
