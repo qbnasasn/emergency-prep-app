@@ -102,6 +102,7 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   const [frequencyInput, setFrequencyInput] = useState("88.5")
   const [outputDevices, setOutputDevices] = useState<MediaDeviceInfo[]>([])
   const [selectedDevice, setSelectedDevice] = useState<string>("default")
+  const [ppm, setPpm] = useState(0)
 
   const radioRef = useRef<any>(null)
   const demodulatorRef = useRef<any>(null)
@@ -152,6 +153,7 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
       await radio.setGain(gainValue)
 
       radio.setSampleRate(2048000)
+      await radio.setFrequencyCorrection(ppm)
 
       radio.addEventListener("error", (e: any) => {
         console.error("Radio error:", e)
@@ -236,10 +238,18 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   }
 
   const toggleAutoGain = async (auto: boolean) => {
-    const newGain = auto ? "auto" : 0
+    const newGain = auto ? "auto" : 30
     setGain(newGain)
     if (radioRef.current && isPlaying) {
-      await radioRef.current.setGain(auto ? null : 0)
+      await radioRef.current.setGain(auto ? null : 30)
+    }
+  }
+
+  const handlePpmChange = async (value: number[]) => {
+    const newPpm = value[0]
+    setPpm(newPpm)
+    if (radioRef.current && isPlaying) {
+      await radioRef.current.setFrequencyCorrection(newPpm)
     }
   }
 
@@ -450,6 +460,20 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
               />
             </div>
           )}
+
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <Label className="font-body text-xs">Freq Correction (PPM)</Label>
+              <span className="text-xs text-muted-foreground">{ppm}</span>
+            </div>
+            <Slider
+              value={[ppm]}
+              min={-100}
+              max={100}
+              step={1}
+              onValueChange={handlePpmChange}
+            />
+          </div>
         </div>
 
         <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
