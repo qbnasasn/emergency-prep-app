@@ -15,7 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 // Import from the library
 // Using deep imports as permitted by package exports
 import { Demodulator } from "@jtarrio/webrtlsdr/demod/demodulator.js"
-import { getMode } from "@jtarrio/webrtlsdr/demod/modes.js"
+import { getMode, modeParameters } from "@jtarrio/webrtlsdr/demod/modes.js"
 import { Radio as RtlRadio } from "@jtarrio/webrtlsdr/radio.js"
 import { RTL2832U_Provider } from "@jtarrio/webrtlsdr/rtlsdr.js"
 
@@ -93,6 +93,7 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   const [outputDevices, setOutputDevices] = useState<MediaDeviceInfo[]>([])
   const [selectedDevice, setSelectedDevice] = useState<string>("default")
   const [ppm, setPpm] = useState(0)
+  const [squelch, setSquelch] = useState(0)
 
   const radioRef = useRef<any>(null)
   const demodulatorRef = useRef<any>(null)
@@ -205,7 +206,26 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   const handleModeChange = (newMode: string) => {
     setMode(newMode)
     if (demodulatorRef.current) {
-      demodulatorRef.current.setMode(getMode(newMode))
+      const m = getMode(newMode)
+      demodulatorRef.current.setMode(m)
+
+      const params = modeParameters(m)
+      if (params.hasSquelch()) {
+        setSquelch(params.getSquelch())
+      }
+    }
+  }
+
+  const handleSquelchChange = (value: number[]) => {
+    const newSquelch = value[0]
+    setSquelch(newSquelch)
+    if (demodulatorRef.current) {
+      const currentMode = demodulatorRef.current.getMode()
+      const params = modeParameters(currentMode)
+      if (params.hasSquelch()) {
+        params.setSquelch(newSquelch)
+        demodulatorRef.current.setMode(params.mode)
+      }
     }
   }
 
@@ -464,6 +484,22 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
               onValueChange={handlePpmChange}
             />
           </div>
+
+          {mode !== "WBFM" && (
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label className="font-body text-xs">Squelch</Label>
+                <span className="text-xs text-muted-foreground">{squelch}</span>
+              </div>
+              <Slider
+                value={[squelch]}
+                min={0}
+                max={6}
+                step={0.1}
+                onValueChange={handleSquelchChange}
+              />
+            </div>
+          )}
         </div>
 
         <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
