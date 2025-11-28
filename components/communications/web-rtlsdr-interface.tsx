@@ -15,9 +15,67 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 // Import from the library
 // Using deep imports as permitted by package exports
 import { Demodulator } from "@jtarrio/webrtlsdr/demod/demodulator.js"
-import { getMode } from "@jtarrio/webrtlsdr/demod/modes.js"
+import { getMode, modeParameters } from "@jtarrio/webrtlsdr/demod/modes.js"
 import { Radio as RtlRadio } from "@jtarrio/webrtlsdr/radio.js"
 import { RTL2832U_Provider } from "@jtarrio/webrtlsdr/rtlsdr.js"
+
+class CustomAudioPlayer {
+  static OUT_RATE = 48000
+  static TIME_BUFFER = 0.05
+
+  lastPlayedAt = -1
+  ac: AudioContext | undefined
+  gainNode: GainNode | undefined
+  gain = 1
+
+  play(leftSamples: Float32Array, rightSamples: Float32Array) {
+    if (!this.ac || !this.gainNode) {
+      this.ac = new (window.AudioContext || (window as any).webkitAudioContext)()
+      this.gainNode = this.ac.createGain()
+      this.gainNode.gain.value = this.gain
+      this.gainNode.connect(this.ac.destination)
+    }
+
+    const buffer = this.ac.createBuffer(2, leftSamples.length, CustomAudioPlayer.OUT_RATE)
+    buffer.getChannelData(0).set(leftSamples)
+    buffer.getChannelData(1).set(rightSamples)
+
+    const source = this.ac.createBufferSource()
+    source.buffer = buffer
+    source.connect(this.gainNode)
+
+    this.lastPlayedAt = Math.max(
+      this.lastPlayedAt + leftSamples.length / CustomAudioPlayer.OUT_RATE,
+      this.ac.currentTime + CustomAudioPlayer.TIME_BUFFER,
+    )
+    source.start(this.lastPlayedAt)
+  }
+
+  setVolume(volume: number) {
+    this.gain = volume
+    if (this.gainNode) {
+      this.gainNode.gain.value = volume
+    }
+  }
+
+  getVolume() {
+    return this.gain
+  }
+
+  get sampleRate() {
+    return this.ac ? this.ac.sampleRate : 48000
+  }
+
+  async setOutputDevice(deviceId: string) {
+    if (this.ac && typeof (this.ac as any).setSinkId === "function") {
+      try {
+        await (this.ac as any).setSinkId(deviceId)
+      } catch (err) {
+        console.error("Failed to set audio output device:", err)
+      }
+    }
+  }
+}
 
 interface WebRtlsdrInterfaceProps {
   className?: string
@@ -32,6 +90,10 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   const [error, setError] = useState<string | null>(null)
   const [supported, setSupported] = useState(true)
   const [frequencyInput, setFrequencyInput] = useState("88.5")
+  const [outputDevices, setOutputDevices] = useState<MediaDeviceInfo[]>([])
+  const [selectedDevice, setSelectedDevice] = useState<string>("default")
+  const [ppm, setPpm] = useState(0)
+  const [squelch, setSquelch] = useState(0)
 
   const radioRef = useRef<any>(null)
   const demodulatorRef = useRef<any>(null)
@@ -39,6 +101,23 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   useEffect(() => {
     setFrequencyInput(frequency.toString())
   }, [frequency])
+
+  useEffect(() => {
+    const getDevices = async () => {
+      if (typeof navigator !== "undefined" && navigator.mediaDevices) {
+        try {
+          const devs = await navigator.mediaDevices.enumerateDevices()
+          const outputs = devs.filter((d) => d.kind === "audiooutput" && d.deviceId !== "")
+          setOutputDevices(outputs)
+        } catch (e) {
+          console.error("Failed to enumerate devices", e)
+        }
+      }
+    }
+    getDevices()
+    navigator.mediaDevices?.addEventListener("devicechange", getDevices)
+    return () => navigator.mediaDevices?.removeEventListener("devicechange", getDevices)
+  }, [])
 
   useEffect(() => {
     // Check for WebUSB support
@@ -50,7 +129,7 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   const initRadio = async () => {
     try {
       const provider = new RTL2832U_Provider()
-      const demodulator = new Demodulator()
+      const demodulator = new Demodulator(new CustomAudioPlayer() as any)
       const radio = new RtlRadio(provider, demodulator)
 
       radioRef.current = radio
@@ -63,6 +142,16 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
 
       const gainValue = gain === "auto" ? null : gain
       await radio.setGain(gainValue)
+
+      radio.setSampleRate(2048000)
+      await radio.setFrequencyCorrection(ppm)
+
+      radio.addEventListener("error", (e: any) => {
+        console.error("Radio error:", e)
+        setError(e.detail?.exception?.message || "Radio error occurred")
+        setIsPlaying(false)
+        radioRef.current = null
+      })
 
       await radio.start()
       setIsPlaying(true)
@@ -117,7 +206,26 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   const handleModeChange = (newMode: string) => {
     setMode(newMode)
     if (demodulatorRef.current) {
-      demodulatorRef.current.setMode(getMode(newMode))
+      const m = getMode(newMode)
+      demodulatorRef.current.setMode(m)
+
+      const params = modeParameters(m)
+      if (params.hasSquelch()) {
+        setSquelch(params.getSquelch())
+      }
+    }
+  }
+
+  const handleSquelchChange = (value: number[]) => {
+    const newSquelch = value[0]
+    setSquelch(newSquelch)
+    if (demodulatorRef.current) {
+      const currentMode = demodulatorRef.current.getMode()
+      const params = modeParameters(currentMode)
+      if (params.hasSquelch()) {
+        params.setSquelch(newSquelch)
+        demodulatorRef.current.setMode(params.mode)
+      }
     }
   }
 
@@ -129,11 +237,29 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
     }
   }
 
+  const handleDeviceChange = async (deviceId: string) => {
+    setSelectedDevice(deviceId)
+    if (demodulatorRef.current && demodulatorRef.current.player) {
+      const player = demodulatorRef.current.player as CustomAudioPlayer
+      if (player.setOutputDevice) {
+        await player.setOutputDevice(deviceId)
+      }
+    }
+  }
+
   const toggleAutoGain = async (auto: boolean) => {
-    const newGain = auto ? "auto" : 0
+    const newGain = auto ? "auto" : 30
     setGain(newGain)
     if (radioRef.current && isPlaying) {
-      await radioRef.current.setGain(auto ? null : 0)
+      await radioRef.current.setGain(auto ? null : 30)
+    }
+  }
+
+  const handlePpmChange = async (value: number[]) => {
+    const newPpm = value[0]
+    setPpm(newPpm)
+    if (radioRef.current && isPlaying) {
+      await radioRef.current.setFrequencyCorrection(newPpm)
     }
   }
 
@@ -289,7 +415,7 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
                 <Slider
                   value={[volume]}
                   min={0}
-                  max={1}
+                  max={10}
                   step={0.1}
                   onValueChange={handleVolumeChange}
                   className="flex-1"
@@ -297,6 +423,24 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
               </div>
             </div>
           </div>
+
+          {outputDevices.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium font-body">Audio Output</label>
+              <Select value={selectedDevice} onValueChange={handleDeviceChange}>
+                <SelectTrigger className="font-body">
+                  <SelectValue placeholder="Select audio output" />
+                </SelectTrigger>
+                <SelectContent>
+                  {outputDevices.map((device) => (
+                    <SelectItem key={device.deviceId} value={device.deviceId}>
+                      {device.label || `Speaker ${device.deviceId.slice(0, 5)}...`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <div className="space-y-4 pt-2 border-t">
@@ -323,6 +467,36 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
                 max={50}
                 step={1}
                 onValueChange={handleGainChange}
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <Label className="font-body text-xs">Freq Correction (PPM)</Label>
+              <span className="text-xs text-muted-foreground">{ppm}</span>
+            </div>
+            <Slider
+              value={[ppm]}
+              min={-100}
+              max={100}
+              step={1}
+              onValueChange={handlePpmChange}
+            />
+          </div>
+
+          {mode !== "WBFM" && (
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label className="font-body text-xs">Squelch</Label>
+                <span className="text-xs text-muted-foreground">{squelch}</span>
+              </div>
+              <Slider
+                value={[squelch]}
+                min={0}
+                max={6}
+                step={0.1}
+                onValueChange={handleSquelchChange}
               />
             </div>
           )}
