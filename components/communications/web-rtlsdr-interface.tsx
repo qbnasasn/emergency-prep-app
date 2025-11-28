@@ -151,6 +151,15 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
       const gainValue = gain === "auto" ? null : gain
       await radio.setGain(gainValue)
 
+      radio.setSampleRate(2048000)
+
+      radio.addEventListener("error", (e: any) => {
+        console.error("Radio error:", e)
+        setError(e.detail?.exception?.message || "Radio error occurred")
+        setIsPlaying(false)
+        radioRef.current = null
+      })
+
       await radio.start()
       setIsPlaying(true)
       setError(null)
