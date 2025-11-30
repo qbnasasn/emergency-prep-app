@@ -1,7 +1,7 @@
 "use client"
 
 import { Suspense, useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
+import { useUser } from "@clerk/nextjs"
 import { toast } from "sonner"
 import { KitsHeader } from "@/components/kits/kits-header"
 import { KitsOverview } from "@/components/kits/kits-overview"
@@ -11,7 +11,7 @@ import { Kit } from "@/lib/data/kits"
 import { createKit, updateKit } from "@/lib/actions/kits"
 
 export default function KitsPage() {
-  const { data: session } = useSession()
+  const { user, isLoaded } = useUser()
   const [kits, setKits] = useState<Kit[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
@@ -25,7 +25,7 @@ export default function KitsPage() {
   )
 
   const fetchKits = async () => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
     setIsLoading(true);
     try {
       const response = await fetch('/api/kits');
@@ -40,8 +40,12 @@ export default function KitsPage() {
   };
 
   useEffect(() => {
-    fetchKits();
-  }, [session]);
+    if (isLoaded && user) {
+        fetchKits();
+    } else if (isLoaded && !user) {
+        setIsLoading(false);
+    }
+  }, [isLoaded, user]);
 
   const handleOpenModal = (kit: Kit | null = null) => {
     setSelectedKit(kit)
@@ -54,7 +58,7 @@ export default function KitsPage() {
   }
 
   const handleSaveKit = async (kitData: any) => {
-    const userId = session?.user?.id
+    const userId = user?.id
     if (!userId) {
       toast.error("You must be logged in to perform this action.")
       return

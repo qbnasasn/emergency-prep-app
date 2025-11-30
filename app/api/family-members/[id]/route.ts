@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import db from '@/lib/db'
-import { auth } from '@/lib/auth'
+import { getAuthUser } from '@/lib/auth'
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -27,7 +27,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       [
         first_name, last_name, weight_lbs, height_inches, birth_date, role,
         phone_number, email, call_sign, street_number, street_name, city, state, zip_code,
-        id, session.user.id
+        id, user.id
       ]
     )
 
@@ -43,14 +43,14 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { id } = params
   try {
-    const result = await db.query('DELETE FROM family_members WHERE id = $1 AND user_id = $2', [id, session.user.id])
+    const result = await db.query('DELETE FROM family_members WHERE id = $1 AND user_id = $2', [id, user.id])
 
     if (result.rowCount === 0) {
       return NextResponse.json({ error: 'Family member not found or not owned by user' }, { status: 404 })

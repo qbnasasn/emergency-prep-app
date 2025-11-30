@@ -2,7 +2,8 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Montserrat, Open_Sans } from "next/font/google"
 import "./globals.css"
-import Provider from "@/components/auth/session-provider"
+import { ClerkProvider } from "@clerk/nextjs"
+import { Toaster } from "sonner"
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -30,10 +31,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${montserrat.variable} ${openSans.variable}`}>
-      <body className="font-sans antialiased">
-        <Provider>{children}</Provider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={`${montserrat.variable} ${openSans.variable}`}>
+        <body className="font-sans antialiased">
+          {children}
+          <Toaster position="bottom-right" />
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
