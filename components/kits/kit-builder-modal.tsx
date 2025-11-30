@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { InventoryItem } from "@/lib/data/inventory"
 import { useUser } from "@clerk/nextjs"
 import { PlusCircle, XCircle, ShoppingCart, Loader2 } from "lucide-react"
@@ -156,6 +156,9 @@ export function KitBuilderModal({ isOpen, onClose, onSave, kit }: KitBuilderModa
       <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{kit ? "Edit Kit" : "Create New Kit"}</DialogTitle>
+          <DialogDescription>
+            {kit ? "Modify your existing emergency kit." : "Assemble a new emergency kit from your inventory."}
+          </DialogDescription>
         </DialogHeader>
         <div className="flex-grow overflow-y-auto pr-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
