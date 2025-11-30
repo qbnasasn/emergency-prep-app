@@ -1,6 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { DemoButton } from "@/components/landing/demo-button"
 import { SignInForm } from "@/components/auth/sign-in-form"
 import {
   Dialog,
@@ -90,9 +91,7 @@ export default function LandingPage() {
                   <SignInForm />
                 </DialogContent>
               </Dialog>
-              <Button variant="outline" size="lg" className="text-white border-slate-600 hover:bg-white/10 h-12 px-8 bg-transparent rounded-full">
-                View Demo
-              </Button>
+              <DemoButton />
             </div>
           </div>
         </section>
@@ -366,25 +365,14 @@ export default function LandingPage() {
 
       <footer className="bg-white border-t border-slate-200 py-12">
         <div className="container px-4 md:px-6 mx-auto max-w-5xl">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-            <div className="max-w-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <Image src="/images/LOGO.png" alt="PrepSafe" width={24} height={24} className="h-6 w-auto grayscale opacity-80" />
-                <span className="font-bold text-lg text-slate-700">PrepSafe</span>
-              </div>
-              <p className="text-slate-500 text-sm">
-                The ultimate emergency preparedness platform for individuals and families. Be ready for anything.
-              </p>
+          <div className="flex flex-col items-center justify-center text-center gap-6">
+            <div className="flex items-center gap-2">
+              <Image src="/images/LOGO.png" alt="PrepSafe" width={24} height={24} className="h-6 w-auto grayscale opacity-80" />
+              <span className="font-bold text-lg text-slate-700">PrepSafe</span>
             </div>
-            <div>
-              <h4 className="font-bold mb-4 text-slate-900">Resources</h4>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li><Link href="#" className="hover:text-primary">Survival Guide</Link></li>
-                <li><Link href="#" className="hover:text-primary">Blog</Link></li>
-                <li><Link href="#" className="hover:text-primary">Community</Link></li>
-                <li><Link href="#" className="hover:text-primary">Support</Link></li>
-              </ul>
-            </div>
+            <p className="text-slate-500 text-sm max-w-md">
+              The ultimate emergency preparedness platform for individuals and families. Be ready for anything.
+            </p>
           </div>
           <div className="mt-12 pt-8 border-t border-slate-200 text-center text-sm text-slate-500">
             © {new Date().getFullYear()} PrepSafe. All rights reserved.
