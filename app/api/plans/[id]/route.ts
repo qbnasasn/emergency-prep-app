@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth-options"
+import { getAuthUser } from "@/lib/auth"
 
 interface RouteParams {
   params: {
@@ -10,11 +9,11 @@ interface RouteParams {
 }
 
 export async function GET(req: Request, { params }: RouteParams) {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user || !session.user.id) {
+  const user = await getAuthUser();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = session.user.id;
+  const userId = user.id;
   const { id } = params;
 
   try {
@@ -34,11 +33,11 @@ export async function GET(req: Request, { params }: RouteParams) {
 }
 
 export async function PUT(req: Request, { params }: RouteParams) {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user || !session.user.id) {
+    const user = await getAuthUser();
+    if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const userId = session.user.id;
+    const userId = user.id;
     const { id } = params;
 
     try {
@@ -67,11 +66,11 @@ export async function PUT(req: Request, { params }: RouteParams) {
 }
 
 export async function PATCH(req: Request, { params }: RouteParams) {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user || !session.user.id) {
+    const user = await getAuthUser();
+    if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const userId = session.user.id;
+    const userId = user.id;
     const { id } = params;
 
     try {
@@ -100,11 +99,11 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 }
 
 export async function DELETE(req: Request, { params }: RouteParams) {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user || !session.user.id) {
+    const user = await getAuthUser();
+    if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const userId = session.user.id;
+    const userId = user.id;
     const { id } = params;
 
     try {

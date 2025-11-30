@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server'
 import pool from '@/lib/db'
-import { auth } from '@/lib/auth'
+import { getAuthUser } from '@/lib/auth'
 
 export async function GET() {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
-    const pets = await pool.query('SELECT * FROM pets WHERE user_id = $1 ORDER BY created_at ASC', [session.user.id])
+    const pets = await pool.query('SELECT * FROM pets WHERE user_id = $1 ORDER BY created_at ASC', [user.id])
     return NextResponse.json(pets.rows)
   } catch (error) {
     console.error('Error fetching pets:', error)
@@ -18,8 +18,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
-        session.user.id, name, species, breed, age, weight_lbs, microchip_id, care_instructions
+        user.id, name, species, breed, age, weight_lbs, microchip_id, care_instructions
       ]
     )
 

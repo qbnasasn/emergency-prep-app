@@ -1,14 +1,13 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import pool from '@/lib/db'; // Using the project's original db pool
+import { getAuthUser } from "@/lib/auth";
+import pool from '@/lib/db';
 
 export const getUserLocations = async () => {
-  const session = await getServerSession(authOptions);
+  const user = await getAuthUser();
 
-  if (!session?.user?.id) {
+  if (!user) {
     throw new Error('Not authenticated');
   }
-  const userId = session.user.id;
+  const userId = user.id;
   const client = await pool.connect();
 
   try {

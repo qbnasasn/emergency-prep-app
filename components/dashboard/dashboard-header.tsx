@@ -1,22 +1,19 @@
 "use client"
 
-import { Bell, Settings, User, LogOut, HelpCircle, Check, Trash2 } from "lucide-react"
+import { Bell, Check, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Image from "next/image"
-import Link from "next/link"
-import { useSession, signOut } from "next-auth/react"
 import { ModeToggle } from "@/components/ui/mode-toggle"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
+import { UserButton, useUser } from "@clerk/nextjs"
 
 interface Notification {
   id: string
@@ -33,9 +30,7 @@ interface NotificationResponse {
 }
 
 export function DashboardHeader() {
-  const { data: session } = useSession()
-  const user = session?.user
-  const initials = user?.name?.split(' ').map(n => n[0]).join('') ?? ''
+  const { isLoaded, isSignedIn } = useUser()
 
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -54,13 +49,13 @@ export function DashboardHeader() {
   }
 
   useEffect(() => {
-    if (session) {
+    if (isSignedIn) {
       fetchNotifications()
       // Poll every minute
       const interval = setInterval(fetchNotifications, 60000)
       return () => clearInterval(interval)
     }
-  }, [session])
+  }, [isSignedIn])
 
   const markAsRead = async (id: string) => {
     try {
@@ -175,44 +170,7 @@ export function DashboardHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? 'User'} />
-                  <AvatarFallback className="bg-muted">
-                    {initials || <User className="h-5 w-5" />}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-body">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild className="font-body cursor-pointer">
-                <Link href="/dashboard/settings">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="font-body cursor-pointer">
-                <HelpCircle className="mr-2 h-4 w-4" />
-                Request Help
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })} className="font-body cursor-pointer">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserButton />
         </div>
       </div>
     </header>
