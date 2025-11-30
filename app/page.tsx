@@ -3,6 +3,8 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { DemoButton } from "@/components/landing/demo-button"
 import { SignInForm } from "@/components/auth/sign-in-form"
+import { auth } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -23,7 +25,13 @@ import {
   Check
 } from "lucide-react"
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { userId } = await auth()
+
+  if (userId) {
+    redirect("/dashboard")
+  }
+
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-900">
       {/* Navigation Header */}
