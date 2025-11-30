@@ -12,9 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { InventoryItem } from "@/lib/data/inventory"
-import { useSession } from "next-auth/react"
+import { useUser } from "@clerk/nextjs"
 import { PlusCircle, XCircle, ShoppingCart, Loader2 } from "lucide-react"
 import { suggestedItems } from "@/lib/data/suggested-items"
 import { Kit } from "@/lib/data/kits"
@@ -40,7 +40,7 @@ interface KitBuilderModalProps {
 }
 
 export function KitBuilderModal({ isOpen, onClose, onSave, kit }: KitBuilderModalProps) {
-  const { data: session } = useSession();
+  const { user } = useUser();
   const [kitName, setKitName] = useState("");
   const [kitDescription, setKitDescription] = useState("");
   const [kitCategory, setKitCategory] = useState<KitCategory | "">("");
@@ -55,7 +55,7 @@ export function KitBuilderModal({ isOpen, onClose, onSave, kit }: KitBuilderModa
   // Fetch all inventory items once when the modal is opened
   useEffect(() => {
     async function fetchAllInventory() {
-      if (isOpen && session?.user?.id) {
+      if (isOpen && user?.id) {
         try {
           const response = await fetch("/api/inventory");
           if (!response.ok) throw new Error("Failed to fetch inventory");
@@ -67,7 +67,7 @@ export function KitBuilderModal({ isOpen, onClose, onSave, kit }: KitBuilderModa
       }
     }
     fetchAllInventory();
-  }, [isOpen, session]);
+  }, [isOpen, user]);
 
   // Pre-fill form and fetch kit-specific items when in "edit" mode
   useEffect(() => {
@@ -129,7 +129,7 @@ export function KitBuilderModal({ isOpen, onClose, onSave, kit }: KitBuilderModa
   }
 
   const handleSave = async () => {
-    if (!session?.user?.id || !kitName || !kitCategory) {
+    if (!user?.id || !kitName || !kitCategory) {
         setErrorMessage("Please provide a kit name and select a category.");
         return;
     }
@@ -156,6 +156,9 @@ export function KitBuilderModal({ isOpen, onClose, onSave, kit }: KitBuilderModa
       <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{kit ? "Edit Kit" : "Create New Kit"}</DialogTitle>
+          <DialogDescription>
+            {kit ? "Modify your existing emergency kit." : "Assemble a new emergency kit from your inventory."}
+          </DialogDescription>
         </DialogHeader>
         <div className="flex-grow overflow-y-auto pr-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

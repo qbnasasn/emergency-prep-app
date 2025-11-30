@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth-options"
+import { getAuthUser } from "@/lib/auth"
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user || !session.user.id) {
+  const user = await getAuthUser();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
   const client = await pool.connect();
 
   try {

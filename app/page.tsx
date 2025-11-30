@@ -7,6 +7,8 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import {
   ShieldCheck,
@@ -53,6 +55,8 @@ export default function LandingPage() {
                 <Button className="font-heading font-semibold bg-slate-900 text-white hover:bg-slate-800">Sign In</Button>
               </DialogTrigger>
               <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-md">
+                <DialogTitle className="sr-only">Sign In</DialogTitle>
+                <DialogDescription className="sr-only">Sign in to your account</DialogDescription>
                 <SignInForm defaultTab="signup" />
               </DialogContent>
             </Dialog>
@@ -88,6 +92,8 @@ export default function LandingPage() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-md">
+                  <DialogTitle className="sr-only">Start Preparing</DialogTitle>
+                  <DialogDescription className="sr-only">Create an account to start preparing</DialogDescription>
                   <SignInForm />
                 </DialogContent>
               </Dialog>
@@ -257,6 +263,8 @@ export default function LandingPage() {
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-md">
+                    <DialogTitle className="sr-only">Start for Free</DialogTitle>
+                    <DialogDescription className="sr-only">Create a free account</DialogDescription>
                     <SignInForm />
                   </DialogContent>
                 </Dialog>
@@ -304,6 +312,8 @@ export default function LandingPage() {
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-md">
+                    <DialogTitle className="sr-only">Get Pro Access</DialogTitle>
+                    <DialogDescription className="sr-only">Create a Pro account</DialogDescription>
                     <SignInForm />
                   </DialogContent>
                 </Dialog>
@@ -344,6 +354,8 @@ export default function LandingPage() {
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-md">
+                    <DialogTitle className="sr-only">Get Family Plan</DialogTitle>
+                    <DialogDescription className="sr-only">Create a Family account</DialogDescription>
                     <SignInForm />
                   </DialogContent>
                 </Dialog>
