@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth-options"
+import { getAuthUser } from "@/lib/auth"
 
 async function checkPlanOwnership(client: any, planId: string, userId: string) {
     const result = await client.query('SELECT user_id FROM plans WHERE id = $1', [planId]);
@@ -15,13 +14,13 @@ async function checkPlanOwnership(client: any, planId: string, userId: string) {
 }
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user || !session.user.id) {
+    const user = await getAuthUser();
+    if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const planId = params.id;
-    const userId = session.user.id;
+    const userId = user.id;
     const client = await pool.connect();
 
     try {
@@ -57,13 +56,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user || !session.user.id) {
+    const user = await getAuthUser();
+    if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const planId = params.id;
-    const userId = session.user.id;
+    const userId = user.id;
 
     try {
         const { selectedItemIds, selectedKitIds } = await req.json();
