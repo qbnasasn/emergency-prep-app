@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { auth } from '@/lib/auth';
+import { getAuthUser } from '@/lib/auth';
 
 interface RouteParams {
   params: {
@@ -9,11 +9,11 @@ interface RouteParams {
 }
 
 export async function GET(req: Request, { params }: RouteParams) {
-  const session = await auth();
-  if (!session || !session.user || !session.user.id) {
+  const user = await getAuthUser();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = session.user.id;
+  const userId = user.id;
   const { id: planId } = params;
 
   try {
@@ -43,11 +43,11 @@ export async function GET(req: Request, { params }: RouteParams) {
 }
 
 export async function PUT(req: Request, { params }: RouteParams) {
-  const session = await auth();
-  if (!session || !session.user || !session.user.id) {
+  const user = await getAuthUser();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = session.user.id;
+  const userId = user.id;
   const { id: planId } = params;
 
   let client;

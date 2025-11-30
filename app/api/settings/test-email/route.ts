@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
+import { getAuthUser } from '@/lib/auth';
 import { sendNotification } from '@/lib/notifications';
 
 export async function POST() {
-  const session = await getServerSession(authOptions);
+  const user = await getAuthUser();
 
-  if (!session?.user?.id) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     await sendNotification(
-      session.user.id,
+      user.id,
       'Test Notification',
       'This is a test email from PrepSafe.',
       'system'

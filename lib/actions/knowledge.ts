@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import pool from "@/lib/db"
 import { z } from "zod"
-import { auth } from "@/lib/auth"
+import { getAuthUser } from "@/lib/auth"
 
 // Schema for Knowledge Base Document
 const DocumentSchema = z.object({
@@ -30,12 +30,12 @@ export async function getDocuments(filters?: {
   category?: string
   search?: string
 }) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     throw new Error("Unauthorized")
   }
 
-  const userId = session.user.id
+  const userId = user.id
   let query = `
     SELECT
       d.*,
@@ -77,8 +77,8 @@ export async function getDocuments(filters?: {
 
 // Get a single document by ID
 export async function getDocument(id: string) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     throw new Error("Unauthorized")
   }
 
@@ -91,7 +91,7 @@ export async function getDocument(id: string) {
       FROM knowledge_base_docs d
       WHERE d.id = $1 AND d.user_id = $2
       `,
-      [id, session.user.id]
+      [id, user.id]
     )
     return result.rows[0] as KnowledgeDocument | null
   } catch (error) {
@@ -102,8 +102,8 @@ export async function getDocument(id: string) {
 
 // Create a new document
 export async function createDocument(data: z.infer<typeof DocumentSchema>) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     throw new Error("Unauthorized")
   }
 
@@ -122,7 +122,7 @@ export async function createDocument(data: z.infer<typeof DocumentSchema>) {
       RETURNING id
       `,
       [
-        session.user.id,
+        user.id,
         title,
         content || "",
         type,
@@ -141,8 +141,8 @@ export async function createDocument(data: z.infer<typeof DocumentSchema>) {
 
 // Update a document
 export async function updateDocument(id: string, data: z.infer<typeof DocumentSchema>) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     throw new Error("Unauthorized")
   }
 
@@ -160,7 +160,7 @@ export async function updateDocument(id: string, data: z.infer<typeof DocumentSc
       [id]
     )
     if (check.rows.length === 0) return { success: false, error: "Document not found" }
-    if (check.rows[0].user_id !== session.user.id) {
+    if (check.rows[0].user_id !== user.id) {
       return { success: false, error: "Not authorized to update this document" }
     }
 
@@ -182,8 +182,8 @@ export async function updateDocument(id: string, data: z.infer<typeof DocumentSc
 
 // Delete a document
 export async function deleteDocument(id: string) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     throw new Error("Unauthorized")
   }
 
@@ -194,7 +194,7 @@ export async function deleteDocument(id: string) {
       [id]
     )
     if (check.rows.length === 0) return { success: false, error: "Document not found" }
-    if (check.rows[0].user_id !== session.user.id) {
+    if (check.rows[0].user_id !== user.id) {
       return { success: false, error: "Not authorized to delete this document" }
     }
 
@@ -209,26 +209,26 @@ export async function deleteDocument(id: string) {
 
 // Toggle Favorite
 export async function toggleFavorite(docId: string) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     throw new Error("Unauthorized")
   }
 
   try {
     const existing = await pool.query(
       "SELECT 1 FROM kb_favorites WHERE user_id = $1 AND doc_id = $2",
-      [session.user.id, docId]
+      [user.id, docId]
     )
 
     if (existing.rows.length > 0) {
       await pool.query(
         "DELETE FROM kb_favorites WHERE user_id = $1 AND doc_id = $2",
-        [session.user.id, docId]
+        [user.id, docId]
       )
     } else {
       await pool.query(
         "INSERT INTO kb_favorites (user_id, doc_id) VALUES ($1, $2)",
-        [session.user.id, docId]
+        [user.id, docId]
       )
     }
     revalidatePath("/dashboard/knowledge")
@@ -241,8 +241,8 @@ export async function toggleFavorite(docId: string) {
 
 // Get Daily Tip for Dashboard
 export async function getDailyTip() {
-  const session = await auth()
-  const userId = session?.user?.id
+  const user = await getAuthUser()
+  const userId = user?.id
 
   try {
     // Set seed based on the day of the year (0.0 to 1.0)
@@ -276,8 +276,8 @@ export async function getDailyTip() {
 
 // Get Favorites
 export async function getFavorites() {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     throw new Error("Unauthorized")
   }
 
@@ -290,7 +290,7 @@ export async function getFavorites() {
       WHERE f.user_id = $1
       ORDER BY d.created_at DESC
       `,
-      [session.user.id]
+      [user.id]
     )
     return result.rows as KnowledgeDocument[]
   } catch (error) {

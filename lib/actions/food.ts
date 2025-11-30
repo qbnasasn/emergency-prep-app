@@ -1,17 +1,17 @@
 "use server"
 
 import pool from "@/lib/db"
-import { auth } from "@/lib/auth"
+import { getAuthUser } from "@/lib/auth"
 import { NUTRITION_TYPES } from "@/lib/constants"
 import { KnowledgeDocument } from "@/lib/actions/knowledge"
 
 export async function getFoodPageData() {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     throw new Error("Unauthorized")
   }
 
-  const userId = session.user.id
+  const userId = user.id
 
   try {
     const client = await pool.connect()
@@ -122,8 +122,8 @@ export async function getFoodPageData() {
 }
 
 export async function getMenus() {
-    const session = await auth()
-    if (!session?.user?.id) {
+    const user = await getAuthUser()
+    if (!user) {
         throw new Error("Unauthorized")
     }
 
@@ -133,7 +133,7 @@ export async function getMenus() {
             WHERE user_id = $1 AND type = 'menu'
             ORDER BY created_at DESC
         `
-        const result = await pool.query(query, [session.user.id])
+        const result = await pool.query(query, [user.id])
         return result.rows as KnowledgeDocument[]
     } catch (error) {
         console.error("Failed to fetch menus:", error)

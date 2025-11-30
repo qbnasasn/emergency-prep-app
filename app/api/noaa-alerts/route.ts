@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { auth } from '@/lib/auth';
+import { getAuthUser } from '@/lib/auth';
 
 interface NoaaLocation {
     id: string;
@@ -38,11 +38,11 @@ async function fetchAlertsForLocation(lat: number, lon: number) {
 }
 
 export async function GET(req: Request) {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser();
+    if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const userId = session.user.id;
+    const userId = user.id;
 
     const client = await pool.connect();
     try {

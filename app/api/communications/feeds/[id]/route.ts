@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { auth } from '@/lib/auth';
+import { getAuthUser } from '@/lib/auth';
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const user = await getAuthUser();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = session.user.id;
+  const userId = user.id;
   const { id } = params;
 
   const client = await pool.connect();
@@ -31,11 +31,11 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 }
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const user = await getAuthUser();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = session.user.id;
+  const userId = user.id;
   const { id } = params;
 
   try {

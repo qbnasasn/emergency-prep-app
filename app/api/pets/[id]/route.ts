@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import pool from '@/lib/db'
-import { auth } from '@/lib/auth'
+import { getAuthUser } from '@/lib/auth'
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -24,7 +24,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
        RETURNING *`,
       [
         name, species, breed, age, weight_lbs, microchip_id, care_instructions,
-        id, session.user.id
+        id, user.id
       ]
     )
 
@@ -40,14 +40,14 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const user = await getAuthUser()
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { id } = params
   try {
-    const result = await pool.query('DELETE FROM pets WHERE id = $1 AND user_id = $2', [id, session.user.id])
+    const result = await pool.query('DELETE FROM pets WHERE id = $1 AND user_id = $2', [id, user.id])
 
     if (result.rowCount === 0) {
       return NextResponse.json({ error: 'Pet not found or not owned by user' }, { status: 404 })
