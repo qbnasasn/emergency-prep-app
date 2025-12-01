@@ -12,13 +12,19 @@ export async function getAuthUser() {
   const client = await pool.connect();
   try {
     // 1. Try to find by clerk_id (Primary/Fastest)
-    const byClerkId = await client.query('SELECT id, email FROM users WHERE clerk_id = $1', [clerkId]);
+    const byClerkId = await client.query(
+      'SELECT id, email, household_id as "householdId", subscription_plan as "subscriptionPlan" FROM users WHERE clerk_id = $1',
+      [clerkId]
+    );
     if (byClerkId.rows.length > 0) {
         return byClerkId.rows[0];
     }
 
     // 2. Fallback: Try to find by email (Legacy/Migration)
-    const byEmail = await client.query('SELECT id, email FROM users WHERE email = $1', [email]);
+    const byEmail = await client.query(
+      'SELECT id, email, household_id as "householdId", subscription_plan as "subscriptionPlan" FROM users WHERE email = $1',
+      [email]
+    );
     if (byEmail.rows.length > 0) {
         const user = byEmail.rows[0];
         // MIGRATE: Link this legacy user to the Clerk ID
@@ -31,9 +37,18 @@ export async function getAuthUser() {
 
     await client.query('BEGIN');
 
+    // Create Household first
+    const householdName = `${fullName || 'My'}'s Household`;
+    const householdRes = await client.query(
+      'INSERT INTO households (name) VALUES ($1) RETURNING id',
+      [householdName]
+    );
+    const householdId = householdRes.rows[0].id;
+
+    // Create User linked to Household
     const insertRes = await client.query(
-      'INSERT INTO users (email, full_name, image, clerk_id) VALUES ($1, $2, $3, $4) RETURNING id, email',
-      [email, fullName, clerkUser.imageUrl, clerkId]
+      'INSERT INTO users (email, full_name, image, clerk_id, household_id, subscription_plan) VALUES ($1, $2, $3, $4, $5, \'scout\') RETURNING id, email, household_id as "householdId", subscription_plan as "subscriptionPlan"',
+      [email, fullName, clerkUser.imageUrl, clerkId, householdId]
     );
     const newUser = insertRes.rows[0];
 
