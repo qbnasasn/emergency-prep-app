@@ -236,10 +236,10 @@ export default async function LandingPage() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-              {/* Basic Scout (Free Tier) */}
+              {/* Scout (Free Tier) */}
               <div className="relative rounded-2xl border border-slate-200 bg-white p-8 shadow-sm hover:shadow-md transition-all flex flex-col">
                 <div className="mb-6">
-                  <h3 className="text-2xl font-bold text-slate-900 font-heading">Basic Scout</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 font-heading">Scout</h3>
                   <div className="mt-4 flex items-baseline text-slate-900">
                     <span className="text-5xl font-extrabold tracking-tight">$0</span>
                     <span className="ml-1 text-xl font-semibold text-slate-500">/month</span>
