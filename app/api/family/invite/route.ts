@@ -12,6 +12,16 @@ function generateCode(length: number = 6): string {
   return result;
 }
 
+export async function GET(req: Request) {
+  const user = await getAuthUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return NextResponse.json({
+      subscriptionPlan: user.subscriptionPlan,
+      householdId: user.householdId,
+      canInvite: user.subscriptionPlan === 'family_plan'
+  });
+}
+
 export async function POST(req: Request) {
   const user = await getAuthUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

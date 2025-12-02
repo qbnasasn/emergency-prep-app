@@ -1,18 +1,29 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, User, Trash2, Edit } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Plus, User, Trash2, Edit, Copy, Users } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { FamilyMemberForm } from './family-member-form'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export function FamilyMembers() {
   const [members, setMembers] = useState([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedMember, setSelectedMember] = useState(null)
+
+  // Family Link State
+  const [canInvite, setCanInvite] = useState(false)
+  const [inviteCode, setInviteCode] = useState("")
+  const [inviteExpiresAt, setInviteExpiresAt] = useState("")
+  const [showInviteDialog, setShowInviteDialog] = useState(false)
+  const [joinCode, setJoinCode] = useState("")
+  const [isJoining, setIsJoining] = useState(false)
 
   const fetchMembers = async () => {
     try {
@@ -30,8 +41,21 @@ export function FamilyMembers() {
     }
   }
 
+  const fetchUserStatus = async () => {
+      try {
+          const res = await fetch('/api/family/invite');
+          if (res.ok) {
+              const data = await res.json();
+              setCanInvite(data.canInvite);
+          }
+      } catch (e) {
+          console.error("Failed to fetch user status", e);
+      }
+  }
+
   useEffect(() => {
     fetchMembers()
+    fetchUserStatus()
   }, [])
 
   const handleAdd = () => {
@@ -80,20 +104,97 @@ export function FamilyMembers() {
     return `${feet}' ${remainingInches}"`;
   };
 
+  // New Handlers
+  const handleGenerateInvite = async () => {
+      try {
+          const res = await fetch('/api/family/invite', { method: 'POST' });
+          const data = await res.json();
+          if (res.ok) {
+              setInviteCode(data.code);
+              setInviteExpiresAt(data.expiresAt);
+              setShowInviteDialog(true);
+          } else {
+              toast.error(data.error || "Failed to generate invite");
+          }
+      } catch (e) {
+          toast.error("Error generating invite");
+      }
+  }
+
+  const handleJoinHousehold = async () => {
+      if (!joinCode) return;
+      setIsJoining(true);
+      try {
+          const res = await fetch('/api/family/invite', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code: joinCode })
+          });
+          const data = await res.json();
+          if (res.ok) {
+              toast.success(data.message);
+              setJoinCode("");
+              window.location.reload();
+          } else {
+              toast.error(data.error || "Failed to join household");
+          }
+      } catch (e) {
+          toast.error("Error joining household");
+      } finally {
+          setIsJoining(false);
+      }
+  }
+
+  const copyToClipboard = () => {
+      navigator.clipboard.writeText(inviteCode);
+      toast.success("Invite code copied!");
+  }
+
   return (
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="font-heading text-lg flex items-center">
-            <User className="h-5 w-5 mr-2" />
-            Family Members & Contacts
-          </CardTitle>
-          <Button size="sm" onClick={handleAdd}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Member
-          </Button>
+          <div>
+            <CardTitle className="font-heading text-lg flex items-center">
+                <User className="h-5 w-5 mr-2" />
+                Family Members & Contacts
+            </CardTitle>
+            <CardDescription>Manage your household members.</CardDescription>
+          </div>
+          <div className="flex space-x-2">
+            {canInvite && (
+                <Button size="sm" variant="outline" onClick={handleGenerateInvite}>
+                    <Users className="h-4 w-4 mr-2" />
+                    Invite Family
+                </Button>
+            )}
+            <Button size="sm" onClick={handleAdd}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Member
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
+          {/* Join Household Section */}
+          <div className="mb-6 p-4 bg-muted/50 rounded-lg border">
+              <h3 className="text-sm font-medium mb-2">Join a Household</h3>
+              <div className="flex gap-2 max-w-sm">
+                  <Input
+                    placeholder="Enter Invite Code"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    className="uppercase"
+                    maxLength={6}
+                  />
+                  <Button onClick={handleJoinHousehold} disabled={isJoining || !joinCode}>
+                      {isJoining ? "Joining..." : "Join"}
+                  </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                  Joining a household will move your inventory items to the new family.
+              </p>
+          </div>
+
           <div className="space-y-4">
             {members.map((member) => (
               <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -118,6 +219,29 @@ export function FamilyMembers() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Invite Code Dialog */}
+      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Invite Family Member</DialogTitle>
+                  <DialogDescription>
+                      Share this code with your family member. It expires in 24 hours.
+                  </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center space-x-2 my-4">
+                  <div className="flex-1 p-3 bg-muted rounded-md text-center font-mono text-xl tracking-widest font-bold border">
+                      {inviteCode}
+                  </div>
+                  <Button size="icon" variant="outline" onClick={copyToClipboard}>
+                      <Copy className="h-4 w-4" />
+                  </Button>
+              </div>
+              <DialogFooter>
+                  <Button onClick={() => setShowInviteDialog(false)}>Close</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
