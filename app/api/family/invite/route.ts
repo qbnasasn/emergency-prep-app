@@ -65,7 +65,7 @@ export async function PUT(req: Request) {
 
             // Validate Code
             const inviteRes = await client.query(
-                'SELECT household_id FROM household_invites WHERE code = $1 AND expires_at > NOW()',
+                'SELECT household_id FROM household_invites WHERE code = UPPER($1) AND expires_at > NOW()',
                 [code]
             );
 
