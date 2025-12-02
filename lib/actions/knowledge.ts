@@ -5,6 +5,8 @@ import pool from "@/lib/db"
 import { z } from "zod"
 import { getAuthUser } from "@/lib/auth"
 
+const MAX_DOCS_SCOUT = 5;
+
 // Schema for Knowledge Base Document
 const DocumentSchema = z.object({
   id: z.string().optional(),
@@ -107,6 +109,9 @@ export async function createDocument(data: z.infer<typeof DocumentSchema>) {
     throw new Error("Unauthorized")
   }
 
+  const householdId = user.householdId
+  const subscriptionPlan = user.subscriptionPlan
+
   const validatedFields = DocumentSchema.safeParse(data)
   if (!validatedFields.success) {
     throw new Error("Invalid fields")
@@ -115,6 +120,24 @@ export async function createDocument(data: z.infer<typeof DocumentSchema>) {
   const { title, content, type, category, tags } = validatedFields.data
 
   try {
+    // Enforce Scout Plan Limit
+    if (subscriptionPlan === 'scout') {
+        if (!householdId) return { success: false, error: "Household context missing" };
+
+        const countResult = await pool.query(
+            `SELECT COUNT(k.*)
+             FROM knowledge_base_docs k
+             JOIN users u ON k.user_id = u.id
+             WHERE u.household_id = $1 AND k.user_id IS NOT NULL`,
+            [householdId]
+        );
+        const count = parseInt(countResult.rows[0].count, 10);
+
+        if (count >= MAX_DOCS_SCOUT) {
+            return { success: false, error: 'Scout plan limited to 5 custom documents.' };
+        }
+    }
+
     const result = await pool.query(
       `
       INSERT INTO knowledge_base_docs (user_id, title, content, type, category, tags, is_public)
