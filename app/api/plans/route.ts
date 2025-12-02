@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getAuthUser } from "@/lib/auth"
 
+const MAX_PLANS_SCOUT = 2;
+
 export async function GET() {
   const user = await getAuthUser();
   if (!user) {
@@ -27,6 +29,8 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const userId = user.id;
+    const householdId = user.householdId;
+    const subscriptionPlan = user.subscriptionPlan;
 
     try {
         const { name, description, hazard_type, is_active } = await req.json();
@@ -35,13 +39,38 @@ export async function POST(req: Request) {
         }
 
         const client = await pool.connect();
-        const result = await client.query(
-            'INSERT INTO plans (user_id, name, description, hazard_type, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [userId, name, description, hazard_type, is_active]
-        );
-        client.release();
 
-        return NextResponse.json(result.rows[0], { status: 201 });
+        try {
+            // Enforce Scout Plan Limit
+            if (subscriptionPlan === 'scout') {
+                if (!householdId) {
+                     return NextResponse.json({ error: 'Household context missing' }, { status: 400 });
+                }
+
+                // Count plans for the entire household
+                const countResult = await client.query(
+                    `SELECT COUNT(p.*)
+                     FROM plans p
+                     JOIN users u ON p.user_id = u.id
+                     WHERE u.household_id = $1`,
+                    [householdId]
+                );
+                const count = parseInt(countResult.rows[0].count, 10);
+
+                if (count >= MAX_PLANS_SCOUT) {
+                    return NextResponse.json({ error: 'Scout plan limited to 2 emergency plans.' }, { status: 403 });
+                }
+            }
+
+            const result = await client.query(
+                'INSERT INTO plans (user_id, name, description, hazard_type, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+                [userId, name, description, hazard_type, is_active]
+            );
+            return NextResponse.json(result.rows[0], { status: 201 });
+        } finally {
+            client.release();
+        }
+
     } catch (error) {
         console.error('Error creating plan:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

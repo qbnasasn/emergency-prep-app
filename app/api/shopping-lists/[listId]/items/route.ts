@@ -2,14 +2,19 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getAuthUser } from "@/lib/auth"
 
-export async function POST(req: Request, { params }: { params: { listId: string } }) {
+const MAX_SHOPPING_ITEMS_SCOUT = 10;
+
+export async function POST(req: Request, { params }: { params: Promise<{ listId: string }> }) {
+  // params is a Promise in Next.js 15
+  const { listId } = await params;
+
   const user = await getAuthUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const userId = user.id;
-  const listId = params.listId;
+  const subscriptionPlan = user.subscriptionPlan;
 
   try {
     const body = await req.json();
@@ -33,6 +38,19 @@ export async function POST(req: Request, { params }: { params: { listId: string 
 
       if (listCheckResult.rows[0].user_id !== userId) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      // Enforce Scout Plan Limit
+      if (subscriptionPlan === 'scout') {
+          const countResult = await client.query(
+              'SELECT COUNT(*) FROM shopping_list_items WHERE shopping_list_id = $1',
+              [listId]
+          );
+          const count = parseInt(countResult.rows[0].count, 10);
+
+          if (count >= MAX_SHOPPING_ITEMS_SCOUT) {
+              return NextResponse.json({ error: 'Plan limit reached. Upgrade to Prepper Pro for unlimited items.' }, { status: 403 });
+          }
       }
 
       // Insert the new item
