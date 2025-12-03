@@ -98,3 +98,48 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 14. Create households table
+CREATE TABLE IF NOT EXISTS households (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL DEFAULT 'My Household',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 15. Add household_id to users
+ALTER TABLE users ADD COLUMN IF NOT EXISTS household_id UUID REFERENCES households(id);
+
+-- 16. Add household_id to inventory_items
+ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS household_id UUID REFERENCES households(id);
+
+-- 17. Create household_invites table
+CREATE TABLE IF NOT EXISTS household_invites (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    household_id UUID NOT NULL REFERENCES households(id) ON DELETE CASCADE,
+    code TEXT NOT NULL UNIQUE,
+    email TEXT,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 18. Backfill existing users (Executed manually)
+/*
+DO $$
+DECLARE
+    user_rec RECORD;
+    new_household_id UUID;
+BEGIN
+    FOR user_rec IN SELECT * FROM users WHERE household_id IS NULL LOOP
+        -- Create new household
+        INSERT INTO households (name)
+        VALUES (COALESCE(user_rec.full_name, 'My') || '''s Household')
+        RETURNING id INTO new_household_id;
+
+        -- Link user to household
+        UPDATE users SET household_id = new_household_id WHERE id = user_rec.id;
+
+        -- Link inventory items to household
+        UPDATE inventory_items SET household_id = new_household_id WHERE user_id = user_rec.id;
+    END LOOP;
+END $$;
+*/
