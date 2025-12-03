@@ -176,24 +176,26 @@ export function FamilyMembers() {
         </CardHeader>
         <CardContent>
           {/* Join Household Section */}
-          <div className="mb-6 p-4 bg-muted/50 rounded-lg border">
-              <h3 className="text-sm font-medium mb-2">Join a Household</h3>
-              <div className="flex gap-2 max-w-sm">
-                  <Input
-                    placeholder="Enter Invite Code"
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value)}
-                    className="uppercase"
-                    maxLength={6}
-                  />
-                  <Button onClick={handleJoinHousehold} disabled={isJoining || !joinCode}>
-                      {isJoining ? "Joining..." : "Join"}
-                  </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                  Joining a household will move your inventory items to the new family.
-              </p>
-          </div>
+          {!canInvite && (
+            <div className="mb-6 p-4 bg-muted/50 rounded-lg border">
+                <h3 className="text-sm font-medium mb-2">Join a Household</h3>
+                <div className="flex gap-2 max-w-sm">
+                    <Input
+                      placeholder="Enter Invite Code"
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value)}
+                      className="uppercase"
+                      maxLength={6}
+                    />
+                    <Button onClick={handleJoinHousehold} disabled={isJoining || !joinCode}>
+                        {isJoining ? "Joining..." : "Join"}
+                    </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                    Joining a household will move your inventory items to the new family.
+                </p>
+            </div>
+          )}
 
           <div className="space-y-4">
             {members.map((member) => (
