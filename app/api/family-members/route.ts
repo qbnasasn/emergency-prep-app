@@ -8,8 +8,21 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const householdId = user.householdId;
+  if (!householdId) {
+      return NextResponse.json({ error: 'Household context missing' }, { status: 400 });
+  }
+
   try {
-    const familyMembers = await db.query('SELECT * FROM family_members WHERE user_id = $1 ORDER BY created_at ASC', [user.id])
+    // Fetch all family members linked to users in the same household
+    const familyMembers = await db.query(
+        `SELECT fm.*
+         FROM family_members fm
+         JOIN users u ON fm.user_id = u.id
+         WHERE u.household_id = $1
+         ORDER BY fm.created_at ASC`,
+        [householdId]
+    )
     return NextResponse.json(familyMembers.rows)
   } catch (error) {
     console.error('Error fetching family members:', error)

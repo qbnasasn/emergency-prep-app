@@ -93,8 +93,9 @@ export async function PUT(req: Request) {
             }
 
             // Update User
+            // Upgrade to 'prepper_pro' to bypass Scout limits
             await client.query(
-                'UPDATE users SET household_id = $1 WHERE id = $2',
+                "UPDATE users SET household_id = $1, subscription_plan = 'prepper_pro' WHERE id = $2",
                 [targetHouseholdId, user.id]
             );
 
