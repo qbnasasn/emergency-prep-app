@@ -1,7 +1,6 @@
 import { SettingsHeader } from "@/components/settings/settings-header"
 import { UserSettings } from "@/components/settings/user-settings"
 import { NotificationSettings } from "@/components/settings/notification-settings"
-import { ChangePasswordForm } from "@/components/settings/change-password-form"
 
 export default function SettingsPage() {
   return (
@@ -13,7 +12,6 @@ export default function SettingsPage() {
         </div>
         <div className="space-y-6">
           <NotificationSettings />
-          <ChangePasswordForm />
         </div>
       </div>
     </div>
