@@ -1,7 +1,7 @@
 import pool from '@/lib/db';
 import { sendNotification } from '@/lib/notifications';
 
-export async function checkUserInventory(userId: string) {
+export async function checkUserInventory(userId: string, force: boolean = false) {
   const client = await pool.connect();
   try {
     // Check if user wants inventory alerts
@@ -22,7 +22,8 @@ export async function checkUserInventory(userId: string) {
 
     // If frequency is constrained and today doesn't match, skip
     // NOTE: This applies to both Cron and Sign-in checks to respect user preference
-    if (!isDaily && !isWeekly && !isMonthly) {
+    // Skip this check if force is true
+    if (!force && !isDaily && !isWeekly && !isMonthly) {
         return;
     }
 
@@ -33,7 +34,7 @@ export async function checkUserInventory(userId: string) {
     );
 
     for (const item of lowStockRes.rows) {
-      await processAlert(client, userId, item, 'low_stock');
+      await processAlert(client, userId, item, 'low_stock', force);
     }
 
     // 2. Expiring Soon Check (30 days)
@@ -46,7 +47,7 @@ export async function checkUserInventory(userId: string) {
     );
 
     for (const item of expiringRes.rows) {
-        await processAlert(client, userId, item, 'expiring');
+        await processAlert(client, userId, item, 'expiring', force);
     }
 
     // 3. Expired Check
@@ -58,7 +59,7 @@ export async function checkUserInventory(userId: string) {
     );
 
     for (const item of expiredRes.rows) {
-        await processAlert(client, userId, item, 'expired');
+        await processAlert(client, userId, item, 'expired', force);
     }
 
   } catch (error) {
@@ -68,17 +69,29 @@ export async function checkUserInventory(userId: string) {
   }
 }
 
-async function processAlert(client: any, userId: string, item: any, type: 'low_stock' | 'expiring' | 'expired') {
+async function processAlert(client: any, userId: string, item: any, type: 'low_stock' | 'expiring' | 'expired', force: boolean) {
     const itemLink = `/dashboard/inventory?itemId=${item.id}&alert=${type}`;
 
-    // Check deduplication
-    // We append type to link to allow distinct alerts for Low Stock vs Expired for the same item
-    const existingNotifRes = await client.query(
-        `SELECT id FROM notifications WHERE user_id = $1 AND link = $2 AND read = false`,
-        [userId, itemLink]
-    );
+    if (!force) {
+        // Check deduplication / throttle
+        // We select the most recent notification for this user/link
+        const lastNotifRes = await client.query(
+            `SELECT created_at FROM notifications WHERE user_id = $1 AND link = $2 ORDER BY created_at DESC LIMIT 1`,
+            [userId, itemLink]
+        );
 
-    if (existingNotifRes.rows.length > 0) return;
+        if (lastNotifRes.rows.length > 0) {
+            const lastCreatedAt = new Date(lastNotifRes.rows[0].created_at);
+            const now = new Date();
+            const diffMs = now.getTime() - lastCreatedAt.getTime();
+            const diffHours = diffMs / (1000 * 60 * 60);
+
+            // Throttle if less than 24 hours
+            if (diffHours < 24) {
+                return;
+            }
+        }
+    }
 
     let title = '';
     let message = '';
