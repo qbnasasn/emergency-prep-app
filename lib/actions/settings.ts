@@ -5,7 +5,7 @@ import { checkUserInventory } from '@/lib/inventory-check';
 
 export async function forceInventoryCheck() {
   try {
-    const { user } = await getAuthUser();
+    const user = await getAuthUser();
     if (!user) {
       return { success: false, error: 'Unauthorized' };
     }
