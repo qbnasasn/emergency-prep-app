@@ -62,13 +62,13 @@ export async function sendNotification(
         }
       }
 
-      // 2. Insert into notifications table (In-App) if enabled
-      if (shouldInApp) {
-        await client.query(
-          'INSERT INTO notifications (user_id, title, message, type, link) VALUES ($1, $2, $3, $4, $5)',
-          [userId, title, message, type, link]
-        );
-      }
+      // 2. Always insert into notifications table (In-App) for history and throttling
+      // If In-App is disabled (e.g. Email Only), mark as read so it doesn't trigger a badge
+      const isRead = !shouldInApp;
+      await client.query(
+        'INSERT INTO notifications (user_id, title, message, type, link, read) VALUES ($1, $2, $3, $4, $5, $6)',
+        [userId, title, message, type, link, isRead]
+      );
 
       // 3. Send Email via Resend if enabled
       if (shouldEmail && email) {
