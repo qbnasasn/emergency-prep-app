@@ -10,11 +10,19 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = user.id;
+  const { householdId } = user;
 
   try {
     const client = await pool.connect();
-    const result = await client.query('SELECT * FROM plans WHERE user_id = $1 ORDER BY is_active DESC, created_at DESC', [userId]);
+    // Scope by Household
+    const result = await client.query(
+      `SELECT p.*
+       FROM plans p
+       JOIN users u ON p.user_id = u.id
+       WHERE u.household_id = $1
+       ORDER BY p.is_active DESC, p.created_at DESC`,
+      [householdId]
+    );
     client.release();
     return NextResponse.json(result.rows);
   } catch (error) {
