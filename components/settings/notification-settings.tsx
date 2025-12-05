@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { Bell, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { forceInventoryCheck } from "@/lib/actions/settings"
 
 interface NotificationSettingsData {
   email_alerts: boolean
@@ -21,6 +22,7 @@ export function NotificationSettings() {
   const [settings, setSettings] = useState<NotificationSettingsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
+  const [isRunningCheck, setIsRunningCheck] = useState(false)
 
   const handleSendTestEmail = async () => {
     setIsSending(true)
@@ -35,6 +37,25 @@ export function NotificationSettings() {
       toast.error("Failed to send test email.")
     } finally {
       setIsSending(false)
+    }
+  }
+
+  const handleRunCheck = async () => {
+    setIsRunningCheck(true)
+    toast.info("Starting inventory check...")
+
+    try {
+        const result = await forceInventoryCheck()
+        if (result.success) {
+            toast.success(result.message)
+        } else {
+            throw new Error(result.error)
+        }
+    } catch (error: any) {
+        console.error("Failed to run inventory check", error)
+        toast.error(error.message || "Failed to run inventory check.")
+    } finally {
+        setIsRunningCheck(false)
     }
   }
 
@@ -208,7 +229,7 @@ export function NotificationSettings() {
             If disabled, no emails will be sent even if specific alerts are enabled.
           </p>
         </div>
-        <div className="pt-2">
+        <div className="pt-2 flex gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -222,6 +243,22 @@ export function NotificationSettings() {
               </>
             ) : (
               'Send Test Email'
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRunCheck}
+            disabled={isRunningCheck}
+          >
+            {isRunningCheck ? (
+                <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Checking...
+                </>
+            ) : (
+                'Run Inventory Check'
             )}
           </Button>
         </div>
