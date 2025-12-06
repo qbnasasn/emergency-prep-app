@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getAuthUser } from "@/lib/auth";
+import { Resend } from 'resend';
 
 // Helper to generate 6-char random code
 function generateCode(length: number = 6): string {
@@ -34,22 +35,75 @@ export async function POST(req: Request) {
   const householdId = user.householdId;
   if (!householdId) return NextResponse.json({ error: 'Household context missing' }, { status: 400 });
 
-  const code = generateCode(6);
-  // Expiration: 24 hours from now
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  // Get recipient email from body
+  let recipientEmail: string | undefined;
+  try {
+      const body = await req.json();
+      recipientEmail = body.email;
+  } catch (e) {
+      // Ignore if no body/json
+  }
 
   const client = await pool.connect();
   try {
+    // 1. Enforce Limit (Max 5 members)
+    const countRes = await client.query(
+        'SELECT COUNT(*) FROM users WHERE household_id = $1',
+        [householdId]
+    );
+    const memberCount = parseInt(countRes.rows[0].count, 10);
+    if (memberCount >= 5) {
+        return NextResponse.json({ error: 'Household limit reached (Max 5 members)' }, { status: 403 });
+    }
+
+    const code = generateCode(6);
+    // Expiration: 24 hours from now
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
     // Database Insert
-    // Note: 'created_by' column was not created in the schema migration, so it is omitted here.
     const result = await client.query(
       'INSERT INTO household_invites (household_id, code, expires_at) VALUES ($1, $2, $3) RETURNING code, expires_at',
       [householdId, code, expiresAt.toISOString()]
     );
 
+    const generatedCode = result.rows[0].code;
+    let emailSent = false;
+
+    // 2. Send Email (Optional)
+    if (recipientEmail) {
+        const apiKey = process.env.RESEND_API_KEY;
+        if (apiKey) {
+            const resend = new Resend(apiKey);
+            try {
+                await resend.emails.send({
+                    from: 'Prepper Family <familylink@prepsafe.app>',
+                    to: recipientEmail,
+                    subject: "You've been invited to join a Prepper Family",
+                    html: `
+                        <div style="font-family: sans-serif; color: #333;">
+                            <h2>You've been invited!</h2>
+                            <p>You have been invited to join a household on PrepSafe.</p>
+                            <p>Your invite code is: <strong>${generatedCode}</strong></p>
+                            <p>This code expires in 24 hours.</p>
+                            <hr />
+                            <p style="font-size: 12px; color: #666;">
+                                <a href="https://prepsafe.app">Open PrepSafe</a>
+                            </p>
+                        </div>
+                    `
+                });
+                emailSent = true;
+            } catch (emailError) {
+                console.error("Failed to send invite email:", emailError);
+                // We don't fail the request, just log it.
+            }
+        }
+    }
+
     return NextResponse.json({
-        code: result.rows[0].code,
-        expiresAt: result.rows[0].expires_at
+        code: generatedCode,
+        expiresAt: result.rows[0].expires_at,
+        emailSent
     });
   } catch (error) {
       console.error('Error generating invite:', error);
