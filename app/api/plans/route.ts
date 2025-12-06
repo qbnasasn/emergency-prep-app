@@ -15,6 +15,7 @@ export async function GET() {
   try {
     const client = await pool.connect();
     // Scope by Household
+    // Plans don't have a household_id directly, so we join with users
     const result = await client.query(
       `SELECT p.*
        FROM plans p
