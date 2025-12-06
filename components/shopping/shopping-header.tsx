@@ -53,11 +53,6 @@ export function ShoppingHeader({ shoppingListId, onListUpdate, onSearch }: Shopp
           />
         </div>
 
-        <Button variant="outline" size="sm" className="font-body bg-transparent">
-          <Settings className="h-4 w-4 mr-2" />
-          Store Settings
-        </Button>
-
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="font-body bg-gray-900 hover:bg-gray-800">

@@ -46,10 +46,6 @@ export function KitsList({ kits, isLoading, onEditKit, onDataChange }: KitsListP
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Your Emergency Kits</h2>
-        <Button variant="outline" size="sm">
-          <Package className="h-4 w-4 mr-2" />
-          Kit Templates
-        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

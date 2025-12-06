@@ -82,11 +82,7 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-heading text-xl">Your Emergency Plans</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <>
         {plans.length === 0 ? (
           <div className="text-center text-muted-foreground py-10">
             <p>You haven&apos;t created any plans yet.</p>
@@ -180,7 +176,6 @@ export function PlansList({ plans, onEdit, onDelete, onActivate, onDeactivate, i
           ))}
         </div>
         )}
-      </CardContent>
-    </Card>
+    </>
   )
 }
