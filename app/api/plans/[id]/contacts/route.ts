@@ -55,7 +55,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = user.id;
+  const { householdId } = user;
   const { id: planId } = await params;
 
   let client;
@@ -67,13 +67,16 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
     client = await pool.connect();
 
-    // Verify user owns the plan - Only the creator can edit contacts for now (or admins, but let's stick to owner for edits)
-    // OR we could allow household members to edit. The prompt specifically asked about "visibility" (GET).
-    // I will leave PUT stricter (owner only) unless requested otherwise to be safe,
-    // BUT the prompt implies general "Family functionality" issues.
-    // However, usually editing is more restricted. I'll stick to GET changes as requested.
-    const planCheck = await client.query('SELECT user_id FROM plans WHERE id = $1', [planId]);
-    if (planCheck.rows.length === 0 || planCheck.rows[0].user_id !== userId) {
+    // Verify user belongs to same household as plan owner
+    const planCheck = await client.query(
+        `SELECT u.household_id
+         FROM plans p
+         JOIN users u ON p.user_id = u.id
+         WHERE p.id = $1`,
+        [planId]
+    );
+
+    if (planCheck.rows.length === 0 || planCheck.rows[0].household_id !== householdId) {
       return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
     }
 

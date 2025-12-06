@@ -8,19 +8,27 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const userId = user.id;
-
-  const itemId = params.id;
+  const householdId = user.householdId;
+  const itemId = (await params).id;
 
   try {
     const body = await req.json();
 
     const client = await pool.connect();
     try {
-        const checkResult = await client.query('SELECT user_id FROM inventory_items WHERE id = $1', [itemId]);
+        // Use JOIN to verify household membership (safer fallback if column missing, though confirmed it exists)
+        const checkResult = await client.query(
+            `SELECT u.household_id
+             FROM inventory_items i
+             JOIN users u ON i.user_id = u.id
+             WHERE i.id = $1`,
+            [itemId]
+        );
+
         if (checkResult.rows.length === 0) {
             return NextResponse.json({ error: 'Item not found' }, { status: 404 });
         }
-        if (checkResult.rows[0].user_id !== userId) {
+        if (checkResult.rows[0].household_id !== householdId) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
@@ -37,8 +45,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         fields.forEach(field => {
             if (body[field] !== undefined) {
                 setClauses.push(`${field} = $${valueCount++}`);
-                // Handle empty strings for nullable fields to avoid DB errors
-                // Especially important for date and numeric fields
                 const val = body[field];
                 values.push(val === "" ? null : val);
             }
@@ -48,12 +54,14 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
         }
 
-        values.push(itemId, userId);
+        // We still need to identify the item. We can use ID.
+        // And we should ensure we only update if authorized (which we checked above).
+        values.push(itemId);
 
         const updateQuery = `
           UPDATE inventory_items
           SET ${setClauses.join(', ')}
-          WHERE id = $${valueCount++} AND user_id = $${valueCount++}
+          WHERE id = $${valueCount++}
           RETURNING *;
         `;
 
@@ -75,21 +83,29 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const userId = user.id;
-
-  const itemId = params.id;
+  const householdId = user.householdId;
+  const itemId = (await params).id;
 
   const client = await pool.connect();
   try {
-    const checkResult = await client.query('SELECT user_id FROM inventory_items WHERE id = $1', [itemId]);
+    // Use JOIN to verify
+    const checkResult = await client.query(
+        `SELECT u.household_id
+         FROM inventory_items i
+         JOIN users u ON i.user_id = u.id
+         WHERE i.id = $1`,
+        [itemId]
+    );
+
     if (checkResult.rows.length === 0) {
         return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
-    if (checkResult.rows[0].user_id !== userId) {
+    if (checkResult.rows[0].household_id !== householdId) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    await client.query('DELETE FROM inventory_items WHERE id = $1 AND user_id = $2', [itemId, userId]);
-    return new NextResponse(null, { status: 204 }); // No Content
+    await client.query('DELETE FROM inventory_items WHERE id = $1', [itemId]);
+    return new NextResponse(null, { status: 204 });
 
   } catch (error) {
     console.error(`Error deleting item ${itemId}:`, error);

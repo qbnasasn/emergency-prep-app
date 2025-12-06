@@ -10,10 +10,14 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = user.id;
+  const { householdId } = user;
+
+  if (!householdId) {
+      return NextResponse.json({ error: 'Household context missing' }, { status: 400 });
+  }
 
   try {
-    const kits = await getKits(userId);
+    const kits = await getKits(householdId);
     return NextResponse.json(kits);
   } catch (error) {
     console.error('Error fetching kits:', error);

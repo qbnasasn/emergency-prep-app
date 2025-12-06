@@ -13,15 +13,22 @@ export async function GET(req: Request, { params }: RouteParams) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = user.id;
-  const { id: planId } = params;
+  const { householdId } = user;
+  const { id: planId } = await params;
 
   try {
     const client = await pool.connect();
 
-    // First, verify the user owns the plan
-    const planCheck = await client.query('SELECT user_id FROM plans WHERE id = $1', [planId]);
-    if (planCheck.rows.length === 0 || planCheck.rows[0].user_id !== userId) {
+    // First, verify the user belongs to the same household
+    const planCheck = await client.query(
+        `SELECT u.household_id
+         FROM plans p
+         JOIN users u ON p.user_id = u.id
+         WHERE p.id = $1`,
+        [planId]
+    );
+
+    if (planCheck.rows.length === 0 || planCheck.rows[0].household_id !== householdId) {
       client.release();
       return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
     }
@@ -47,8 +54,8 @@ export async function PUT(req: Request, { params }: RouteParams) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = user.id;
-  const { id: planId } = params;
+  const { householdId } = user;
+  const { id: planId } = await params;
 
   let client;
   try {
@@ -59,9 +66,16 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
     client = await pool.connect();
 
-    // Verify user owns the plan
-    const planCheck = await client.query('SELECT user_id FROM plans WHERE id = $1', [planId]);
-    if (planCheck.rows.length === 0 || planCheck.rows[0].user_id !== userId) {
+    // Verify user belongs to the same household
+    const planCheck = await client.query(
+        `SELECT u.household_id
+         FROM plans p
+         JOIN users u ON p.user_id = u.id
+         WHERE p.id = $1`,
+        [planId]
+    );
+
+    if (planCheck.rows.length === 0 || planCheck.rows[0].household_id !== householdId) {
       return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
     }
 

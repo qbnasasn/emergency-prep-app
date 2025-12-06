@@ -37,16 +37,19 @@ export async function getDocuments(filters?: {
     throw new Error("Unauthorized")
   }
 
-  const userId = user.id
+  const { householdId } = user
+
+  // Update query to check household
   let query = `
     SELECT
       d.*,
       EXISTS(SELECT 1 FROM kb_favorites f WHERE f.doc_id = d.id AND f.user_id = $1) as is_favorite
     FROM knowledge_base_docs d
-    WHERE d.user_id = $1
+    LEFT JOIN users u ON d.user_id = u.id
+    WHERE (d.user_id IS NULL OR u.household_id = $2)
   `
-  const params: any[] = [userId]
-  let paramIndex = 2
+  const params: any[] = [user.id, householdId]
+  let paramIndex = 3
 
   if (filters?.type && filters.type !== "all") {
     query += ` AND d.type = $${paramIndex}`
@@ -91,9 +94,10 @@ export async function getDocument(id: string) {
         d.*,
         EXISTS(SELECT 1 FROM kb_favorites f WHERE f.doc_id = d.id AND f.user_id = $2) as is_favorite
       FROM knowledge_base_docs d
-      WHERE d.id = $1 AND d.user_id = $2
+      LEFT JOIN users u ON d.user_id = u.id
+      WHERE d.id = $1 AND (d.user_id IS NULL OR u.household_id = $3)
       `,
-      [id, user.id]
+      [id, user.id, user.householdId]
     )
     return result.rows[0] as KnowledgeDocument | null
   } catch (error) {
@@ -168,6 +172,7 @@ export async function updateDocument(id: string, data: z.infer<typeof DocumentSc
   if (!user) {
     throw new Error("Unauthorized")
   }
+  const { householdId } = user;
 
   const validatedFields = DocumentSchema.safeParse(data)
   if (!validatedFields.success) {
@@ -177,13 +182,16 @@ export async function updateDocument(id: string, data: z.infer<typeof DocumentSc
   const { title, content, type, category, tags } = validatedFields.data
 
   try {
-    // Check ownership
+    // Check ownership or household membership
     const check = await pool.query(
-      "SELECT user_id FROM knowledge_base_docs WHERE id = $1",
+      `SELECT u.household_id
+       FROM knowledge_base_docs k
+       JOIN users u ON k.user_id = u.id
+       WHERE k.id = $1`,
       [id]
     )
     if (check.rows.length === 0) return { success: false, error: "Document not found" }
-    if (check.rows[0].user_id !== user.id) {
+    if (check.rows[0].household_id !== householdId) {
       return { success: false, error: "Not authorized to update this document" }
     }
 
@@ -209,15 +217,19 @@ export async function deleteDocument(id: string) {
   if (!user) {
     throw new Error("Unauthorized")
   }
+  const { householdId } = user;
 
   try {
      // Check ownership
      const check = await pool.query(
-      "SELECT user_id FROM knowledge_base_docs WHERE id = $1",
+      `SELECT u.household_id
+       FROM knowledge_base_docs k
+       JOIN users u ON k.user_id = u.id
+       WHERE k.id = $1`,
       [id]
     )
     if (check.rows.length === 0) return { success: false, error: "Document not found" }
-    if (check.rows[0].user_id !== user.id) {
+    if (check.rows[0].household_id !== householdId) {
       return { success: false, error: "Not authorized to delete this document" }
     }
 
@@ -265,7 +277,8 @@ export async function toggleFavorite(docId: string) {
 // Get Daily Tip for Dashboard
 export async function getDailyTip() {
   const user = await getAuthUser()
-  const userId = user?.id
+  if (!user) return null
+  const { householdId } = user;
 
   try {
     // Set seed based on the day of the year (0.0 to 1.0)
@@ -275,12 +288,17 @@ export async function getDailyTip() {
         await client.query("BEGIN")
         await client.query("SELECT setseed(extract(doy from current_date) / 366.0)")
 
-        // Fetch tips that belong to the user (since we seed them)
-        // If no user (public dashboard?), we might fallback to system tips if we kept them,
-        // but for now we assume authenticated dashboard.
-        const query = "SELECT * FROM knowledge_base_docs WHERE type = 'tip' AND user_id = $1 ORDER BY RANDOM() LIMIT 1"
+        // Fetch tips that belong to the user's household or are system tips (user_id IS NULL)
+        const query = `
+            SELECT k.*
+            FROM knowledge_base_docs k
+            LEFT JOIN users u ON k.user_id = u.id
+            WHERE k.type = 'tip'
+              AND (k.user_id IS NULL OR u.household_id = $1)
+            ORDER BY RANDOM() LIMIT 1
+        `
 
-        const params = [userId]
+        const params = [householdId]
         const result = await client.query(query, params)
 
         await client.query("COMMIT")
