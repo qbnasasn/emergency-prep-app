@@ -38,7 +38,7 @@ export function PlansHeader({ onCreate, plans, onSearch }: PlansHeaderProps) {
           />
         </div>
 
-        <Button className="font-body bg-gray-900 hover:bg-gray-800" onClick={onCreate}>
+        <Button className="font-body" onClick={onCreate}>
           <Plus className="h-4 w-4 mr-2" />
           New Plan
         </Button>
