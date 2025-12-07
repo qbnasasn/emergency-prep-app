@@ -67,8 +67,9 @@ export async function POST() {
 
       for (const plan of activePlans) {
         // Fetch Locations
+        // Removed description from query as it does not exist in plan_locations table
         const locRes = await client.query(
-          `SELECT name, description, street_number, street_name, city, state, zip_code
+          `SELECT name, street_number, street_name, city, state, zip_code
            FROM plan_locations
            WHERE plan_id = $1`,
           [plan.id]
@@ -108,7 +109,6 @@ export async function POST() {
               <li>
                 <strong>${loc.name}</strong>
                 ${address ? `<br/><span style="color: #555; font-size: 0.9em;">${address}</span>` : ''}
-                ${loc.description ? `<br/><span style="color: #555; font-style: italic; font-size: 0.9em;">${loc.description}</span>` : ''}
               </li>
             `;
           }
@@ -164,7 +164,7 @@ export async function POST() {
 
       const emailPromises = recipients.map(email =>
         resend.emails.send({
-          from: 'Prepper Family <alerts@prepsafe.app>', // Updated to match memory
+          from: 'Prepper Family <alerts@prepsafe.app>',
           to: email,
           subject: '🚨 EMERGENCY BROADCAST: Action Required',
           html: emailBody,
