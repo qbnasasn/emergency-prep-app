@@ -204,7 +204,7 @@ export function FamilyMembers() {
                   <p className="font-semibold">{member.first_name} {member.last_name}</p>
                   <p className="text-sm text-muted-foreground">{member.role}</p>
                   <p className="text-sm text-muted-foreground">
-                    {member.birth_date ? new Date(member.birth_date).toLocaleDateString() : ''}
+                    {member.birth_date ? new Date(member.birth_date).toLocaleDateString('en-US', { timeZone: 'UTC' }) : ''}
                     {member.height_inches ? ` | ${formatHeight(member.height_inches)}` : ''}
                   </p>
                 </div>
