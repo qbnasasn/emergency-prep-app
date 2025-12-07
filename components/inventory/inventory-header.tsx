@@ -76,7 +76,7 @@ export function InventoryHeader({ fetchItems, onSearch }: InventoryHeaderProps) 
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="font-body bg-gray-900 hover:bg-gray-800">
+            <Button className="font-body">
               <Plus className="h-4 w-4 mr-2" />
               Add Item
             </Button>

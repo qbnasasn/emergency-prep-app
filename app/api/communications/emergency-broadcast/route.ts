@@ -30,8 +30,7 @@ export async function POST() {
 
       const recipients = recipientsRes.rows.map(row => row.email);
 
-      // Also include the current user's email if not already covered (optional but good practice)
-      // Check if user has email in users table
+      // Also include the current user's email if not already covered
       const userRes = await client.query('SELECT email FROM users WHERE id = $1', [user.id]);
       if (userRes.rows.length > 0 && userRes.rows[0].email) {
           if (!recipients.includes(userRes.rows[0].email)) {
@@ -40,7 +39,7 @@ export async function POST() {
       }
 
       if (recipients.length === 0) {
-        return NextResponse.json({ message: 'No recipients found to broadcast to.' }, { status: 200 });
+        return NextResponse.json({ success: false, status: 'no_recipients', message: 'No recipients found to broadcast to.' }, { status: 200 });
       }
 
       // 2. Fetch Active Plans
@@ -55,7 +54,7 @@ export async function POST() {
       const activePlans = plansRes.rows;
 
       if (activePlans.length === 0) {
-        return NextResponse.json({ message: 'No active plans found to broadcast.' }, { status: 200 });
+        return NextResponse.json({ success: false, status: 'no_plans', message: 'No active plans found to broadcast.' }, { status: 200 });
       }
 
       // 3. Construct Email Content
@@ -68,8 +67,9 @@ export async function POST() {
 
       for (const plan of activePlans) {
         // Fetch Locations
+        // Removed description from query as it does not exist in plan_locations table
         const locRes = await client.query(
-          `SELECT name, description, street_number, street_name, city, state, zip_code
+          `SELECT name, street_number, street_name, city, state, zip_code
            FROM plan_locations
            WHERE plan_id = $1`,
           [plan.id]
@@ -109,7 +109,6 @@ export async function POST() {
               <li>
                 <strong>${loc.name}</strong>
                 ${address ? `<br/><span style="color: #555; font-size: 0.9em;">${address}</span>` : ''}
-                ${loc.description ? `<br/><span style="color: #555; font-style: italic; font-size: 0.9em;">${loc.description}</span>` : ''}
               </li>
             `;
           }
@@ -152,19 +151,20 @@ export async function POST() {
       const apiKey = process.env.RESEND_API_KEY;
       if (!apiKey) {
         console.warn('RESEND_API_KEY is not set. Skipping broadcast email.');
-        return NextResponse.json({ message: 'Broadcast simulated (API key missing)' }, { status: 200 });
+        // Return a specific status so the frontend can display a warning
+        return NextResponse.json({
+            success: true,
+            status: 'simulated',
+            recipientCount: recipients.length,
+            message: 'Broadcast simulated (API key missing)'
+        }, { status: 200 });
       }
 
       const resend = new Resend(apiKey);
 
-      // Send individually to ensure delivery privacy or use bcc?
-      // Individual is safer for avoiding 'reply-all' storms and privacy.
-      // But Resend rate limits might be an issue? "Email every family member".
-      // Given the small scale (household), loop is fine.
-
       const emailPromises = recipients.map(email =>
         resend.emails.send({
-          from: 'alerts@prepsafe.app',
+          from: 'Prepper Family <alerts@prepsafe.app>',
           to: email,
           subject: '🚨 EMERGENCY BROADCAST: Action Required',
           html: emailBody,
@@ -173,7 +173,11 @@ export async function POST() {
 
       await Promise.all(emailPromises);
 
-      return NextResponse.json({ success: true, count: recipients.length }, { status: 200 });
+      return NextResponse.json({
+          success: true,
+          status: 'sent',
+          recipientCount: recipients.length
+      }, { status: 200 });
 
     } finally {
       client.release();
