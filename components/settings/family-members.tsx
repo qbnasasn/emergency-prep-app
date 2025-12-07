@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, User, Trash2, Edit, Copy, Users } from 'lucide-react'
+import { Plus, User, Trash2, Edit, Copy, Users, Mail, Loader2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { FamilyMemberForm } from './family-member-form'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
@@ -24,6 +24,10 @@ export function FamilyMembers() {
   const [showInviteDialog, setShowInviteDialog] = useState(false)
   const [joinCode, setJoinCode] = useState("")
   const [isJoining, setIsJoining] = useState(false)
+
+  // Invite with Email State
+  const [inviteEmail, setInviteEmail] = useState("")
+  const [isGeneratingInvite, setIsGeneratingInvite] = useState(false)
 
   const fetchMembers = async () => {
     try {
@@ -105,19 +109,42 @@ export function FamilyMembers() {
   };
 
   // New Handlers
+  const handleOpenInviteDialog = () => {
+      setInviteEmail("");
+      setInviteCode("");
+      setShowInviteDialog(true);
+  }
+
   const handleGenerateInvite = async () => {
+      setIsGeneratingInvite(true);
       try {
-          const res = await fetch('/api/family/invite', { method: 'POST' });
+          const payload: any = {};
+          if (inviteEmail) {
+              payload.email = inviteEmail;
+          }
+
+          const res = await fetch('/api/family/invite', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+          });
           const data = await res.json();
           if (res.ok) {
               setInviteCode(data.code);
               setInviteExpiresAt(data.expiresAt);
-              setShowInviteDialog(true);
+              if (data.emailSent) {
+                  toast.success(`Invite sent to ${inviteEmail}`);
+                  setInviteEmail(""); // Clear email on success
+              } else if (inviteEmail) {
+                  toast.warning("Invite generated, but email failed to send.");
+              }
           } else {
               toast.error(data.error || "Failed to generate invite");
           }
       } catch (e) {
           toast.error("Error generating invite");
+      } finally {
+          setIsGeneratingInvite(false);
       }
   }
 
@@ -163,7 +190,7 @@ export function FamilyMembers() {
           </div>
           <div className="flex space-x-2">
             {canInvite && (
-                <Button size="sm" variant="outline" onClick={handleGenerateInvite}>
+                <Button size="sm" variant="outline" onClick={handleOpenInviteDialog}>
                     <Users className="h-4 w-4 mr-2" />
                     Invite Family
                 </Button>
@@ -228,19 +255,66 @@ export function FamilyMembers() {
               <DialogHeader>
                   <DialogTitle>Invite Family Member</DialogTitle>
                   <DialogDescription>
-                      Share this code with your family member. It expires in 24 hours.
+                      Generate an invite code or send it directly via email.
                   </DialogDescription>
               </DialogHeader>
-              <div className="flex items-center space-x-2 my-4">
-                  <div className="flex-1 p-3 bg-muted rounded-md text-center font-mono text-xl tracking-widest font-bold border">
-                      {inviteCode}
-                  </div>
-                  <Button size="icon" variant="outline" onClick={copyToClipboard}>
-                      <Copy className="h-4 w-4" />
-                  </Button>
-              </div>
+
+              {!inviteCode ? (
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label>Email Address (Optional)</Label>
+                        <Input
+                            type="email"
+                            placeholder="family@example.com"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            We'll send the code directly to this email address.
+                        </p>
+                    </div>
+                    <Button
+                        onClick={handleGenerateInvite}
+                        disabled={isGeneratingInvite}
+                        className="w-full"
+                    >
+                        {isGeneratingInvite ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                <Mail className="mr-2 h-4 w-4" />
+                                {inviteEmail ? "Send Invite" : "Generate Code Only"}
+                            </>
+                        )}
+                    </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                    <div className="flex items-center space-x-2 my-4">
+                        <div className="flex-1 p-3 bg-muted rounded-md text-center font-mono text-xl tracking-widest font-bold border">
+                            {inviteCode}
+                        </div>
+                        <Button size="icon" variant="outline" onClick={copyToClipboard}>
+                            <Copy className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <div className="text-center text-sm text-muted-foreground">
+                        Code expires in 24 hours.
+                    </div>
+                    <Button variant="outline" className="w-full" onClick={() => {
+                        setInviteCode("");
+                        setInviteEmail("");
+                    }}>
+                        Generate Another
+                    </Button>
+                </div>
+              )}
+
               <DialogFooter>
-                  <Button onClick={() => setShowInviteDialog(false)}>Close</Button>
+                  <Button variant="ghost" onClick={() => setShowInviteDialog(false)}>Close</Button>
               </DialogFooter>
           </DialogContent>
       </Dialog>
