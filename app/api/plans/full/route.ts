@@ -18,12 +18,18 @@ export async function GET(req: Request) {
     // Fetch a single plan with all details
     try {
       const client = await pool.connect();
-      const planQuery = 'SELECT * FROM plans WHERE id = $1 AND user_id = $2';
+      // Allow access if the plan belongs to a user in the same household
+      const planQuery = `
+        SELECT p.*
+        FROM plans p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.id = $1 AND u.household_id = (SELECT household_id FROM users WHERE id = $2)
+      `;
       const planResult = await client.query(planQuery, [planId, userId]);
 
       if (planResult.rows.length === 0) {
         client.release();
-        return NextResponse.json({ error: 'Plan not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
       }
 
       const plan = planResult.rows[0];
