@@ -4,7 +4,8 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Radio, Satellite, Ship, AlertTriangle } from "lucide-react"
+import { Radio, Satellite, Ship, AlertTriangle, PlayCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 const gmrsChannels = [
   { channel: 1, frequency: "462.5625", power: "5W", notes: "General use" },
@@ -16,6 +17,15 @@ const gmrsChannels = [
   { channel: 18, frequency: "462.6250", power: "50W", notes: "Emergency/Travel" },
   { channel: 19, frequency: "462.6500", power: "50W", notes: "Emergency" },
   { channel: 20, frequency: "462.6750", power: "50W", notes: "Emergency" },
+  // Repeater inputs
+  { channel: "15R (In)", frequency: "467.5500", power: "50W", notes: "Repeater Input" },
+  { channel: "16R (In)", frequency: "467.5750", power: "50W", notes: "Repeater Input" },
+  { channel: "17R (In)", frequency: "467.6000", power: "50W", notes: "Repeater Input" },
+  { channel: "18R (In)", frequency: "467.6250", power: "50W", notes: "Repeater Input" },
+  { channel: "19R (In)", frequency: "467.6500", power: "50W", notes: "Repeater Input" },
+  { channel: "20R (In)", frequency: "467.6750", power: "50W", notes: "Repeater Input" },
+  { channel: "21R (In)", frequency: "467.7000", power: "50W", notes: "Repeater Input" },
+  { channel: "22R (In)", frequency: "467.7250", power: "50W", notes: "Repeater Input" },
 ]
 
 const noaaChannels = [
@@ -37,8 +47,21 @@ const maritimeChannels = [
   { channel: 22, frequency: "157.100", purpose: "Coast Guard Liaison", priority: "High" },
 ]
 
-export function RadioGuides() {
+interface RadioGuidesProps {
+  onTune?: (freq: number, mode: string) => void
+}
+
+export function RadioGuides({ onTune }: RadioGuidesProps) {
   const [activeTab, setActiveTab] = useState("gmrs")
+
+  const handleTune = (freqStr: string, mode: string) => {
+    if (onTune) {
+      const freq = parseFloat(freqStr)
+      if (!isNaN(freq)) {
+        onTune(freq, mode)
+      }
+    }
+  }
 
   return (
     <Card>
@@ -67,11 +90,12 @@ export function RadioGuides() {
               <Radio className="h-4 w-4 text-primary" />
               <h3 className="font-body font-semibold text-foreground">GMRS Channels</h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {gmrsChannels.map((ch) => (
                 <div
                   key={ch.channel}
-                  className="flex items-center justify-between p-3 border border-border rounded-lg"
+                  className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group"
+                  onClick={() => handleTune(ch.frequency, "NBFM")}
                 >
                   <div className="flex items-center space-x-3">
                     <Badge className="bg-blue-100 text-blue-800 min-w-[3rem]">CH {ch.channel}</Badge>
@@ -80,9 +104,14 @@ export function RadioGuides() {
                       <div className="font-body text-xs text-muted-foreground">{ch.notes}</div>
                     </div>
                   </div>
-                  <Badge className={ch.power === "50W" ? "bg-orange-100 text-orange-800" : "bg-muted text-foreground"}>
-                    {ch.power}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={ch.power === "50W" ? "bg-orange-100 text-orange-800" : "bg-muted text-foreground"}>
+                        {ch.power}
+                    </Badge>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <PlayCircle className="h-4 w-4 text-primary" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -103,7 +132,8 @@ export function RadioGuides() {
               {noaaChannels.map((ch) => (
                 <div
                   key={ch.channel}
-                  className="flex items-center justify-between p-3 border border-border rounded-lg"
+                  className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group"
+                  onClick={() => handleTune(ch.frequency, "NBFM")}
                 >
                   <div className="flex items-center space-x-3">
                     <Badge className="bg-orange-100 text-orange-800 min-w-[3rem]">{ch.channel}</Badge>
@@ -112,6 +142,9 @@ export function RadioGuides() {
                       <div className="font-body text-xs text-muted-foreground">{ch.location} Coverage</div>
                     </div>
                   </div>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <PlayCircle className="h-4 w-4 text-primary" />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -130,23 +163,32 @@ export function RadioGuides() {
             </div>
             <div className="space-y-2">
               {maritimeChannels.map((ch) => (
-                <div key={ch.channel} className="p-3 border border-border rounded-lg">
+                <div
+                    key={ch.channel}
+                    className="p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group"
+                    onClick={() => handleTune(ch.frequency, "NBFM")}
+                >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-3">
                       <Badge className="bg-blue-100 text-blue-800 min-w-[3rem]">CH {ch.channel}</Badge>
                       <div className="font-body font-medium text-foreground">{ch.frequency} MHz</div>
                     </div>
-                    <Badge
-                      className={
-                        ch.priority === "Emergency"
-                          ? "bg-red-100 text-red-800"
-                          : ch.priority === "High"
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-muted text-foreground"
-                      }
-                    >
-                      {ch.priority}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                        <Badge
+                        className={
+                            ch.priority === "Emergency"
+                            ? "bg-red-100 text-red-800"
+                            : ch.priority === "High"
+                                ? "bg-orange-100 text-orange-800"
+                                : "bg-muted text-foreground"
+                        }
+                        >
+                        {ch.priority}
+                        </Badge>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <PlayCircle className="h-4 w-4 text-primary" />
+                        </Button>
+                    </div>
                   </div>
                   <div className="font-body text-sm text-muted-foreground">{ch.purpose}</div>
                 </div>

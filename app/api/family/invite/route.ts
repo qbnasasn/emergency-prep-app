@@ -76,18 +76,27 @@ export async function POST(req: Request) {
             const resend = new Resend(apiKey);
             try {
                 await resend.emails.send({
-                    from: 'Prepper Family <familylink@prepsafe.app>',
+                    from: 'invite@prepsafe.app',
                     to: recipientEmail,
-                    subject: "You've been invited to join a Prepper Family",
+                    subject: "You've been invited to join a PrepSafe Household",
                     html: `
-                        <div style="font-family: sans-serif; color: #333;">
-                            <h2>You've been invited!</h2>
-                            <p>You have been invited to join a household on PrepSafe.</p>
-                            <p>Your invite code is: <strong>${generatedCode}</strong></p>
+                        <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+                            <h2 style="color: #f97316;">You've been invited!</h2>
+                            <p>You have been invited to join <strong>${user.full_name || 'a friend'}'s</strong> household on PrepSafe.</p>
+                            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; text-align: center; margin: 20px 0;">
+                                <p style="margin: 0; font-size: 14px; color: #666;">Your Invite Code:</p>
+                                <p style="margin: 5px 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">${generatedCode}</p>
+                            </div>
+                            <p>To accept this invite:</p>
+                            <ol>
+                                <li>Log in to your PrepSafe account (or create one).</li>
+                                <li>Go to <strong>Settings > Family Members</strong>.</li>
+                                <li>Click "Join Existing Household" and enter the code above.</li>
+                            </ol>
                             <p>This code expires in 24 hours.</p>
-                            <hr />
-                            <p style="font-size: 12px; color: #666;">
-                                <a href="https://prepsafe.app">Open PrepSafe</a>
+                            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+                            <p style="font-size: 12px; color: #666; text-align: center;">
+                                <a href="https://prepsafe.app" style="color: #f97316; text-decoration: none;">Open PrepSafe</a>
                             </p>
                         </div>
                     `

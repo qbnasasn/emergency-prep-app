@@ -9,8 +9,17 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Radio, Play, Square, Activity, Volume2, VolumeX, AlertTriangle } from "lucide-react"
+import { Radio, Play, Square, Activity, Volume2, VolumeX, AlertTriangle, Save, Trash2 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { toast } from "sonner"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription
+} from "@/components/ui/dialog"
 
 // Import from the library
 // Using deep imports as permitted by package exports
@@ -77,11 +86,20 @@ class CustomAudioPlayer {
   }
 }
 
-interface WebRtlsdrInterfaceProps {
-  className?: string
+interface SavedFrequency {
+  id: string
+  frequency: string // numeric string from DB
+  description: string | null
+  mode: string | null
+  created_at: string
 }
 
-export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
+interface WebRtlsdrInterfaceProps {
+  className?: string
+  externalTune?: { freq: number; mode: string } | null
+}
+
+export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfaceProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [frequency, setFrequency] = useState(88.5)
   const [volume, setVolume] = useState(1)
@@ -95,8 +113,24 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
   const [ppm, setPpm] = useState(0)
   const [squelch, setSquelch] = useState(0)
 
+  // Saved Frequencies State
+  const [savedFrequencies, setSavedFrequencies] = useState<SavedFrequency[]>([])
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
+  const [newFreqDescription, setNewFreqDescription] = useState("")
+
   const radioRef = useRef<any>(null)
   const demodulatorRef = useRef<any>(null)
+
+  // React to external tune
+  useEffect(() => {
+    if (externalTune) {
+      setFrequency(externalTune.freq)
+      setFrequencyInput(externalTune.freq.toString())
+      setMode(externalTune.mode)
+      handleFrequencyChange([externalTune.freq]) // Tune radio
+      handleModeChange(externalTune.mode) // Set mode
+    }
+  }, [externalTune])
 
   useEffect(() => {
     setFrequencyInput(frequency.toString())
@@ -124,7 +158,72 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
     if (typeof navigator !== 'undefined' && !navigator.usb) {
       setSupported(false)
     }
+    fetchSavedFrequencies();
   }, [])
+
+  const fetchSavedFrequencies = async () => {
+    try {
+        const res = await fetch('/api/communications/saved-frequencies');
+        if (res.ok) {
+            const data = await res.json();
+            setSavedFrequencies(data);
+        }
+    } catch (e) {
+        console.error("Failed to fetch saved frequencies", e);
+    }
+  }
+
+  const handleSaveFrequency = async () => {
+      try {
+          const res = await fetch('/api/communications/saved-frequencies', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  frequency: frequency,
+                  description: newFreqDescription || `Frequency ${frequency.toFixed(4)}`,
+                  mode: mode
+              })
+          });
+          if (res.ok) {
+              toast.success("Frequency saved");
+              setNewFreqDescription("");
+              setIsSaveDialogOpen(false);
+              fetchSavedFrequencies();
+          } else {
+              toast.error("Failed to save frequency");
+          }
+      } catch (e) {
+          toast.error("Error saving frequency");
+      }
+  }
+
+  const handleDeleteFrequency = async (id: string) => {
+      try {
+          const res = await fetch(`/api/communications/saved-frequencies/${id}`, {
+              method: 'DELETE'
+          });
+          if (res.ok) {
+              toast.success("Frequency deleted");
+              fetchSavedFrequencies();
+          } else {
+              toast.error("Failed to delete");
+          }
+      } catch (e) {
+          toast.error("Error deleting");
+      }
+  }
+
+  const handleRecallFrequency = (saved: SavedFrequency) => {
+      const freq = parseFloat(saved.frequency);
+      if (!isNaN(freq)) {
+          setFrequency(freq);
+          setFrequencyInput(freq.toString());
+          handleFrequencyChange([freq]);
+          if (saved.mode) {
+              handleModeChange(saved.mode);
+          }
+      }
+  }
 
   const initRadio = async () => {
     try {
@@ -358,17 +457,53 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium font-body">Frequency (MHz)</label>
-              <Input
-                type="number"
-                value={frequencyInput}
-                onChange={handleFrequencyInputChange}
-                onBlur={handleFrequencyInputCommit}
-                onKeyDown={handleKeyDown}
-                className="w-32 h-8 font-mono text-right"
-                step="0.0001"
-              />
+            <div className="flex justify-between items-center gap-2">
+              <label className="text-sm font-medium font-body whitespace-nowrap">Frequency (MHz)</label>
+              <div className="flex items-center gap-2 w-full">
+                  <Input
+                    type="number"
+                    value={frequencyInput}
+                    onChange={handleFrequencyInputChange}
+                    onBlur={handleFrequencyInputCommit}
+                    onKeyDown={handleKeyDown}
+                    className="h-8 font-mono text-right flex-1"
+                    step="0.0001"
+                  />
+                  <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+                      <DialogTrigger asChild>
+                          <Button size="icon" variant="outline" className="h-8 w-8">
+                              <Save className="h-4 w-4" />
+                          </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                          <DialogHeader>
+                              <DialogTitle>Save Frequency</DialogTitle>
+                              <DialogDescription>Save this frequency to your list for quick access.</DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 pt-2">
+                              <div className="grid gap-2">
+                                  <Label>Frequency</Label>
+                                  <Input value={frequency.toFixed(4)} disabled />
+                              </div>
+                              <div className="grid gap-2">
+                                  <Label>Mode</Label>
+                                  <Input value={mode} disabled />
+                              </div>
+                              <div className="grid gap-2">
+                                  <Label>Description</Label>
+                                  <Input
+                                      placeholder="e.g. NOAA Weather, Local Repeater"
+                                      value={newFreqDescription}
+                                      onChange={(e) => setNewFreqDescription(e.target.value)}
+                                  />
+                              </div>
+                              <Button onClick={handleSaveFrequency} className="w-full">
+                                  Save Frequency
+                              </Button>
+                          </div>
+                      </DialogContent>
+                  </Dialog>
+              </div>
             </div>
             <Slider
               value={[frequency]}
@@ -423,25 +558,38 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
               </div>
             </div>
           </div>
-
-          {outputDevices.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium font-body">Audio Output</label>
-              <Select value={selectedDevice} onValueChange={handleDeviceChange}>
-                <SelectTrigger className="font-body">
-                  <SelectValue placeholder="Select audio output" />
-                </SelectTrigger>
-                <SelectContent>
-                  {outputDevices.map((device) => (
-                    <SelectItem key={device.deviceId} value={device.deviceId}>
-                      {device.label || `Speaker ${device.deviceId.slice(0, 5)}...`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
         </div>
+
+        {/* Saved Frequencies List */}
+        {savedFrequencies.length > 0 && (
+            <div className="pt-4 border-t space-y-3">
+                <Label className="font-body text-sm font-medium">Saved Frequencies</Label>
+                <div className="space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-2">
+                    {savedFrequencies.map((saved) => (
+                        <div key={saved.id} className="flex items-center justify-between p-2 rounded-md bg-muted/40 hover:bg-muted/70 group">
+                            <div
+                                className="flex-1 cursor-pointer"
+                                onClick={() => handleRecallFrequency(saved)}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span className="font-mono font-medium">{parseFloat(saved.frequency).toFixed(4)}</span>
+                                    {saved.mode && <Badge variant="outline" className="text-[10px] h-4 px-1">{saved.mode}</Badge>}
+                                </div>
+                                {saved.description && <div className="text-xs text-muted-foreground truncate">{saved.description}</div>}
+                            </div>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDeleteFrequency(saved.id)}
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )}
 
         <div className="space-y-4 pt-2 border-t">
           <div className="flex items-center justify-between">
@@ -484,22 +632,6 @@ export function WebRtlsdrInterface({ className }: WebRtlsdrInterfaceProps) {
               onValueChange={handlePpmChange}
             />
           </div>
-
-          {mode !== "WBFM" && (
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label className="font-body text-xs">Squelch</Label>
-                <span className="text-xs text-muted-foreground">{squelch}</span>
-              </div>
-              <Slider
-                value={[squelch]}
-                min={0}
-                max={6}
-                step={0.1}
-                onValueChange={handleSquelchChange}
-              />
-            </div>
-          )}
         </div>
 
         <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
