@@ -160,10 +160,10 @@ export default function KnowledgePageClient({ documents }: KnowledgePageProps) {
 
           <Tabs value={activeType} onValueChange={setActiveType} className="w-full lg:w-auto">
             <TabsList className="grid w-full grid-cols-4 lg:w-auto">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="article">Articles</TabsTrigger>
-                <TabsTrigger value="guide">Guides</TabsTrigger>
-                <TabsTrigger value="favorites" className="text-yellow-600 data-[state=active]:text-yellow-700">
+                <TabsTrigger value="all" className="dark:data-[state=active]:bg-orange-500 dark:data-[state=active]:text-white">All</TabsTrigger>
+                <TabsTrigger value="article" className="dark:data-[state=active]:bg-orange-500 dark:data-[state=active]:text-white">Articles</TabsTrigger>
+                <TabsTrigger value="guide" className="dark:data-[state=active]:bg-orange-500 dark:data-[state=active]:text-white">Guides</TabsTrigger>
+                <TabsTrigger value="favorites" className="text-yellow-600 data-[state=active]:text-yellow-700 dark:data-[state=active]:bg-orange-500 dark:data-[state=active]:text-white">
                     <Bookmark className="h-4 w-4 mr-1" />
                     <span className="hidden sm:inline">Saved</span>
                 </TabsTrigger>
