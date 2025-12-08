@@ -26,7 +26,7 @@ export function MenuPlanner({ menus }: MenuPlannerProps) {
           <UtensilsCrossed className="h-5 w-5 text-primary" />
           <CardTitle className="font-heading text-xl">Menu Planner</CardTitle>
         </div>
-        <Button size="sm" className="font-body" onClick={() => setIsDialogOpen(true)}>
+        <Button size="sm" className="font-body dark:bg-orange-500 dark:hover:bg-orange-600 dark:text-white" onClick={() => setIsDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           New Menu
         </Button>
