@@ -30,10 +30,12 @@ export async function getFoodPageData() {
 
         // 2. Get Inventory Items for Calculation (Total Calories) (Household-wide)
         // STRICTLY from 'Food & Nutrition' category to match analysis
+        // Using JOIN with users table to ensure we use the household_id from users table as requested
         const calorieRes = await client.query(
-            `SELECT SUM(COALESCE(calories, 0) * quantity) as total_calories
-             FROM inventory_items
-             WHERE household_id = $1 AND category = 'Food & Nutrition'`,
+            `SELECT SUM(COALESCE(i.calories, 0) * i.quantity) as total_calories
+             FROM inventory_items i
+             JOIN users u ON i.user_id = u.id
+             WHERE u.household_id = $1 AND i.category = 'Food & Nutrition'`,
             [householdId]
         )
         const totalCalories = parseInt(calorieRes.rows[0].total_calories || "0")
@@ -43,13 +45,14 @@ export async function getFoodPageData() {
         // Map NULL nutrition_type to "Other"
         const analysisRes = await client.query(
             `SELECT
-                nutrition_type,
+                i.nutrition_type,
                 COUNT(*) as items,
-                SUM(COALESCE(calories, 0) * quantity) as calories
-             FROM inventory_items
-             WHERE household_id = $1
-               AND category = 'Food & Nutrition'
-             GROUP BY nutrition_type`,
+                SUM(COALESCE(i.calories, 0) * i.quantity) as calories
+             FROM inventory_items i
+             JOIN users u ON i.user_id = u.id
+             WHERE u.household_id = $1
+               AND i.category = 'Food & Nutrition'
+             GROUP BY i.nutrition_type`,
             [householdId]
         )
 
@@ -86,8 +89,9 @@ export async function getFoodPageData() {
         // Calculate stats for overview
         const foodItemsCountRes = await client.query(
             `SELECT COUNT(*) as count
-             FROM inventory_items
-             WHERE household_id = $1 AND category = 'Food & Nutrition'`,
+             FROM inventory_items i
+             JOIN users u ON i.user_id = u.id
+             WHERE u.household_id = $1 AND i.category = 'Food & Nutrition'`,
             [householdId]
         )
         const foodItemsCount = parseInt(foodItemsCountRes.rows[0].count || "0")
