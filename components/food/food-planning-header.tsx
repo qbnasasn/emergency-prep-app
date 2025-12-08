@@ -17,7 +17,7 @@ export function FoodPlanningHeader() {
 
       <div className="flex items-center space-x-4">
         <Button
-            className="font-body bg-gray-900 hover:bg-gray-800"
+            className="font-body bg-gray-900 hover:bg-gray-800 dark:bg-orange-500 dark:hover:bg-orange-600 dark:text-white"
             onClick={() => setIsDialogOpen(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
