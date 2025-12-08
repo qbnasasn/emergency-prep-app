@@ -9,13 +9,21 @@ export async function GET() {
   }
 
   const userId = user.id;
+  const householdId = user.householdId;
   const client = await pool.connect();
 
   try {
-    // Find user's shopping list
-    let result = await client.query('SELECT * FROM shopping_lists WHERE user_id = $1', [userId]);
+    // Find household's shopping list
+    // We join with users to check if the list owner is in the same household
+    let result = await client.query(
+      `SELECT sl.*
+       FROM shopping_lists sl
+       JOIN users u ON sl.user_id = u.id
+       WHERE u.household_id = $1`,
+      [householdId]
+    );
 
-    // If no list exists, create one
+    // If no list exists for the household, create one
     if (result.rows.length === 0) {
       result = await client.query(
         'INSERT INTO shopping_lists (user_id, name) VALUES ($1, $2) RETURNING *',
@@ -23,7 +31,7 @@ export async function GET() {
       );
     }
 
-    // For now, we assume one list per user. Return the first one found or created.
+    // For now, we assume one list per household. Return the first one found or created.
     const shoppingList = result.rows[0];
 
     // Now, get the items for that list

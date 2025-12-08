@@ -14,6 +14,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ listId:
   }
 
   const userId = user.id;
+  const householdId = user.householdId;
   const subscriptionPlan = user.subscriptionPlan;
 
   try {
@@ -26,9 +27,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ listId:
 
     const client = await pool.connect();
     try {
-      // Verify user owns the shopping list
+      // Verify user's household owns the shopping list
       const listCheckResult = await client.query(
-        'SELECT user_id FROM shopping_lists WHERE id = $1',
+        `SELECT u.household_id
+         FROM shopping_lists sl
+         JOIN users u ON sl.user_id = u.id
+         WHERE sl.id = $1`,
         [listId]
       );
 
@@ -36,7 +40,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ listId:
         return NextResponse.json({ error: 'Shopping list not found' }, { status: 404 });
       }
 
-      if (listCheckResult.rows[0].user_id !== userId) {
+      if (listCheckResult.rows[0].household_id !== householdId) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
