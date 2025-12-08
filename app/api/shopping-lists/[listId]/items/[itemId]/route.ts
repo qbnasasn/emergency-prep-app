@@ -2,23 +2,27 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getAuthUser } from "@/lib/auth"
 
-export async function PUT(req: Request, { params }: { params: { listId: string, itemId: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ listId: string, itemId: string }> }) {
   const user = await getAuthUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const userId = user.id;
-  const { listId, itemId } = params;
+  // params is a Promise in Next.js 15
+  const { listId, itemId } = await params;
+  const householdId = user.householdId;
 
   try {
     const body = await req.json();
 
     const client = await pool.connect();
     try {
-      // Verify user owns the shopping list
+      // Verify user's household owns the shopping list
       const listCheckResult = await client.query(
-        'SELECT user_id FROM shopping_lists WHERE id = $1',
+        `SELECT u.household_id
+         FROM shopping_lists sl
+         JOIN users u ON sl.user_id = u.id
+         WHERE sl.id = $1`,
         [listId]
       );
 
@@ -26,7 +30,7 @@ export async function PUT(req: Request, { params }: { params: { listId: string, 
         return NextResponse.json({ error: 'Shopping list not found' }, { status: 404 });
       }
 
-      if (listCheckResult.rows[0].user_id !== userId) {
+      if (listCheckResult.rows[0].household_id !== householdId) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
@@ -76,20 +80,24 @@ export async function PUT(req: Request, { params }: { params: { listId: string, 
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { listId: string, itemId: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ listId: string, itemId: string }> }) {
   const user = await getAuthUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const userId = user.id;
-  const { listId, itemId } = params;
+  // params is a Promise in Next.js 15
+  const { listId, itemId } = await params;
+  const householdId = user.householdId;
 
   const client = await pool.connect();
   try {
-    // Verify user owns the shopping list
+    // Verify user's household owns the shopping list
     const listCheckResult = await client.query(
-      'SELECT user_id FROM shopping_lists WHERE id = $1',
+      `SELECT u.household_id
+       FROM shopping_lists sl
+       JOIN users u ON sl.user_id = u.id
+       WHERE sl.id = $1`,
       [listId]
     );
 
@@ -97,7 +105,7 @@ export async function DELETE(req: Request, { params }: { params: { listId: strin
       return NextResponse.json({ error: 'Shopping list not found' }, { status: 404 });
     }
 
-    if (listCheckResult.rows[0].user_id !== userId) {
+    if (listCheckResult.rows[0].household_id !== householdId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
