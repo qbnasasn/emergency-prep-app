@@ -12,26 +12,33 @@ export async function getFoodPageData() {
   }
 
   const userId = user.id
+  const householdId = user.householdId
 
   try {
     const client = await pool.connect()
     try {
-        // 1. Get Family Members
+        // 1. Get Family Members (Household-wide)
+        // Join with users table to find all family members in the same household
         const familyRes = await client.query(
-            "SELECT * FROM family_members WHERE user_id = $1",
-            [userId]
+            `SELECT fm.*
+             FROM family_members fm
+             JOIN users u ON fm.user_id = u.id
+             WHERE u.household_id = $1`,
+            [householdId]
         )
         const familyMembers = familyRes.rows
 
-        // 2. Get Inventory Items for Calculation (Total Calories)
+        // 2. Get Inventory Items for Calculation (Total Calories) (Household-wide)
         // STRICTLY from 'Food & Nutrition' category to match analysis
         const calorieRes = await client.query(
-            "SELECT SUM(COALESCE(calories, 0) * quantity) as total_calories FROM inventory_items WHERE user_id = $1 AND category = 'Food & Nutrition'",
-            [userId]
+            `SELECT SUM(COALESCE(calories, 0) * quantity) as total_calories
+             FROM inventory_items
+             WHERE household_id = $1 AND category = 'Food & Nutrition'`,
+            [householdId]
         )
         const totalCalories = parseInt(calorieRes.rows[0].total_calories || "0")
 
-        // 3. Get Food Inventory Analysis
+        // 3. Get Food Inventory Analysis (Household-wide)
         // Group by nutrition_type
         // Map NULL nutrition_type to "Other"
         const analysisRes = await client.query(
@@ -40,10 +47,10 @@ export async function getFoodPageData() {
                 COUNT(*) as items,
                 SUM(COALESCE(calories, 0) * quantity) as calories
              FROM inventory_items
-             WHERE user_id = $1
+             WHERE household_id = $1
                AND category = 'Food & Nutrition'
              GROUP BY nutrition_type`,
-            [userId]
+            [householdId]
         )
 
         // Process analysis results to match the format expected by the component
@@ -78,8 +85,10 @@ export async function getFoodPageData() {
 
         // Calculate stats for overview
         const foodItemsCountRes = await client.query(
-            "SELECT COUNT(*) as count FROM inventory_items WHERE user_id = $1 AND category = 'Food & Nutrition'",
-            [userId]
+            `SELECT COUNT(*) as count
+             FROM inventory_items
+             WHERE household_id = $1 AND category = 'Food & Nutrition'`,
+            [householdId]
         )
         const foodItemsCount = parseInt(foodItemsCountRes.rows[0].count || "0")
 
@@ -128,12 +137,15 @@ export async function getMenus() {
     }
 
     try {
+        // Fetch menus for the entire household
         const query = `
-            SELECT * FROM knowledge_base_docs
-            WHERE user_id = $1 AND type = 'menu'
-            ORDER BY created_at DESC
+            SELECT kbd.*
+            FROM knowledge_base_docs kbd
+            JOIN users u ON kbd.user_id = u.id
+            WHERE u.household_id = $1 AND kbd.type = 'menu'
+            ORDER BY kbd.created_at DESC
         `
-        const result = await pool.query(query, [user.id])
+        const result = await pool.query(query, [user.householdId])
         return result.rows as KnowledgeDocument[]
     } catch (error) {
         console.error("Failed to fetch menus:", error)
