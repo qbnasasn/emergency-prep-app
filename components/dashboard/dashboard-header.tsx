@@ -1,7 +1,8 @@
 "use client"
 
-import { Bell, Check, Trash2 } from "lucide-react"
+import { Bell, Check, Trash2, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { SupportDialog } from "@/components/support/support-dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,6 +95,14 @@ export function DashboardHeader() {
 
         <div className="flex items-center space-x-4">
           <ModeToggle />
+
+          <SupportDialog
+            trigger={
+              <Button variant="ghost" size="sm">
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+            }
+          />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
