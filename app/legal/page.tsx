@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { AlertTriangle, ChevronLeft } from "lucide-react"
+import { TriangleAlert, ChevronLeft } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -38,7 +38,7 @@ export default function LegalPage() {
         {/* Medical & Emergency Liability Disclaimer */}
         <section>
           <Alert variant="destructive" className="border-red-600 bg-red-50 text-red-900 [&>svg]:text-red-600">
-            <AlertTriangle className="h-5 w-5" />
+            <TriangleAlert className="h-5 w-5" />
             <AlertTitle className="text-lg font-bold mb-2">Medical & Emergency Liability Disclaimer</AlertTitle>
             <AlertDescription className="text-base text-red-800/90 leading-relaxed">
               <p className="font-semibold mb-2">
