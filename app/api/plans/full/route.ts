@@ -13,6 +13,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const userId = user.id;
+  const householdId = user.householdId;
 
   if (planId) {
     // Fetch a single plan with all details
@@ -23,9 +24,9 @@ export async function GET(req: Request) {
         SELECT p.*
         FROM plans p
         JOIN users u ON p.user_id = u.id
-        WHERE p.id = $1 AND u.household_id = (SELECT household_id FROM users WHERE id = $2)
+        WHERE p.id = $1 AND u.household_id = $2
       `;
-      const planResult = await client.query(planQuery, [planId, userId]);
+      const planResult = await client.query(planQuery, [planId, householdId]);
 
       if (planResult.rows.length === 0) {
         client.release();
@@ -104,7 +105,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
   } else {
-    // Fetch all plans with counts
+    // Fetch all plans with counts for the household
     try {
       const client = await pool.connect();
       const query = `
@@ -123,6 +124,8 @@ export async function GET(req: Request) {
           COUNT(DISTINCT pi.item_id) AS items_count
         FROM
           plans p
+        JOIN
+          users u ON p.user_id = u.id
         LEFT JOIN
           plan_contacts pc ON p.id = pc.plan_id
         LEFT JOIN
@@ -132,13 +135,13 @@ export async function GET(req: Request) {
         LEFT JOIN
           plan_items pi ON p.id = pi.plan_id
         WHERE
-          p.user_id = $1
+          u.household_id = $1
         GROUP BY
-          p.id
+          p.id, p.user_id, p.name, p.description, p.is_active, p.created_at, p.updated_at, p.hazard_type
         ORDER BY
           p.is_active DESC, p.created_at DESC;
       `;
-      const result = await client.query(query, [userId]);
+      const result = await client.query(query, [householdId]);
       client.release();
       return NextResponse.json(result.rows);
     } catch (error) {
