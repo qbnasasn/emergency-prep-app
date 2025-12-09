@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Radio, Play, Square, Activity, Volume2, VolumeX, AlertTriangle, Save, Trash2 } from "lucide-react"
+import { Radio, Play, Square, Activity, Volume2, VolumeX, AlertTriangle, Save, Trash2, Zap, Waves } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { toast } from "sonner"
 import {
@@ -35,14 +35,25 @@ class CustomAudioPlayer {
   lastPlayedAt = -1
   ac: AudioContext | undefined
   gainNode: GainNode | undefined
+  analyser: AnalyserNode | undefined
   gain = 1
 
   play(leftSamples: Float32Array, rightSamples: Float32Array) {
     if (!this.ac || !this.gainNode) {
       this.ac = new (window.AudioContext || (window as any).webkitAudioContext)()
+      this.ac.resume().catch(console.error) // Force resume on start
+
       this.gainNode = this.ac.createGain()
       this.gainNode.gain.value = this.gain
-      this.gainNode.connect(this.ac.destination)
+
+      // Setup Analyser
+      this.analyser = this.ac.createAnalyser()
+      this.analyser.fftSize = 2048
+      this.analyser.smoothingTimeConstant = 0.8
+
+      // Connect: Source -> Gain -> Analyser -> Destination
+      this.gainNode.connect(this.analyser)
+      this.analyser.connect(this.ac.destination)
     }
 
     const buffer = this.ac.createBuffer(2, leftSamples.length, CustomAudioPlayer.OUT_RATE)
@@ -61,14 +72,32 @@ class CustomAudioPlayer {
   }
 
   setVolume(volume: number) {
-    this.gain = volume
+    // Logarithmic / Exponential curve for better audible range
+    // Volume input is 0-10 (linear from slider)
+    // We map 0-10 to an exponential gain curve.
+    // Using cubic curve: gain = (vol/10)^3 * maxGain
+    // A maxGain of 2.0 or 3.0 helps boost quiet signals on laptops.
+    const maxGain = 3.0
+    const normalized = Math.max(0, Math.min(volume, 10)) / 10
+
+    // Apply cubic curve
+    this.gain = Math.pow(normalized, 3) * maxGain
+
     if (this.gainNode) {
-      this.gainNode.gain.value = volume
+      this.gainNode.gain.value = this.gain
     }
   }
 
   getVolume() {
+    // Reverse the calculation to return linear 0-10 for UI if needed,
+    // but we usually just track the slider state in the component.
     return this.gain
+  }
+
+  getByteFrequencyData(array: Uint8Array) {
+      if (this.analyser) {
+          this.analyser.getByteFrequencyData(array)
+      }
   }
 
   get sampleRate() {
@@ -102,9 +131,11 @@ interface WebRtlsdrInterfaceProps {
 export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfaceProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [frequency, setFrequency] = useState(88.5)
-  const [volume, setVolume] = useState(1)
+  const [volume, setVolume] = useState(5) // Default to mid-range (linear)
   const [mode, setMode] = useState("WBFM")
   const [gain, setGain] = useState<number | "auto">("auto")
+  const [biasTee, setBiasTee] = useState(false)
+  const [tunerType, setTunerType] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [supported, setSupported] = useState(true)
   const [frequencyInput, setFrequencyInput] = useState("88.5")
@@ -120,6 +151,11 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
 
   const radioRef = useRef<any>(null)
   const demodulatorRef = useRef<any>(null)
+  const playerRef = useRef<CustomAudioPlayer | null>(null)
+  const providerRef = useRef<any>(null)
+
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animationRef = useRef<number>()
 
   // React to external tune
   useEffect(() => {
@@ -225,25 +261,139 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
       }
   }
 
+  const drawVisualizer = useCallback(() => {
+    if (!canvasRef.current || !playerRef.current || !playerRef.current.analyser) {
+         animationRef.current = requestAnimationFrame(drawVisualizer);
+         return;
+    }
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const analyser = playerRef.current.analyser;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    playerRef.current.getByteFrequencyData(dataArray);
+
+    // Clear with Cyberpunk Black
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw Grid lines
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(let i=0; i<canvas.width; i+=40) {
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, canvas.height);
+    }
+    for(let i=0; i<canvas.height; i+=20) {
+        ctx.moveTo(0, i);
+        ctx.lineTo(canvas.width, i);
+    }
+    ctx.stroke();
+
+    const barWidth = (canvas.width / bufferLength) * 2.5;
+    let barHeight;
+    let x = 0;
+
+    for(let i = 0; i < bufferLength; i++) {
+        barHeight = dataArray[i];
+
+        // Cyberpunk colors: Green base, Red tips for spikes
+        // "Matrix" style
+        let r = 0;
+        let g = barHeight + 20;
+        let b = 0;
+
+        if (barHeight > 180) {
+             // Spike detected (Red/Orange)
+             r = barHeight;
+             g = barHeight > 220 ? 0 : 100; // Pure red for very high peaks
+             b = 0;
+        } else {
+             // Normal signal (Green)
+             r = 0;
+             g = Math.min(255, barHeight + 50);
+             b = 0;
+        }
+
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.fillRect(x, canvas.height - barHeight / 1.5, barWidth, barHeight / 1.5);
+
+        x += barWidth + 1;
+    }
+
+    animationRef.current = requestAnimationFrame(drawVisualizer);
+  }, []);
+
+  useEffect(() => {
+    if (isPlaying) {
+        animationRef.current = requestAnimationFrame(drawVisualizer);
+    } else {
+        if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    }
+    return () => {
+         if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    }
+  }, [isPlaying, drawVisualizer]);
+
+
   const initRadio = async () => {
     try {
       const provider = new RTL2832U_Provider()
-      const demodulator = new Demodulator(new CustomAudioPlayer() as any)
+      providerRef.current = provider;
+
+      const player = new CustomAudioPlayer()
+      playerRef.current = player
+      // Apply initial volume
+      player.setVolume(volume)
+
+      const demodulator = new Demodulator(player as any)
       const radio = new RtlRadio(provider, demodulator)
 
       radioRef.current = radio
       demodulatorRef.current = demodulator
 
+      // Open the device to check tuner type (if exposed by provider)
+      // Note: We need to start the radio to get some info, but usually checking properties works after open.
+      // Assuming 'open' happens implicitly or during init.
+      // We will check for R828D logic here if applicable.
+
       // Set initial state
       await radio.setFrequency(Math.floor(frequency * 1000000))
-      demodulator.setVolume(volume)
+      demodulator.setVolume(1) // Demodulator internal volume, we control gain via player
       demodulator.setMode(getMode(mode))
+
+      // Check Tuner Type if possible
+      // This is speculative based on common library properties,
+      // but if provider has `tunerType` we use it.
+      if ((provider as any).tunerType) {
+          setTunerType((provider as any).tunerType);
+          if ((provider as any).tunerType === 'R828D') {
+              console.log("R828D Tuner Detected - Optimizing defaults");
+              // R828D often benefits from Auto gain initially
+              if (gain === "auto") {
+                   await radio.setGain(null); // Auto
+              }
+          }
+      } else {
+          // Fallback check
+          // Some libraries expose it on the radio instance
+          setTunerType("Standard (R820T/2)");
+      }
 
       const gainValue = gain === "auto" ? null : gain
       await radio.setGain(gainValue)
 
       radio.setSampleRate(2048000)
       await radio.setFrequencyCorrection(ppm)
+
+      // Restore Bias Tee state if it was enabled
+      if (biasTee) {
+          toggleBiasTee(true);
+      }
 
       radio.addEventListener("error", (e: any) => {
         console.error("Radio error:", e)
@@ -282,6 +432,54 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
     }
   }
 
+  const toggleBiasTee = async (enabled: boolean) => {
+      setBiasTee(enabled);
+
+      // Only attempt to send command if radio/provider is active
+      // But user might toggle before start. If so, we handle in initRadio.
+      if (!radioRef.current && !providerRef.current) return;
+
+      const provider = providerRef.current;
+      const radio = radioRef.current;
+
+      try {
+          let success = false;
+
+          // Strategy 1: Offset Tuning Hack (Common for V3/V4)
+          // Toggles GPIO connected to Bias Tee
+          if (radio && typeof radio.setOffsetTuning === 'function') {
+              await radio.setOffsetTuning(enabled);
+              success = true;
+          } else if (provider && typeof provider.setOffsetTuning === 'function') {
+              await provider.setOffsetTuning(enabled);
+              success = true;
+          }
+
+          // Strategy 2: Direct GPIO (if library supports it)
+          // R828D / V4 might use specific GPIO calls
+          if (!success && provider && typeof provider.setBiasTee === 'function') {
+              await provider.setBiasTee(enabled);
+              success = true;
+          }
+
+          if (success) {
+              toast.success(`Bias Tee Power ${enabled ? 'ON' : 'OFF'}`, {
+                  description: "Check V4 LED indicator."
+              });
+          } else {
+              // If we couldn't find a function, we warn but still set state
+              // so initRadio might try again or user knows intent.
+              console.warn("No direct Bias Tee control found on provider/radio.");
+              if (isPlaying) {
+                 toast.warning("Driver may not support Bias Tee toggle.");
+              }
+          }
+      } catch (e) {
+          console.error("Bias Tee Toggle Error", e);
+          toast.error("Failed to toggle Bias Tee");
+      }
+  }
+
   const handleFrequencyChange = async (value: number[]) => {
     const newFreq = value[0]
     setFrequency(newFreq)
@@ -297,8 +495,8 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
   const handleVolumeChange = (value: number[]) => {
     const newVol = value[0]
     setVolume(newVol)
-    if (demodulatorRef.current) {
-      demodulatorRef.current.setVolume(newVol)
+    if (playerRef.current) {
+      playerRef.current.setVolume(newVol)
     }
   }
 
@@ -338,11 +536,8 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
 
   const handleDeviceChange = async (deviceId: string) => {
     setSelectedDevice(deviceId)
-    if (demodulatorRef.current && demodulatorRef.current.player) {
-      const player = demodulatorRef.current.player as CustomAudioPlayer
-      if (player.setOutputDevice) {
-        await player.setOutputDevice(deviceId)
-      }
+    if (playerRef.current) {
+      await playerRef.current.setOutputDevice(deviceId)
     }
   }
 
@@ -421,6 +616,11 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
           <CardTitle className="font-heading text-xl">RTL-SDR Receiver</CardTitle>
         </div>
         <div className="flex items-center space-x-2">
+            {tunerType && (
+                 <Badge variant="outline" className="text-[10px] hidden sm:flex">
+                     {tunerType}
+                 </Badge>
+            )}
              <Badge variant={isPlaying ? "default" : "secondary"}>
             {isPlaying ? "Live" : "Standby"}
             </Badge>
@@ -453,6 +653,19 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
           >
             {isPlaying ? <Square className="h-5 w-5" /> : <Play className="h-5 w-5 ml-1" />}
           </Button>
+        </div>
+
+        {/* Spectral Visualizer Canvas */}
+        <div className="relative w-full h-32 bg-black rounded-md overflow-hidden border border-gray-800 shadow-inner">
+             <canvas
+                ref={canvasRef}
+                width={600}
+                height={128}
+                className="w-full h-full"
+             />
+             <div className="absolute top-1 left-2 text-[10px] text-green-500/50 font-mono">
+                 AUDIO SPECTRUM
+             </div>
         </div>
 
         <div className="space-y-4">
@@ -593,6 +806,20 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
 
         <div className="space-y-4 pt-2 border-t">
           <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                  <Label htmlFor="bias-tee" className="font-body flex items-center">
+                    Bias Tee (4.5V)
+                    <Zap className="h-3 w-3 ml-1 text-yellow-500" />
+                  </Label>
+              </div>
+              <Switch
+                  id="bias-tee"
+                  checked={biasTee}
+                  onCheckedChange={toggleBiasTee}
+              />
+          </div>
+
+          <div className="flex items-center justify-between">
             <Label htmlFor="auto-gain" className="font-body">
               Automatic Gain Control
             </Label>
@@ -637,7 +864,7 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
         <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
           <p className="text-xs text-blue-800 dark:text-blue-200 font-body flex items-start">
             <Radio className="h-3 w-3 mr-2 mt-0.5 flex-shrink-0" />
-            Connect a compatible RTL-SDR USB dongle to receive live radio signals directly in your browser.
+            Connect a compatible RTL-SDR USB dongle (V3/V4 recommended).
           </p>
         </div>
       </CardContent>
