@@ -8,8 +8,18 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { householdId } = user;
+
   try {
-    const pets = await pool.query('SELECT * FROM pets WHERE user_id = $1 ORDER BY created_at ASC', [user.id])
+    // Fetch all pets linked to users in the same household
+    const pets = await pool.query(
+        `SELECT p.*
+         FROM pets p
+         JOIN users u ON p.user_id = u.id
+         WHERE u.household_id = $1
+         ORDER BY p.created_at ASC`,
+        [householdId]
+    )
     return NextResponse.json(pets.rows)
   } catch (error) {
     console.error('Error fetching pets:', error)
