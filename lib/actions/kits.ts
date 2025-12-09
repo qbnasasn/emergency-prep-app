@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import pool from "@/lib/db"
+import { getAuthUser } from "@/lib/auth"
 
 type KitData = {
   name: string;
@@ -13,6 +14,14 @@ type KitData = {
 };
 
 export async function createKit(userId: string, kitData: KitData) {
+  // Although userId is passed, we verify against session for security
+  const user = await getAuthUser();
+  if (!user) {
+      return { success: false, message: "Unauthorized" };
+  }
+  // We use the session ID to ensure the user is who they say they are
+  const authenticatedUserId = user.id;
+
   const { name, description, category, gps_location, items } = kitData
   const client = await pool.connect();
 
@@ -25,12 +34,12 @@ export async function createKit(userId: string, kitData: KitData) {
       if (isNaN(latitude) || isNaN(longitude)) throw new Error("Invalid GPS coordinates.");
       kitResult = await client.query(
         `INSERT INTO kits (user_id, name, description, category, gps_location) VALUES ($1, $2, $3, $4, POINT($5, $6)) RETURNING id;`,
-        [userId, name, description, category, latitude, longitude]
+        [authenticatedUserId, name, description, category, latitude, longitude]
       );
     } else {
       kitResult = await client.query(
         `INSERT INTO kits (user_id, name, description, category) VALUES ($1, $2, $3, $4) RETURNING id;`,
-        [userId, name, description, category]
+        [authenticatedUserId, name, description, category]
       );
     }
 
@@ -56,10 +65,29 @@ export async function createKit(userId: string, kitData: KitData) {
 }
 
 export async function updateKit(kitId: string, kitData: Omit<KitData, 'items'> & { items: any[] }) {
+    const user = await getAuthUser();
+    if (!user) {
+        return { success: false, message: "Unauthorized" };
+    }
+    const { householdId } = user;
+
     const { name, description, category, gps_location, items } = kitData;
     const client = await pool.connect();
 
     try {
+        // Verify ownership/household access
+        const checkOwnership = await client.query(
+            `SELECT k.id
+             FROM kits k
+             JOIN users u ON k.user_id = u.id
+             WHERE k.id = $1 AND u.household_id = $2`,
+            [kitId, householdId]
+        );
+
+        if (checkOwnership.rows.length === 0) {
+            return { success: false, message: "Kit not found or access denied." };
+        }
+
         await client.query('BEGIN');
 
         if (gps_location) {
@@ -97,8 +125,27 @@ export async function updateKit(kitId: string, kitData: Omit<KitData, 'items'> &
 }
 
 export async function deleteKit(kitId: string) {
+  const user = await getAuthUser();
+  if (!user) {
+      return { success: false, message: "Unauthorized" };
+  }
+  const { householdId } = user;
+
   const client = await pool.connect();
   try {
+    // Verify ownership/household access
+    const checkOwnership = await client.query(
+        `SELECT k.id
+         FROM kits k
+         JOIN users u ON k.user_id = u.id
+         WHERE k.id = $1 AND u.household_id = $2`,
+        [kitId, householdId]
+    );
+
+    if (checkOwnership.rows.length === 0) {
+        return { success: false, message: "Kit not found or access denied." };
+    }
+
     await client.query('BEGIN');
     await client.query(`DELETE FROM kit_items WHERE kit_id = $1;`, [kitId]);
     await client.query(`DELETE FROM kits WHERE id = $1;`, [kitId]);

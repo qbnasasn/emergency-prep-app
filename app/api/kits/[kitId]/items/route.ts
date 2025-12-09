@@ -2,24 +2,28 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getAuthUser } from "@/lib/auth"
 
-export async function GET(req: Request, { params }: { params: { kitId: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ kitId: string }> }) {
   const user = await getAuthUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = user.id;
-  const { kitId } = params;
+  const { householdId } = user;
+  const { kitId } = await params;
 
   try {
     const client = await pool.connect();
     try {
-      // First, verify that the kit belongs to the user
-      const kitCheck = await client.query('SELECT user_id FROM kits WHERE id = $1', [kitId]);
+      // Verify that the kit belongs to the user's household
+      const kitCheck = await client.query(
+        `SELECT k.user_id
+         FROM kits k
+         JOIN users u ON k.user_id = u.id
+         WHERE k.id = $1 AND u.household_id = $2`,
+        [kitId, householdId]
+      );
+
       if (kitCheck.rows.length === 0) {
-        return NextResponse.json({ error: 'Kit not found' }, { status: 404 });
-      }
-      if (kitCheck.rows[0].user_id !== userId) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        return NextResponse.json({ error: 'Kit not found or access denied' }, { status: 404 });
       }
 
       // Fetch the items associated with the kit
