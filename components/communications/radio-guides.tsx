@@ -8,16 +8,32 @@ import { Radio, Satellite, Ship, AlertTriangle, PlayCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const gmrsChannels = [
-  { channel: 1, frequency: "462.5625", power: "5W", notes: "General use" },
-  { channel: 2, frequency: "462.5875", power: "5W", notes: "General use" },
-  { channel: 3, frequency: "462.6125", power: "5W", notes: "General use" },
-  { channel: 15, frequency: "462.5500", power: "50W", notes: "Emergency/Travel" },
-  { channel: 16, frequency: "462.5750", power: "50W", notes: "Emergency/Travel" },
-  { channel: 17, frequency: "462.6000", power: "50W", notes: "Emergency/Travel" },
-  { channel: 18, frequency: "462.6250", power: "50W", notes: "Emergency/Travel" },
-  { channel: 19, frequency: "462.6500", power: "50W", notes: "Emergency" },
-  { channel: 20, frequency: "462.6750", power: "50W", notes: "Emergency" },
-  // Repeater inputs
+  // Channels 1-7: GMRS/FRS Shared (Max 5W GMRS)
+  { channel: 1, frequency: "462.5625", power: "5W", notes: "Shared FRS/GMRS" },
+  { channel: 2, frequency: "462.5875", power: "5W", notes: "Shared FRS/GMRS" },
+  { channel: 3, frequency: "462.6125", power: "5W", notes: "Shared FRS/GMRS" },
+  { channel: 4, frequency: "462.6375", power: "5W", notes: "Shared FRS/GMRS" },
+  { channel: 5, frequency: "462.6625", power: "5W", notes: "Shared FRS/GMRS" },
+  { channel: 6, frequency: "462.6875", power: "5W", notes: "Shared FRS/GMRS" },
+  { channel: 7, frequency: "462.7125", power: "5W", notes: "Shared FRS/GMRS" },
+  // Channels 8-14: FRS Only/Shared (Max 0.5W)
+  { channel: 8, frequency: "467.5625", power: "0.5W", notes: "FRS Low Power" },
+  { channel: 9, frequency: "467.5875", power: "0.5W", notes: "FRS Low Power" },
+  { channel: 10, frequency: "467.6125", power: "0.5W", notes: "FRS Low Power" },
+  { channel: 11, frequency: "467.6375", power: "0.5W", notes: "FRS Low Power" },
+  { channel: 12, frequency: "467.6625", power: "0.5W", notes: "FRS Low Power" },
+  { channel: 13, frequency: "467.6875", power: "0.5W", notes: "FRS Low Power" },
+  { channel: 14, frequency: "467.7125", power: "0.5W", notes: "FRS Low Power" },
+  // Channels 15-22: GMRS (Max 50W)
+  { channel: 15, frequency: "462.5500", power: "50W", notes: "GMRS High Power" },
+  { channel: 16, frequency: "462.5750", power: "50W", notes: "GMRS High Power" },
+  { channel: 17, frequency: "462.6000", power: "50W", notes: "GMRS High Power" },
+  { channel: 18, frequency: "462.6250", power: "50W", notes: "GMRS High Power" },
+  { channel: 19, frequency: "462.6500", power: "50W", notes: "GMRS High Power" },
+  { channel: 20, frequency: "462.6750", power: "50W", notes: "GMRS High Power" },
+  { channel: 21, frequency: "462.7000", power: "50W", notes: "GMRS High Power" },
+  { channel: 22, frequency: "462.7250", power: "50W", notes: "GMRS High Power" },
+  // Repeater Inputs (15R-22R)
   { channel: "15R (In)", frequency: "467.5500", power: "50W", notes: "Repeater Input" },
   { channel: "16R (In)", frequency: "467.5750", power: "50W", notes: "Repeater Input" },
   { channel: "17R (In)", frequency: "467.6000", power: "50W", notes: "Repeater Input" },
