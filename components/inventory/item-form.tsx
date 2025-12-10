@@ -155,7 +155,19 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
     }
   }
 
-  const mapCategory = (productName: string): string | undefined => {
+  const mapCategory = (tags: string[] | undefined, productName: string): string | undefined => {
+     // 1. Try mapping from tags (more accurate)
+    if (tags && Array.isArray(tags)) {
+      for (const tag of tags) {
+        if (tag.includes("beverages") || tag.includes("drink")) return "Water & Hydration";
+        if (tag.includes("meats") || tag.includes("seafood") || tag.includes("meals")) return "Food & Nutrition";
+        if (tag.includes("plant-based-foods") || tag.includes("cereals-and-potatoes")) return "Food & Nutrition";
+        if (tag.includes("medicines") || tag.includes("pharmacy")) return "First Aid & Medical";
+        if (tag.includes("hygiene") || tag.includes("beauty")) return "Sanitation & Hygiene";
+      }
+    }
+
+    // 2. Fallback to keyword matching on name
     const lowerName = productName.toLowerCase();
 
     // Simple keyword mapping
@@ -176,11 +188,16 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
     try {
       // Check if online
       if (!navigator.onLine) {
-        toast.error("Product lookup unavailable. Please enter details manually.", { id: toastId });
+        toast.error("No internet connection. Please enter details manually.", { id: toastId });
         return;
       }
 
-      const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+      // Use v2 API and include User-Agent
+      const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`, {
+        headers: {
+          "User-Agent": "PrepSafe - Web - Version 1.0"
+        }
+      });
       const data = await response.json();
 
       if (data.status === 1 && data.product) {
@@ -211,7 +228,7 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
         }
 
         // Map Category
-        const mappedCategory = mapCategory(product.product_name || "");
+        const mappedCategory = mapCategory(product.categories_tags, product.product_name || "");
         if (mappedCategory && INVENTORY_CATEGORIES.includes(mappedCategory)) {
           form.setValue("category", mappedCategory);
           // If category is food, auto-set nutrition type default or logic could be added here
@@ -219,11 +236,11 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
 
         toast.success("Product found!", { id: toastId });
       } else {
-        toast.error("Product lookup unavailable. Please enter details manually.", { id: toastId });
+        toast.error("Product not found in database. Please enter details manually.", { id: toastId });
       }
     } catch (error) {
       console.error("Lookup error:", error);
-      toast.error("Product lookup unavailable. Please enter details manually.", { id: toastId });
+      toast.error("Network error. Please check your connection.", { id: toastId });
     }
   };
 
