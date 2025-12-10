@@ -28,6 +28,44 @@ import { getMode, modeParameters } from "@jtarrio/webrtlsdr/demod/modes.js"
 import { Radio as RtlRadio } from "@jtarrio/webrtlsdr/radio.js"
 import { RTL2832U_Provider } from "@jtarrio/webrtlsdr/rtlsdr.js"
 
+// FRS/GMRS Channels Definition
+const FRS_GMRS_CHANNELS = [
+  // Channels 1-7: FRS/GMRS Shared
+  { id: "frs-1", name: "Channel 1", freq: 462.5625, type: "FRS/GMRS" },
+  { id: "frs-2", name: "Channel 2", freq: 462.5875, type: "FRS/GMRS" },
+  { id: "frs-3", name: "Channel 3", freq: 462.6125, type: "FRS/GMRS" },
+  { id: "frs-4", name: "Channel 4", freq: 462.6375, type: "FRS/GMRS" },
+  { id: "frs-5", name: "Channel 5", freq: 462.6625, type: "FRS/GMRS" },
+  { id: "frs-6", name: "Channel 6", freq: 462.6875, type: "FRS/GMRS" },
+  { id: "frs-7", name: "Channel 7", freq: 462.7125, type: "FRS/GMRS" },
+  // Channels 8-14: FRS Only (Low Power)
+  { id: "frs-8", name: "Channel 8", freq: 467.5625, type: "FRS Only" },
+  { id: "frs-9", name: "Channel 9", freq: 467.5875, type: "FRS Only" },
+  { id: "frs-10", name: "Channel 10", freq: 467.6125, type: "FRS Only" },
+  { id: "frs-11", name: "Channel 11", freq: 467.6375, type: "FRS Only" },
+  { id: "frs-12", name: "Channel 12", freq: 467.6625, type: "FRS Only" },
+  { id: "frs-13", name: "Channel 13", freq: 467.6875, type: "FRS Only" },
+  { id: "frs-14", name: "Channel 14", freq: 467.7125, type: "FRS Only" },
+  // Channels 15-22: GMRS/FRS Shared (High Power GMRS)
+  { id: "gmrs-15", name: "Channel 15", freq: 462.5500, type: "GMRS/FRS" },
+  { id: "gmrs-16", name: "Channel 16", freq: 462.5750, type: "GMRS/FRS" },
+  { id: "gmrs-17", name: "Channel 17", freq: 462.6000, type: "GMRS/FRS" },
+  { id: "gmrs-18", name: "Channel 18", freq: 462.6250, type: "GMRS/FRS" },
+  { id: "gmrs-19", name: "Channel 19", freq: 462.6500, type: "GMRS/FRS" },
+  { id: "gmrs-20", name: "Channel 20", freq: 462.6750, type: "GMRS/FRS" },
+  { id: "gmrs-21", name: "Channel 21", freq: 462.7000, type: "GMRS/FRS" },
+  { id: "gmrs-22", name: "Channel 22", freq: 462.7250, type: "GMRS/FRS" },
+  // Channels 15-22 Repeater Inputs (467.xxx)
+  { id: "gmrs-15rp", name: "Repeater 15 (Input)", freq: 467.5500, type: "GMRS RPT" },
+  { id: "gmrs-16rp", name: "Repeater 16 (Input)", freq: 467.5750, type: "GMRS RPT" },
+  { id: "gmrs-17rp", name: "Repeater 17 (Input)", freq: 467.6000, type: "GMRS RPT" },
+  { id: "gmrs-18rp", name: "Repeater 18 (Input)", freq: 467.6250, type: "GMRS RPT" },
+  { id: "gmrs-19rp", name: "Repeater 19 (Input)", freq: 467.6500, type: "GMRS RPT" },
+  { id: "gmrs-20rp", name: "Repeater 20 (Input)", freq: 467.6750, type: "GMRS RPT" },
+  { id: "gmrs-21rp", name: "Repeater 21 (Input)", freq: 467.7000, type: "GMRS RPT" },
+  { id: "gmrs-22rp", name: "Repeater 22 (Input)", freq: 467.7250, type: "GMRS RPT" },
+]
+
 class CustomAudioPlayer {
   static OUT_RATE = 48000
   static TIME_BUFFER = 0.05
@@ -259,6 +297,13 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
               handleModeChange(saved.mode);
           }
       }
+  }
+
+  const handleRecallPreset = (freq: number) => {
+      setFrequency(freq);
+      setFrequencyInput(freq.toString());
+      handleFrequencyChange([freq]);
+      handleModeChange("NBFM");
   }
 
   const drawVisualizer = useCallback(() => {
@@ -791,6 +836,31 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
               />
             </div>
           </div>
+        </div>
+
+        {/* FRS/GMRS Presets */}
+        <div className="pt-4 border-t space-y-3">
+             <Label className="font-body text-sm font-medium">Standard Channels (FRS/GMRS)</Label>
+             <div className="space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-2">
+                 {FRS_GMRS_CHANNELS.map((channel) => (
+                     <div key={channel.id} className="flex items-center justify-between p-2 rounded-md bg-muted/20 hover:bg-muted/50 group cursor-pointer" onClick={() => handleRecallPreset(channel.freq)}>
+                         <div className="flex-1">
+                             <div className="flex items-center gap-2">
+                                 <span className="font-mono font-medium">{channel.freq.toFixed(4)}</span>
+                                 <Badge variant="outline" className="text-[10px] h-4 px-1">{channel.type}</Badge>
+                             </div>
+                             <div className="text-xs text-muted-foreground">{channel.name}</div>
+                         </div>
+                         <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                         >
+                            <Play className="h-3 w-3" />
+                         </Button>
+                     </div>
+                 ))}
+             </div>
         </div>
 
         {/* Saved Frequencies List */}
