@@ -770,6 +770,26 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
                 />
               </div>
             </div>
+
+            <div className="space-y-2 col-span-2">
+              <div className="flex justify-between">
+                <label className={`text-sm font-medium font-body ${mode !== "NBFM" ? "text-muted-foreground" : ""}`}>
+                  Squelch (NBFM)
+                </label>
+                <span className={`text-xs ${mode !== "NBFM" ? "text-muted-foreground" : "text-primary"}`}>
+                  {squelch}
+                </span>
+              </div>
+              <Slider
+                value={[squelch]}
+                min={0}
+                max={100}
+                step={1}
+                disabled={mode !== "NBFM"}
+                onValueChange={handleSquelchChange}
+                className="flex-1"
+              />
+            </div>
           </div>
         </div>
 
