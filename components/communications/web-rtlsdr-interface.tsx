@@ -777,14 +777,14 @@ export function WebRtlsdrInterface({ className, externalTune }: WebRtlsdrInterfa
                   Squelch (NBFM)
                 </label>
                 <span className={`text-xs ${mode !== "NBFM" ? "text-muted-foreground" : "text-primary"}`}>
-                  {squelch}
+                  {squelch.toFixed(1)}
                 </span>
               </div>
               <Slider
                 value={[squelch]}
                 min={0}
-                max={100}
-                step={1}
+                max={20}
+                step={0.1}
                 disabled={mode !== "NBFM"}
                 onValueChange={handleSquelchChange}
                 className="flex-1"
