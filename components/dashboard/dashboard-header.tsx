@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, Check, Trash2, HelpCircle } from "lucide-react"
+import { Bell, Check, Trash2, HelpCircle, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SupportDialog } from "@/components/support/support-dialog"
 import {
@@ -10,11 +10,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import Image from "next/image"
 import { ModeToggle } from "@/components/ui/mode-toggle"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { UserButton, useUser } from "@clerk/nextjs"
+import { navigation } from "@/components/dashboard/dashboard-nav"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 interface Notification {
   id: string
@@ -32,6 +41,8 @@ interface NotificationResponse {
 
 export function DashboardHeader() {
   const { isLoaded, isSignedIn } = useUser()
+  const pathname = usePathname()
+  const [open, setOpen] = useState(false)
 
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -86,10 +97,53 @@ export function DashboardHeader() {
     <header className="border-b border-border px-6 py-4 bg-card">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Image src="/images/LOGO.png" alt="PrepSafe" width={150} height={190} className="h-12 w-auto" />
-          <div>
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[240px] sm:w-[300px]">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <div className="flex flex-col gap-4 py-4">
+                <div className="flex items-center gap-2 px-2">
+                  <Image src="/images/LOGO.png" alt="PrepSafe" width={40} height={40} className="h-8 w-auto" />
+                  <span className="font-heading font-bold text-lg">PrepSafe</span>
+                </div>
+                <nav className="flex flex-col gap-2">
+                  {navigation.map((item) => {
+                    const isActive = pathname === item.href
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center px-3 py-2 text-sm font-body rounded-lg transition-colors",
+                          isActive
+                            ? "bg-muted text-foreground"
+                            : "text-muted-foreground hover:bg-gray-50 hover:text-foreground dark:hover:text-gray-900"
+                        )}
+                      >
+                        <item.icon className="mr-3 h-5 w-5" />
+                        <span>{item.name}</span>
+                      </Link>
+                    )
+                  })}
+                </nav>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <Image src="/images/LOGO.png" alt="PrepSafe" width={150} height={190} className="hidden md:block h-12 w-auto" />
+          <div className="hidden md:block">
             <h1 className="font-heading font-bold text-xl text-foreground">PrepSafe</h1>
             <p className="font-body text-sm text-muted-foreground">Emergency Preparedness Platform</p>
+          </div>
+          {/* Mobile Logo (simplified) */}
+          <div className="md:hidden">
+             <h1 className="font-heading font-bold text-lg text-foreground">PrepSafe</h1>
           </div>
         </div>
 

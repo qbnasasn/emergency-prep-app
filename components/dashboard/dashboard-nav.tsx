@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-const navigation = [
+export const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Inventory", href: "/dashboard/inventory", icon: Package },
   { name: "Emergency Plans", href: "/dashboard/plans", icon: FileText },
@@ -36,7 +36,7 @@ export function DashboardNav() {
   const pathname = usePathname()
 
   return (
-    <nav className={cn("border-r border-border transition-all duration-300 bg-card", collapsed ? "w-16" : "w-64")}>
+    <nav className={cn("border-r border-border transition-all duration-300 bg-card hidden md:block", collapsed ? "w-16" : "w-64")}>
       <div className="p-4">
         <Button variant="ghost" size="sm" onClick={() => setCollapsed(!collapsed)} className="w-full justify-end mb-4">
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
