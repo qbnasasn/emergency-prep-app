@@ -28,9 +28,8 @@ if %errorlevel% neq 0 (
     winget install Ollama.Ollama
 )
 
-:: Pull Llama 3 Model
-echo Downloading Brain (Llama 3)...
-ollama pull llama3
+:: Note: Ensure you have a model installed.
+:: Example: ollama pull llama3
 
 :: Set CORS to allow browser access (Critical)
 set OLLAMA_ORIGINS="*"
@@ -48,8 +47,8 @@ if ! command -v ollama &> /dev/null; then
     curl -fsSL https://ollama.com/install.sh | sh
 fi
 
-# Pull Llama 3 Model
-ollama pull llama3
+# Note: Ensure you have a model installed.
+# Example: ollama pull llama3
 
 # Set CORS and Start
 export OLLAMA_ORIGINS="*"
@@ -132,9 +131,6 @@ export default function RogerPage() {
             role: m.role,
             content: renderMessageContent(m)
         }));
-        // Append the new user message (since 'messages' state update might be async/batched, but here we use prev logic, but for fetching we need current)
-        // Actually messages from useChat might not be updated yet.
-        // So we append mapped messages + current input.
         contextMessages.push({ role: 'user', content: currentInput });
 
         const response = await fetch('http://localhost:11434/api/chat', {
@@ -325,7 +321,7 @@ export default function RogerPage() {
                     <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur py-2 z-10 border-b">
                         <Label className="flex items-center gap-2 font-bold text-foreground">
                             <Terminal className="w-4 h-4" />
-                            Windows (setup_roger.bat)
+                            Windows (Run via PowerShell)
                         </Label>
                         <Button variant="outline" size="sm" onClick={() => copyToClipboard(WINDOWS_SCRIPT)} className="h-8">
                             <Copy className="w-3 h-3 mr-2" />
@@ -341,7 +337,7 @@ export default function RogerPage() {
                     <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur py-2 z-10 border-b">
                         <Label className="flex items-center gap-2 font-bold text-foreground">
                             <Terminal className="w-4 h-4" />
-                            Linux / Mac (setup_roger.sh)
+                            Linux / Mac (Run via Terminal)
                         </Label>
                         <Button variant="outline" size="sm" onClick={() => copyToClipboard(LINUX_SCRIPT)} className="h-8">
                             <Copy className="w-3 h-3 mr-2" />
