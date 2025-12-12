@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Montserrat, Open_Sans } from "next/font/google"
 import "./globals.css"
 import { ClerkProvider } from "@clerk/nextjs"
@@ -46,6 +46,14 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  manifest: "/manifest.json",
+}
+
+export const viewport: Viewport = {
+  themeColor: "#FFFFFF",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 }
 
 export default function RootLayout({
