@@ -17,25 +17,23 @@ import {
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
-const WINDOWS_SCRIPT = `@echo off
-title Roger AI Setup
-echo Setting up Local Brain...
+const WINDOWS_SCRIPT = `Write-Host "Setting up Local Brain..."
+$Host.UI.RawUI.WindowTitle = "Roger AI Setup"
 
-:: Check for Ollama
-where ollama >nul 2>nul
-if %errorlevel% neq 0 (
-    echo Ollama not found. Installing...
+# Check for Ollama
+if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) {
+    Write-Host "Ollama not found. Installing..."
     winget install Ollama.Ollama
-)
+}
 
-:: Note: Ensure you have a model installed.
-:: Example: ollama pull llama3
+# Note: Ensure you have a model installed.
+# Example: ollama pull llama3
 
-:: Set CORS to allow browser access (Critical)
-set OLLAMA_ORIGINS="*"
+# Set CORS to allow browser access (Critical)
+$env:OLLAMA_ORIGINS="*"
 
-:: Start Server
-echo Roger is ready! Keep this window open.
+# Start Server
+Write-Host "Roger is ready! Keep this window open."
 ollama serve
 `;
 
@@ -321,7 +319,7 @@ export default function RogerPage() {
                     <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur py-2 z-10 border-b">
                         <Label className="flex items-center gap-2 font-bold text-foreground">
                             <Terminal className="w-4 h-4" />
-                            Windows (Run via PowerShell)
+                            Windows (PowerShell)
                         </Label>
                         <Button variant="outline" size="sm" onClick={() => copyToClipboard(WINDOWS_SCRIPT)} className="h-8">
                             <Copy className="w-3 h-3 mr-2" />
