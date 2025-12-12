@@ -14,6 +14,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Bot,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -27,6 +28,7 @@ export const navigation = [
   { name: "Shopping List", href: "/dashboard/shopping", icon: ShoppingCart },
   { name: "Communications", href: "/dashboard/communications", icon: Radio },
   { name: "Food Planning", href: "/dashboard/food", icon: UtensilsCrossed },
+  { name: "Roger AI", href: "/dashboard/roger-ai", icon: Bot },
   { name: "Knowledge Base", href: "/dashboard/knowledge", icon: BookOpen },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
