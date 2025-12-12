@@ -6,6 +6,7 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { OfflineGate } from "@/components/auth/offline-gate"
 import { SyncManager } from "@/components/sync/sync-manager"
+import { BrowserWarning } from "@/components/utility/browser-warning"
 
 export default function DashboardLayout({
   children,
@@ -21,6 +22,7 @@ export default function DashboardLayout({
     >
       <OfflineGate>
         <SyncManager />
+        <BrowserWarning />
         <div className="min-h-screen bg-background">
           <DashboardHeader />
           <div className="flex">
