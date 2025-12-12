@@ -1,33 +1,33 @@
 import Dexie, { type EntityTable } from 'dexie';
 
 interface InventoryItem {
-  id: number;
+  id: string;
   sync_status: string;
   category: string;
   [key: string]: any;
 }
 
 interface Kit {
-  id: number;
+  id: string;
   sync_status: string;
   [key: string]: any;
 }
 
 interface Plan {
-  id: number;
+  id: string;
   sync_status: string;
   [key: string]: any;
 }
 
 interface ShoppingListItem {
-  id: number;
+  id: string;
   sync_status: string;
   is_checked: boolean;
   [key: string]: any;
 }
 
 interface KnowledgeBaseItem {
-  id: number;
+  id: string;
   [key: string]: any;
 }
 
@@ -55,12 +55,13 @@ const db = new Dexie('PrepSafeLocal') as Dexie & {
   sync_queue: EntityTable<SyncQueueItem, 'id'>;
 };
 
+// Version 1 with UUIDs for resource tables
 db.version(1).stores({
-  inventory: '++id, sync_status, category',
-  kits: '++id, sync_status',
-  plans: '++id, sync_status',
-  shopping_list: '++id, sync_status, is_checked',
-  knowledge_base: '++id',
+  inventory: 'id, sync_status, category',
+  kits: 'id, sync_status',
+  plans: 'id, sync_status',
+  shopping_list: 'id, sync_status, is_checked',
+  knowledge_base: 'id',
   user_settings: 'key',
   sync_queue: '++id, operation, endpoint, created_at'
 });
