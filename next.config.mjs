@@ -3,44 +3,33 @@ import withPWAInit from "@ducanh2912/next-pwa";
 const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
-  // 1. Disable aggressive caching
+  // CRITICAL: Disable aggressive caching to prevent storage quota errors
   cacheOnFrontEndNav: false,
   aggressiveFrontEndNavCaching: false,
   reloadOnOnline: true,
-  // 2. Add strict exclusion rules
   workboxOptions: {
     disableDevLogs: true,
-    exclude: [/middleware-manifest\.json$/], // Fixes common Next.js PWA issues
+    // Exclude API routes and build files from the service worker cache
+    exclude: [/middleware-manifest\.json$/, /\/api\/.*$/],
     runtimeCaching: [
       {
-        // NEVER cache the AI chat or API routes
-        urlPattern: /\/api\/chat\//,
+        // NetworkOnly for API calls ensures we never cache DB data in the Service Worker
+        urlPattern: /\/api\/.*/,
         handler: 'NetworkOnly',
       },
       {
-        urlPattern: /\/api\/.*/,
-        handler: 'NetworkFirst',
+        // StaleWhileRevalidate for images/static assets
+        urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
+        handler: 'StaleWhileRevalidate',
         options: {
-          cacheName: 'api-cache',
+          cacheName: 'images',
           expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 60 * 60 * 24 // 1 day
-          }
-        }
+            maxEntries: 50, // Limit to 50 images to save space
+            maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+          },
+        },
       },
-      {
-        // Standard cache for other assets
-        urlPattern: /^https?.*/,
-        handler: 'NetworkFirst',
-        options: {
-          cacheName: 'offlineCache',
-          expiration: {
-            maxEntries: 200,
-            maxAgeSeconds: 60 * 60 * 24 * 30 // 1 Month
-          }
-        }
-      }
-    ]
+    ],
   },
 });
 
@@ -55,6 +44,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-}
+  // Increase body size limit for API routes to handle larger syncs
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
+};
 
 export default withPWA(nextConfig);
