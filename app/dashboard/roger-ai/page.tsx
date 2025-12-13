@@ -17,6 +17,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { buildOfflineContext } from '@/lib/ai/local-context';
 
 // Simplified scripts that focus ONLY on the network access/CORS issue
 const WINDOWS_SCRIPT = `# Run this in PowerShell as Administrator to unlock Roger
@@ -142,15 +143,31 @@ export default function RogerPage() {
     setMessages(prev => [...prev, { role: 'assistant', id: assistantId, content: '' }]);
 
     try {
-        const contextMessages = messages.map(m => ({
-            role: m.role,
-            content: renderMessageContent(m)
-        }));
-        contextMessages.push({ role: 'user', content: currentInput });
+        const localContext = await buildOfflineContext();
+        const systemPrompt = `You are ROGER, a Tactical Advisor.
+
+[LIVE INTEL]
+${localContext}
+
+[INSTRUCTIONS]
+Use the [LIVE INTEL] above to answer the user's questions about their inventory, kits, and plans.
+Be concise, practical, and focused on preparedness.`;
+
+        const contextMessages = [
+            { role: 'system', content: systemPrompt },
+            ...messages.map(m => ({
+                role: m.role,
+                content: renderMessageContent(m)
+            })),
+            { role: 'user', content: currentInput }
+        ];
 
         const response = await fetch('http://localhost:11434/api/chat', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
                 model: selectedModel || 'llama3',
                 messages: contextMessages,
