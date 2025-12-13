@@ -6,7 +6,11 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
+    console.log("Start /api/chat");
     const { messages, context } = await req.json();
+
+    console.log("GROQ_API_KEY exists:", !!process.env.GROQ_API_KEY);
+    console.log("Context size:", context?.length || 0);
 
     const groq = createGroq({
       apiKey: process.env.GROQ_API_KEY,
@@ -24,6 +28,7 @@ Use the [LIVE INTEL] above to answer the user's questions about their inventory,
 Be concise, practical, and focused on preparedness.`
     };
 
+    console.log("Calling streamText...");
     const result = await streamText({
       model: groq('llama-3.1-8b-instant'),
       messages: [systemMessage, ...convertToCoreMessages(messages)],
