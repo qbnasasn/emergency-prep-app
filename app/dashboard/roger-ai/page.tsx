@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useChat } from '@ai-sdk/react';
-import { Send, Bot, Wifi, WifiOff, Copy, Terminal, Server } from 'lucide-react';
+import { Send, Bot, Wifi, WifiOff, Copy, Terminal, RefreshCw, CheckCircle2, AlertCircle, Settings2, Server } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -14,50 +14,39 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
-const WINDOWS_SCRIPT = `Write-Host "Setting up Local Brain..."
-$Host.UI.RawUI.WindowTitle = "Roger AI Setup"
-
-# Check for Ollama
-if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) {
-    Write-Host "Ollama not found. Installing..."
-    winget install Ollama.Ollama
-}
-
-# Note: Ensure you have a model installed.
-# Example: ollama pull llama3
-
-# Set CORS to allow browser access (Critical)
-$env:OLLAMA_ORIGINS="*"
-
-# Start Server
-Write-Host "Roger is ready! Keep this window open."
-ollama serve
+// Simplified scripts that focus ONLY on the network access/CORS issue
+const WINDOWS_SCRIPT = `# Run this in PowerShell as Administrator to unlock Roger
+[Environment]::SetEnvironmentVariable("OLLAMA_ORIGINS", "*", "User")
+Write-Host "Security unlocked! Please RIGHT-CLICK the Ollama icon in your tray, select QUIT, and then restart it."
 `;
 
-const LINUX_SCRIPT = `#!/bin/bash
-echo "Setting up Local Brain..."
-
-# Check for Ollama
-if ! command -v ollama &> /dev/null; then
-    curl -fsSL https://ollama.com/install.sh | sh
-fi
-
-# Note: Ensure you have a model installed.
-# Example: ollama pull llama3
-
-# Set CORS and Start
-export OLLAMA_ORIGINS="*"
-echo "Roger is ready! Keep this terminal open."
-ollama serve
+const MAC_LINUX_SCRIPT = `# Run this in Terminal to unlock Roger
+launchctl setenv OLLAMA_ORIGINS "*"
+# Or if running manually: OLLAMA_ORIGINS="*" ollama serve
+echo "Security unlocked! Please Restart Ollama."
 `;
+
+type LocalModel = {
+    name: string;
+    size: number;
+    details: { parameter_size?: string; family?: string };
+};
 
 export default function RogerPage() {
   const [mode, setMode] = useState<'local' | 'cloud'>('cloud');
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [input, setInput] = useState('');
+
+  // Local State
+  const [isLocalConnected, setIsLocalConnected] = useState(false);
+  const [localModels, setLocalModels] = useState<LocalModel[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [isCheckingConnection, setIsCheckingConnection] = useState(false);
+
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const { messages, setMessages, status, sendMessage } = useChat({
@@ -69,7 +58,7 @@ export default function RogerPage() {
 
   const isLoading = status === 'submitted' || status === 'streaming';
 
-  // Auto-scroll to bottom
+  // Auto-scroll
   useEffect(() => {
     if (scrollAreaRef.current) {
         const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -79,6 +68,45 @@ export default function RogerPage() {
     }
   }, [messages, status]);
 
+  // Check Local Connection on Mode Switch
+  useEffect(() => {
+      if (mode === 'local') {
+          checkLocalConnection();
+      }
+  }, [mode]);
+
+  const checkLocalConnection = async () => {
+      setIsCheckingConnection(true);
+      try {
+          // We fetch the 'tags' endpoint to list models. This confirms connectivity AND gets us useful data.
+          const res = await fetch('http://localhost:11434/api/tags');
+          if (!res.ok) throw new Error('Failed to connect');
+
+          const data = await res.json();
+          setLocalModels(data.models || []);
+          setIsLocalConnected(true);
+
+          // Auto-select a model if none selected
+          if (data.models?.length > 0 && !selectedModel) {
+              // Prefer llama3 if available, otherwise first one
+              const bestMatch = data.models.find((m: any) => m.name.includes('llama3')) || data.models[0];
+              setSelectedModel(bestMatch.name);
+          }
+
+          if (!isLocalConnected) {
+             toast.success("Connected to Local Roger!");
+          }
+      } catch (err) {
+          console.error(err);
+          setIsLocalConnected(false);
+          setLocalModels([]);
+          // Only show modal automatically if user explicitly clicked retry or switched modes
+          if (mode === 'local') setShowSetupModal(true);
+      } finally {
+          setIsCheckingConnection(false);
+      }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Script copied to clipboard");
@@ -86,45 +114,34 @@ export default function RogerPage() {
 
   const renderMessageContent = (m: any) => {
       if (Array.isArray(m.parts)) {
-          return m.parts.map((p: any, i: number) => {
-              if (p.type === 'text') return p.text;
-              return '';
-          }).join('');
+          return m.parts.map((p: any) => p.text || '').join('');
       }
-      if (typeof m.content === 'string') return m.content;
-      return '';
+      return m.content || '';
   };
 
   const handleLocalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
+    if (!isLocalConnected) {
+        setShowSetupModal(true);
+        return;
+    }
+
     const currentInput = input;
-    setInput(''); // Clear input immediately
+    setInput('');
 
-    // Add user message to state
-    const userMessage = {
-        role: 'user' as const,
-        id: Date.now().toString(),
-        parts: [{ type: 'text', text: currentInput }]
-    };
-
+    // Add user message
+    const userMessage = { role: 'user' as const, id: Date.now().toString(), content: currentInput };
     // @ts-ignore
     setMessages(prev => [...prev, userMessage]);
 
-    // Create a placeholder for assistant message
-    const assistantMessageId = (Date.now() + 1).toString();
-    const assistantMessage = {
-        role: 'assistant' as const,
-        id: assistantMessageId,
-        parts: [{ type: 'text', text: '' }]
-    };
-
+    // Add placeholder assistant message
+    const assistantId = (Date.now() + 1).toString();
     // @ts-ignore
-    setMessages(prev => [...prev, assistantMessage]);
+    setMessages(prev => [...prev, { role: 'assistant', id: assistantId, content: '' }]);
 
     try {
-        // Prepare context for Ollama (history + new message)
         const contextMessages = messages.map(m => ({
             role: m.role,
             content: renderMessageContent(m)
@@ -135,110 +152,146 @@ export default function RogerPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'llama3',
+                model: selectedModel || 'llama3',
                 messages: contextMessages,
                 stream: true
             })
         });
 
-        if (!response.ok) {
-            throw new Error("Failed to connect to Local Roger");
-        }
+        if (!response.ok) throw new Error("Ollama API Error");
 
         const reader = response.body?.getReader();
-        if (!reader) throw new Error("No response body");
+        if (!reader) throw new Error("No stream");
 
-        let assistantContent = '';
+        let fullContent = '';
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
             const chunk = new TextDecoder().decode(value);
-            const lines = chunk.split('\n').filter(line => line.trim() !== '');
+            const lines = chunk.split('\n').filter(Boolean);
 
             for (const line of lines) {
                 try {
                     const json = JSON.parse(line);
                     if (json.message?.content) {
-                        assistantContent += json.message.content;
-
+                        fullContent += json.message.content;
                         setMessages(prev => {
-                            const newMessages = [...prev];
-                            const index = newMessages.findIndex(m => m.id === assistantMessageId);
-                            if (index !== -1) {
+                            const newMsgs = [...prev];
+                            const idx = newMsgs.findIndex(m => m.id === assistantId);
+                            if (idx !== -1) {
                                 // @ts-ignore
-                                newMessages[index] = {
-                                    ...newMessages[index],
-                                    parts: [{ type: 'text', text: assistantContent }]
-                                };
+                                newMsgs[idx] = { ...newMsgs[idx], content: fullContent };
                             }
-                            return newMessages;
+                            return newMsgs;
                         });
                     }
-                } catch (e) {
-                    console.error("Error parsing JSON chunk from Ollama", e);
-                }
+                } catch (e) { /* ignore parse errors */ }
             }
         }
-
-    } catch (error) {
-        console.error("Local Roger Error:", error);
-        setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
-        setShowSetupModal(true);
+    } catch (err) {
+        console.error(err);
+        toast.error("Failed to talk to local AI. Check connection.");
+        setMessages(prev => prev.filter(m => m.id !== assistantId));
     }
   };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
-
     if (mode === 'local') {
         handleLocalSubmit(e);
     } else {
+        if (!input.trim()) return;
         const currentInput = input;
         setInput('');
-        await sendMessage({ text: currentInput });
+        // @ts-ignore
+        await sendMessage({ role: 'user', parts: [{ type: 'text', text: currentInput }] });
     }
   };
 
   return (
     <div className="container mx-auto p-4 max-w-4xl h-[calc(100vh-2rem)] flex flex-col">
       <Card className="flex-1 flex flex-col min-h-0 shadow-lg border-2">
+
+        {/* Header */}
         <CardHeader className="border-b pb-4 bg-card/50">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-orange-500/10 rounded-xl">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="p-2.5 bg-orange-500/10 rounded-xl relative">
                         <Bot className="w-6 h-6 text-orange-600 dark:text-orange-500" />
+                        {mode === 'local' && (
+                            <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-background ${isLocalConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                        )}
                     </div>
                     <div>
                         <CardTitle className="text-xl">Roger AI</CardTitle>
-                        <CardDescription>Your personal preparedness assistant</CardDescription>
+                        <CardDescription className="flex items-center gap-2">
+                            {mode === 'local' ? (
+                                isLocalConnected ?
+                                <span className="text-green-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Local Brain Active</span> :
+                                <span className="text-red-500 flex items-center gap-1"><AlertCircle className="w-3 h-3"/> Local Brain Disconnected</span>
+                            ) : "Cloud Assistant Ready"}
+                        </CardDescription>
                     </div>
                 </div>
-                <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border">
-                    <Button
-                        variant={mode === 'local' ? 'secondary' : 'ghost'}
-                        size="sm"
-                        onClick={() => setMode('local')}
-                        className={`gap-2 text-xs font-medium transition-all ${mode === 'local' ? 'shadow-sm' : ''}`}
-                    >
-                        <WifiOff className="w-3.5 h-3.5" />
-                        Local
-                    </Button>
-                    <Button
-                        variant={mode === 'cloud' ? 'secondary' : 'ghost'}
-                        size="sm"
-                        onClick={() => setMode('cloud')}
-                        className={`gap-2 text-xs font-medium transition-all ${mode === 'cloud' ? 'shadow-sm' : ''}`}
-                    >
-                        <Wifi className="w-3.5 h-3.5" />
-                        Cloud
-                    </Button>
+
+                <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                    {/* Model Selector (Local Mode Only) */}
+                    {mode === 'local' && isLocalConnected && (
+                        <Select value={selectedModel} onValueChange={setSelectedModel}>
+                            <SelectTrigger className="w-[180px] h-9 text-xs">
+                                <SelectValue placeholder="Select Model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {localModels.map(m => (
+                                    <SelectItem key={m.name} value={m.name} className="text-xs">
+                                        {m.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+
+                    {/* Mode Toggle */}
+                    <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border">
+                        <Button
+                            variant={mode === 'local' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setMode('local')}
+                            className="gap-2 text-xs font-medium"
+                        >
+                            <WifiOff className="w-3.5 h-3.5" />
+                            Local
+                        </Button>
+                        <Button
+                            variant={mode === 'cloud' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setMode('cloud')}
+                            className="gap-2 text-xs font-medium"
+                        >
+                            <Wifi className="w-3.5 h-3.5" />
+                            Cloud
+                        </Button>
+                    </div>
+
+                    {/* Setup Trigger */}
+                    {mode === 'local' && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={() => checkLocalConnection()}
+                            title="Retry Connection"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${isCheckingConnection ? 'animate-spin' : ''}`} />
+                        </Button>
+                    )}
                 </div>
             </div>
         </CardHeader>
 
+        {/* Chat Area */}
         <CardContent className="flex-1 p-0 min-h-0 relative bg-background/50">
             <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
                 <div className="space-y-6 pb-4 max-w-3xl mx-auto">
@@ -246,10 +299,20 @@ export default function RogerPage() {
                         <div className="text-center text-muted-foreground mt-20">
                             <Bot className="w-16 h-16 mx-auto mb-6 opacity-20" />
                             <h3 className="text-lg font-medium mb-2">Hello! I'm Roger.</h3>
-                            <p>How can I help you prepare today?</p>
-                            <p className="text-sm opacity-60 mt-4 bg-muted/50 inline-block px-3 py-1 rounded-full border">
-                                Running in <span className="font-semibold text-foreground">{mode === 'local' ? 'Local (Ollama)' : 'Cloud (Groq)'}</span> mode
+                            <p className="max-w-md mx-auto">
+                                I can help you create emergency plans, check inventory, or answer survival questions.
                             </p>
+                            {mode === 'local' && !isLocalConnected && (
+                                <div className="mt-6 p-4 border border-red-200 bg-red-50 dark:bg-red-900/20 rounded-lg max-w-sm mx-auto">
+                                    <p className="text-sm text-red-600 dark:text-red-400 font-medium mb-3">
+                                        Roger is not detected on your computer.
+                                    </p>
+                                    <Button size="sm" variant="destructive" onClick={() => setShowSetupModal(true)}>
+                                        <Settings2 className="w-4 h-4 mr-2" />
+                                        Unlock Local Connection
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -285,13 +348,14 @@ export default function RogerPage() {
                 <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder={mode === 'local' ? "Message Roger (Local mode - Offline capable)..." : "Message Roger (Cloud mode - Powered by Groq)..."}
+                    placeholder={mode === 'local' ? (isLocalConnected ? `Message Roger (${selectedModel || 'Local'})...` : "Local Brain Disconnected") : "Message Roger (Cloud)..."}
                     className="flex-1"
+                    disabled={mode === 'local' && !isLocalConnected}
                     autoFocus
                 />
                 <Button
                     type="submit"
-                    disabled={(isLoading && mode === 'cloud') || (!input.trim())}
+                    disabled={(isLoading && mode === 'cloud') || (!input.trim()) || (mode === 'local' && !isLocalConnected)}
                     className="bg-orange-600 hover:bg-orange-700 text-white w-12 px-0"
                 >
                     <Send className="w-5 h-5" />
@@ -306,11 +370,11 @@ export default function RogerPage() {
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-xl">
                     <Server className="w-5 h-5 text-orange-500" />
-                    Local Roger Setup Required
+                    Unlock Local Connection
                 </DialogTitle>
                 <DialogDescription className="text-base pt-2">
-                    Roger couldn't connect to your local Ollama instance at <code className="text-xs bg-muted px-1 py-0.5 rounded">localhost:11434</code>.
-                    Please run one of the scripts below to initialize your local AI brain.
+                    To let this website talk to your local Roger (Ollama), you need to allow "Cross-Origin" access.
+                    Run one of these commands once to unlock it.
                 </DialogDescription>
             </DialogHeader>
 
@@ -319,7 +383,7 @@ export default function RogerPage() {
                     <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur py-2 z-10 border-b">
                         <Label className="flex items-center gap-2 font-bold text-foreground">
                             <Terminal className="w-4 h-4" />
-                            Windows (PowerShell)
+                            Windows (PowerShell Admin)
                         </Label>
                         <Button variant="outline" size="sm" onClick={() => copyToClipboard(WINDOWS_SCRIPT)} className="h-8">
                             <Copy className="w-3 h-3 mr-2" />
@@ -335,15 +399,15 @@ export default function RogerPage() {
                     <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur py-2 z-10 border-b">
                         <Label className="flex items-center gap-2 font-bold text-foreground">
                             <Terminal className="w-4 h-4" />
-                            Linux / Mac (Run via Terminal)
+                            Mac / Linux (Terminal)
                         </Label>
-                        <Button variant="outline" size="sm" onClick={() => copyToClipboard(LINUX_SCRIPT)} className="h-8">
+                        <Button variant="outline" size="sm" onClick={() => copyToClipboard(MAC_LINUX_SCRIPT)} className="h-8">
                             <Copy className="w-3 h-3 mr-2" />
                             Copy
                         </Button>
                     </div>
                     <pre className="bg-slate-950 text-slate-50 p-4 rounded-xl text-xs overflow-x-auto font-mono custom-scrollbar border shadow-inner">
-                        {LINUX_SCRIPT}
+                        {MAC_LINUX_SCRIPT}
                     </pre>
                 </div>
             </div>
