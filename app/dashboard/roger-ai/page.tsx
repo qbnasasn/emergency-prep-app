@@ -17,6 +17,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { buildOfflineContext } from '@/lib/ai/local-context';
 
 // Simplified scripts that focus ONLY on the network access/CORS issue
 const WINDOWS_SCRIPT = `# Run this in PowerShell as Administrator to unlock Roger
@@ -46,10 +47,12 @@ export default function RogerPage() {
   const [localModels, setLocalModels] = useState<LocalModel[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [isCheckingConnection, setIsCheckingConnection] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isWindows, setIsWindows] = useState(false);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const { messages, setMessages, status, sendMessage } = useChat({
+  const { messages, setMessages, status, append } = useChat({
     api: '/api/chat',
     onError: (err) => {
         toast.error("Cloud Chat Error: " + err.message);
@@ -57,6 +60,13 @@ export default function RogerPage() {
   });
 
   const isLoading = status === 'submitted' || status === 'streaming';
+
+  // Detect OS for script display
+  useEffect(() => {
+      if (typeof navigator !== 'undefined') {
+          setIsWindows(navigator.userAgent.includes('Windows'));
+      }
+  }, []);
 
   // Auto-scroll
   useEffect(() => {
@@ -77,14 +87,23 @@ export default function RogerPage() {
 
   const checkLocalConnection = async () => {
       setIsCheckingConnection(true);
+      setConnectionError(null);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2000ms timeout
+
       try {
           // We fetch the 'tags' endpoint to list models. This confirms connectivity AND gets us useful data.
-          const res = await fetch('http://localhost:11434/api/tags');
-          if (!res.ok) throw new Error('Failed to connect');
+          const res = await fetch('http://localhost:11434/api/tags', {
+              signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (!res.ok) throw new Error(`HTTP Error: ${res.status} ${res.statusText}`);
 
           const data = await res.json();
           setLocalModels(data.models || []);
           setIsLocalConnected(true);
+          setConnectionError(null);
 
           // Auto-select a model if none selected
           if (data.models?.length > 0 && !selectedModel) {
@@ -96,10 +115,21 @@ export default function RogerPage() {
           if (!isLocalConnected) {
              toast.success("Connected to Local Roger!");
           }
-      } catch (err) {
-          console.error(err);
+      } catch (err: any) {
+          console.error("Local connection error:", err);
           setIsLocalConnected(false);
           setLocalModels([]);
+
+          let errorMessage = "Unknown Error";
+          if (err.name === 'AbortError') {
+              errorMessage = "Connection Timed Out (Is Ollama running?)";
+          } else if (err.message.includes('Failed to fetch')) {
+              errorMessage = "Network Error (Is Ollama running? Check CORS.)";
+          } else {
+              errorMessage = err.message;
+          }
+          setConnectionError(errorMessage);
+
           // Only show modal automatically if user explicitly clicked retry or switched modes
           if (mode === 'local') setShowSetupModal(true);
       } finally {
@@ -142,15 +172,31 @@ export default function RogerPage() {
     setMessages(prev => [...prev, { role: 'assistant', id: assistantId, content: '' }]);
 
     try {
-        const contextMessages = messages.map(m => ({
-            role: m.role,
-            content: renderMessageContent(m)
-        }));
-        contextMessages.push({ role: 'user', content: currentInput });
+        const localContext = await buildOfflineContext();
+        const systemPrompt = `You are ROGER, a Tactical Advisor.
+
+[LIVE INTEL]
+${localContext}
+
+[INSTRUCTIONS]
+Use the [LIVE INTEL] above to answer the user's questions about their inventory, kits, and plans.
+Be concise, practical, and focused on preparedness.`;
+
+        const contextMessages = [
+            { role: 'system', content: systemPrompt },
+            ...messages.map(m => ({
+                role: m.role,
+                content: renderMessageContent(m)
+            })),
+            { role: 'user', content: currentInput }
+        ];
 
         const response = await fetch('http://localhost:11434/api/chat', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
                 model: selectedModel || 'llama3',
                 messages: contextMessages,
@@ -163,16 +209,20 @@ export default function RogerPage() {
         const reader = response.body?.getReader();
         if (!reader) throw new Error("No stream");
 
+        const decoder = new TextDecoder();
+        let buffer = '';
         let fullContent = '';
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = new TextDecoder().decode(value);
-            const lines = chunk.split('\n').filter(Boolean);
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ''; // Keep incomplete line
 
             for (const line of lines) {
+                if (!line.trim()) continue;
                 try {
                     const json = JSON.parse(line);
                     if (json.message?.content) {
@@ -205,8 +255,17 @@ export default function RogerPage() {
         if (!input.trim()) return;
         const currentInput = input;
         setInput('');
-        // @ts-ignore
-        await sendMessage({ role: 'user', parts: [{ type: 'text', text: currentInput }] });
+
+        let context = '';
+        try {
+            context = await buildOfflineContext();
+        } catch (e) {
+            console.error("Context build failed", e);
+        }
+
+        await append({ role: 'user', content: currentInput }, {
+            body: { context }
+        });
     }
   };
 
@@ -230,7 +289,7 @@ export default function RogerPage() {
                             {mode === 'local' ? (
                                 isLocalConnected ?
                                 <span className="text-green-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Local Brain Active</span> :
-                                <span className="text-red-500 flex items-center gap-1"><AlertCircle className="w-3 h-3"/> Local Brain Disconnected</span>
+                                <span className="text-red-500 flex items-center gap-1" title={connectionError || ''}><AlertCircle className="w-3 h-3"/> {connectionError || "Local Brain Disconnected"}</span>
                             ) : "Cloud Assistant Ready"}
                         </CardDescription>
                     </div>
