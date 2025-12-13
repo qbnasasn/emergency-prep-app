@@ -52,7 +52,7 @@ export default function RogerPage() {
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const { messages, setMessages, status, sendMessage } = useChat({
+  const { messages, setMessages, status, append } = useChat({
     api: '/api/chat',
     onError: (err) => {
         toast.error("Cloud Chat Error: " + err.message);
@@ -209,16 +209,20 @@ Be concise, practical, and focused on preparedness.`;
         const reader = response.body?.getReader();
         if (!reader) throw new Error("No stream");
 
+        const decoder = new TextDecoder();
+        let buffer = '';
         let fullContent = '';
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = new TextDecoder().decode(value);
-            const lines = chunk.split('\n').filter(Boolean);
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ''; // Keep incomplete line
 
             for (const line of lines) {
+                if (!line.trim()) continue;
                 try {
                     const json = JSON.parse(line);
                     if (json.message?.content) {
@@ -251,8 +255,17 @@ Be concise, practical, and focused on preparedness.`;
         if (!input.trim()) return;
         const currentInput = input;
         setInput('');
-        // @ts-ignore
-        await sendMessage({ role: 'user', parts: [{ type: 'text', text: currentInput }] });
+
+        let context = '';
+        try {
+            context = await buildOfflineContext();
+        } catch (e) {
+            console.error("Context build failed", e);
+        }
+
+        await append({ role: 'user', content: currentInput }, {
+            body: { context }
+        });
     }
   };
 
