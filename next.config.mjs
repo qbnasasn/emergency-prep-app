@@ -3,23 +3,44 @@ import withPWAInit from "@ducanh2912/next-pwa";
 const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
-  cacheOnFrontEndNav: false, // DISABLED to save space
-  aggressiveFrontEndNavCaching: false, // DISABLED to prevent quota errors
+  // 1. Disable aggressive caching
+  cacheOnFrontEndNav: false,
+  aggressiveFrontEndNavCaching: false,
   reloadOnOnline: true,
+  // 2. Add strict exclusion rules
   workboxOptions: {
     disableDevLogs: true,
-    // Limit cache size for images/static assets
-    runtimeCaching: [{
-      urlPattern: /^https?.*/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'offlineCache',
-        expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 24 * 60 * 60 * 30 // 1 Month
+    exclude: [/middleware-manifest\.json$/], // Fixes common Next.js PWA issues
+    runtimeCaching: [
+      {
+        // NEVER cache the AI chat or API routes
+        urlPattern: /\/api\/chat\//,
+        handler: 'NetworkOnly',
+      },
+      {
+        urlPattern: /\/api\/.*/,
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'api-cache',
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 60 * 60 * 24 // 1 day
+          }
+        }
+      },
+      {
+        // Standard cache for other assets
+        urlPattern: /^https?.*/,
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'offlineCache',
+          expiration: {
+            maxEntries: 200,
+            maxAgeSeconds: 60 * 60 * 24 * 30 // 1 Month
+          }
         }
       }
-    }]
+    ]
   },
 });
 
