@@ -255,19 +255,22 @@ Be concise, practical, and focused on preparedness.`;
         if (!input.trim()) return;
         const currentInput = input;
         setInput('');
-
-        let context = '';
-        try {
-            context = await buildOfflineContext();
-        } catch (e) {
-            console.error("Context build failed", e);
-        }
-
+    let context = '';
+    try {
+        context = await buildOfflineContext();
+    } catch (e) {
+        console.error("Context build failed", e);
+    }
+    try {
         await append({ role: 'user', content: currentInput }, {
             body: { context }
         });
+    } catch (err) {
+        console.error("Chat append failed:", err);
+        toast.error("Failed to send message. Please refresh.");
     }
-  };
+}
+};
 
   return (
     <div className="container mx-auto p-4 max-w-4xl h-[calc(100vh-2rem)] flex flex-col">
