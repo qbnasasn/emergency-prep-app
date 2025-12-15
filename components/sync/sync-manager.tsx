@@ -5,7 +5,7 @@ import { useOfflineAuth } from "@/hooks/use-offline-auth";
 import { db } from "@/lib/db/local";
 import { toast } from "sonner";
 
-const BATCH_SIZE = 50;
+const BATCH_SIZE = 5;
 
 export function SyncManager() {
   const { isSignedIn, isOffline } = useOfflineAuth();
