@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     console.log("Context size:", context?.length || 0);
 
     const groq = createGroq({
-      apiKey: process.env.GROQ_API_KEY,
+      apiKey: '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', // TEMPORARY DEBUGGING KEY
     });
 
     const systemMessage: CoreMessage = {
