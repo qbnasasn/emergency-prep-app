@@ -1,20 +1,15 @@
 import { createGroq } from '@ai-sdk/groq';
 import { streamText, convertToCoreMessages, CoreMessage } from 'ai';
-
-// Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
-    console.log("--- DEBUG: Starting Chat Request ---");
     const { messages, context } = await req.json();
 
-    // HARDCODED KEY TEST
-    const apiKey = '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';
-    console.log("Using Hardcoded Key:", apiKey.slice(0, 10) + "...");
-    const groq = createGroq({
-      apiKey: apiKey,
-    });
+    // HARDCODED KEY - Verified working via PowerShell
+    const apiKey = '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';
+    const groq = createGroq({ apiKey });
+
     const systemMessage: CoreMessage = {
       role: 'system',
       content: `You are ROGER, a Tactical Advisor.
@@ -28,8 +23,9 @@ export async function POST(req: Request) {
       messages: [systemMessage, ...convertToCoreMessages(messages)],
     });
     return result.toDataStreamResponse();
-  } catch (error) {
+  } catch (error: any) {
     console.error("CRITICAL GROQ ERROR:", error);
-    return new Response(JSON.stringify({ error: 'Server Error', details: error }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    // Return a text response so the client doesn't crash trying to parse JSON
+    return new Response("Service Error: " + (error.message || "Unknown"), { status: 500 });
   }
 }
