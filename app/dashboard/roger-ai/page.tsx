@@ -251,24 +251,43 @@ Be concise, practical, and focused on preparedness.`;
     e.preventDefault();
     if (mode === 'local') {
         handleLocalSubmit(e);
-    } else {
-        if (!input.trim()) return;
-        const currentInput = input;
-        setInput('');
-    let context = '';
-    try {
-        context = await buildOfflineContext();
-    } catch (e) {
-        console.error("Context build failed", e);
+        return;
     }
-    try {
-        await append({ role: 'user', content: currentInput }, {
-            body: { context }
-        });
-    } catch (err) {
-        console.error("Chat append failed:", err);
-        toast.error("Failed to send message. Please refresh.");
-    }
+if (!input.trim()) return;
+const currentInput = input;
+setInput(''); // Clear input box
+// 1. Manually add User Message to UI
+const userMsg = { id: Date.now().toString(), role: 'user', content: currentInput };
+// @ts-ignore
+setMessages(prev => [...prev, userMsg]);
+// 2. Prepare Context
+let context = '';
+try {
+    context = await buildOfflineContext();
+} catch (e) {
+    console.error("Context build failed", e);
+}
+// 3. Manual Fetch (Standard HTTP) - Bypasses Stream Crashes
+try {
+    const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            messages: [...messages, userMsg], // Send history + new message
+            context
+        })
+    });
+    if (!response.ok) throw new Error(response.statusText);
+    const data = await response.json();
+
+    if (data.error) throw new Error(data.error);
+    // 4. Add AI Response to UI
+    const aiMsg = { id: (Date.now() + 1).toString(), role: 'assistant', content: data.content };
+    // @ts-ignore
+    setMessages(prev => [...prev, aiMsg]);
+} catch (err: any) {
+    console.error("Chat Error:", err);
+    toast.error("Roger is offline: " + (err.message || "Connection failed"));
 }
 };
 
