@@ -15,14 +15,22 @@ export async function buildOfflineContext(): Promise<string> {
         // Ignore profile error
     }
 
-    // 2. Fetch Inventory
+    // 2. Fetch Inventory (Limited to 50 items)
     try {
         const items = await db.inventory.toArray();
         if (items.length > 0) {
-            const inventoryString = items.slice(0, 50).map(item => {
-                return `- ${item.name} (Qty: ${item.quantity || 1}) [${item.category || 'Uncategorized'}] @ ${item.location || 'Unknown'}`;
+            // FIX: Slice the array to prevent token overflow
+            const limitedItems = items.slice(0, 50);
+
+            const inventoryString = limitedItems.map(item => {
+                return `- ${item.name} (Qty: ${item.quantity || 1}) [${item.category || 'Uncategorized'}]`;
             }).join('\n');
-            parts.push(`[INVENTORY]\n${inventoryString}`);
+
+            parts.push(`[INVENTORY (Top ${limitedItems.length} items)]\n${inventoryString}`);
+
+            if (items.length > 50) {
+                parts.push(`...(and ${items.length - 50} more items not listed)`);
+            }
         } else {
             parts.push(`[INVENTORY]\n(No items)`);
         }
