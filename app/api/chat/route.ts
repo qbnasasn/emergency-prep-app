@@ -6,14 +6,15 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
-    console.log("Start /api/chat");
+    console.log("--- DEBUG: Starting Chat Request ---");
     const { messages, context } = await req.json();
 
-    console.log("GROQ_API_KEY exists:", !!process.env.GROQ_API_KEY);
-    console.log("Context size:", context?.length || 0);
+    // HARDCODED KEY TEST - DO NOT KEEP IN PRODUCTION
+    const apiKey = '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';
+    console.log("Using Hardcoded Key:", apiKey.slice(0, 10) + "...");
 
     const groq = createGroq({
-      apiKey: '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', // TEMPORARY DEBUGGING KEY
+      apiKey: apiKey,
     });
 
     const systemMessage: CoreMessage = {
@@ -28,15 +29,17 @@ Use the [LIVE INTEL] above to answer the user's questions about their inventory,
 Be concise, practical, and focused on preparedness.`
     };
 
-    console.log("Calling streamText...");
+    console.log("Sending request to Groq...");
     const result = await streamText({
       model: groq('llama-3.1-8b-instant'),
       messages: [systemMessage, ...convertToCoreMessages(messages)],
     });
 
+    console.log("Groq stream started successfully.");
+
     return result.toDataStreamResponse();
   } catch (error) {
-    console.error("Groq API Error:", error);
-    return new Response(JSON.stringify({ error: 'Failed to process chat' }), { status: 500 });
+    console.error("CRITICAL GROQ ERROR:", error);
+    return new Response(JSON.stringify({ error: 'Server Error', details: error }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }
