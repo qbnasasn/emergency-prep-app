@@ -9,35 +9,21 @@ const withPWA = withPWAInit({
   reloadOnOnline: true,
   workboxOptions: {
     disableDevLogs: true,
-    // Exclude API routes and build files from the service worker cache
     exclude: [/middleware-manifest\.json$/, /api\/.*$/],
     runtimeCaching: [
       {
-        // NEVER cache the AI chat or API routes
-        urlPattern: /\/api\/chat\//,
-        handler: "NetworkOnly",
-      },
-      {
+        // FIX 1: Catches /api/chat correctly (no trailing slash)
+        // FIX 2: Uses NetworkOnly to STOP caching the AI
         urlPattern: /\/api\/.*/,
         handler: "NetworkOnly",
-        options: {
-          cacheName: "api-cache",
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 60 * 60 * 24, // 1 day
-          },
-        },
       },
       {
-        // Standard cache for other assets
-        urlPattern: /^https?.*/,
-        handler: "NetworkFirst",
+        // Cache images normally
+        urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
+        handler: "StaleWhileRevalidate",
         options: {
-          cacheName: "offlineCache",
-          expiration: {
-            maxEntries: 200,
-            maxAgeSeconds: 60 * 60 * 24 * 30, // 1 Month
-          },
+          cacheName: "images",
+          expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
         },
       },
     ],
