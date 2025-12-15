@@ -19,7 +19,7 @@ export async function buildOfflineContext(): Promise<string> {
     try {
         const items = await db.inventory.toArray();
         if (items.length > 0) {
-            const inventoryString = items.map(item => {
+            const inventoryString = items.slice(0, 50).map(item => {
                 return `- ${item.name} (Qty: ${item.quantity || 1}) [${item.category || 'Uncategorized'}] @ ${item.location || 'Unknown'}`;
             }).join('\n');
             parts.push(`[INVENTORY]\n${inventoryString}`);
