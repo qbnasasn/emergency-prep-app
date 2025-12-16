@@ -7,15 +7,20 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    
+
     // SAFETY CHECK: Ensure we have an array
     const rawMessages = Array.isArray(body.messages) ? body.messages : [];
     const context = body.context || '';
 
     console.log("DEBUG: Processing", rawMessages.length, "messages");
 
-    // HARDCODED KEY - Verified working via PowerShell
-    const apiKey = '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';
+    // RESTORED: Use Environment Variable for Production Security
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+        console.error("CRITICAL: Missing GROQ_API_KEY in Vercel Environment Variables");
+        throw new Error("Server Configuration Error: Missing API Key");
+    }
+
     const groq = createGroq({ apiKey });
 
     // 1. Manually construct the System Message
@@ -29,7 +34,7 @@ ${context || 'No local data available.'}
 Use the [LIVE INTEL] above to answer user questions. Be concise and practical.`
     };
 
-    // 2. Manually Sanitize Messages (Fixes the "map" crash)
+    // 2. Manually Sanitize Messages (Fixes the "map" crash and ensures valid structure)
     // We explicitly create new objects to strip out any weird data from the client
     const coreMessages: CoreMessage[] = rawMessages.map((m: any) => ({
       role: (m.role === 'user' || m.role === 'assistant' || m.role === 'system') ? m.role : 'user',
@@ -37,12 +42,13 @@ Use the [LIVE INTEL] above to answer user questions. Be concise and practical.`
     }));
 
     // 3. Generate Text (Standard HTTP Mode)
+    // This uses a single request/response to bypass firewall/proxy issues (400 errors)
     const result = await generateText({
       model: groq('llama-3.1-8b-instant'),
       messages: [systemMessage, ...coreMessages],
     });
 
-    // Return simple JSON
+    // Return simple JSON response
     return Response.json({ content: result.text });
 
   } catch (error: any) {
