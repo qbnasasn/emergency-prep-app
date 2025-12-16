@@ -53,13 +53,9 @@ export default function InventoryPage() {
     <div className="space-y-6">
       <InventoryHeader fetchItems={fetchItems} onSearch={setSearchQuery} />
       <InventoryStats items={items} />
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1">
-          <InventoryFilters onFilterChange={setFilters} categories={categories} locations={locations} />
-        </div>
-        <div className="lg:col-span-3">
-          <InventoryTable filters={filters} items={items} searchQuery={searchQuery} />
-        </div>
+      <div className="flex flex-col gap-6">
+        <InventoryFilters onFilterChange={setFilters} categories={categories} locations={locations} />
+        <InventoryTable filters={filters} items={items} searchQuery={searchQuery} />
       </div>
     </div>
   )
