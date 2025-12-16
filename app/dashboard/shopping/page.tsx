@@ -41,19 +41,15 @@ export default function ShoppingPage() {
     <div className="space-y-6">
       <ShoppingHeader shoppingListId={shoppingList.id} onListUpdate={fetchShoppingList} onSearch={setSearchQuery} />
       <ShoppingStats />
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1">
-          <ShoppingFilters onFilterChange={setFilters} />
-        </div>
-        <div className="lg:col-span-3">
-          <ShoppingList
-            shoppingListId={shoppingList.id}
-            items={shoppingList.items}
-            onListUpdate={fetchShoppingList}
-            searchQuery={searchQuery}
-            filters={filters}
-          />
-        </div>
+      <div className="flex flex-col gap-6">
+        <ShoppingFilters onFilterChange={setFilters} />
+        <ShoppingList
+          shoppingListId={shoppingList.id}
+          items={shoppingList.items}
+          onListUpdate={fetchShoppingList}
+          searchQuery={searchQuery}
+          filters={filters}
+        />
       </div>
     </div>
   )
