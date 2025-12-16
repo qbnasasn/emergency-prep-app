@@ -253,43 +253,58 @@ Be concise, practical, and focused on preparedness.`;
         handleLocalSubmit(e);
         return;
     }
-if (!input.trim()) return;
-const currentInput = input;
-setInput(''); // Clear input box
-// 1. Manually add User Message to UI
-const userMsg = { id: Date.now().toString(), role: 'user', content: currentInput };
-// @ts-ignore
-setMessages(prev => [...prev, userMsg]);
-// 2. Prepare Context
-let context = '';
-try {
-    context = await buildOfflineContext();
-} catch (e) {
-    console.error("Context build failed", e);
-}
-// 3. Manual Fetch (Standard HTTP) - Bypasses Stream Crashes
-try {
-    const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            messages: [...messages, userMsg], // Send history + new message
-            context
-        })
-    });
-    if (!response.ok) throw new Error(response.statusText);
-    const data = await response.json();
 
-    if (data.error) throw new Error(data.error);
-    // 4. Add AI Response to UI
-    const aiMsg = { id: (Date.now() + 1).toString(), role: 'assistant', content: data.content };
+    if (!input.trim()) return;
+    const currentInput = input;
+    setInput('');
+
+    // 1. Optimistically add User Message
+    const userMsg = { id: Date.now().toString(), role: 'user', content: currentInput };
     // @ts-ignore
-    setMessages(prev => [...prev, aiMsg]);
-} catch (err: any) {
-    console.error("Chat Error:", err);
-    toast.error("Roger is offline: " + (err.message || "Connection failed"));
-}
-};
+    setMessages(prev => [...prev, userMsg]);
+
+    // 2. Build Context
+    let context = '';
+    try {
+        context = await buildOfflineContext();
+    } catch (e) {
+        console.error("Context error", e);
+    }
+
+    try {
+        // 3. Send Manual Request (Standard HTTP)
+        const payload = {
+            messages: [...messages, userMsg],
+            context: context
+        };
+
+        console.log("Sending Payload:", payload);
+
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Server ${response.status}: ${errText}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.error) throw new Error(data.error);
+
+        // 4. Add AI Response
+        const aiMsg = { id: (Date.now() + 1).toString(), role: 'assistant', content: data.content };
+        // @ts-ignore
+        setMessages(prev => [...prev, aiMsg]);
+
+    } catch (err: any) {
+        console.error("Chat Failed:", err);
+        toast.error("Roger is offline: " + (err.message || "Connection failed"));
+    }
+  };
 
   return (
     <div className="container mx-auto p-4 max-w-4xl h-[calc(100vh-2rem)] flex flex-col">
