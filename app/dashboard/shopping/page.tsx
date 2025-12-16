@@ -40,7 +40,7 @@ export default function ShoppingPage() {
   return (
     <div className="space-y-6">
       <ShoppingHeader shoppingListId={shoppingList.id} onListUpdate={fetchShoppingList} onSearch={setSearchQuery} />
-      <ShoppingStats />
+      <ShoppingStats items={shoppingList.items} />
       <div className="flex flex-col gap-6">
         <ShoppingFilters onFilterChange={setFilters} />
         <ShoppingList
