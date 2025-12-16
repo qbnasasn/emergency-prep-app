@@ -251,21 +251,58 @@ Be concise, practical, and focused on preparedness.`;
     e.preventDefault();
     if (mode === 'local') {
         handleLocalSubmit(e);
-    } else {
-        if (!input.trim()) return;
-        const currentInput = input;
-        setInput('');
+        return;
+    }
 
-        let context = '';
-        try {
-            context = await buildOfflineContext();
-        } catch (e) {
-            console.error("Context build failed", e);
+    if (!input.trim()) return;
+    const currentInput = input;
+    setInput('');
+
+    // 1. Optimistically add User Message
+    const userMsg = { id: Date.now().toString(), role: 'user', content: currentInput };
+    // @ts-ignore
+    setMessages(prev => [...prev, userMsg]);
+
+    // 2. Build Context
+    let context = '';
+    try {
+        context = await buildOfflineContext();
+    } catch (e) {
+        console.error("Context error", e);
+    }
+
+    try {
+        // 3. Send Manual Request (Standard HTTP)
+        const payload = {
+            messages: [...messages, userMsg],
+            context: context
+        };
+
+        console.log("Sending Payload:", payload);
+
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Server ${response.status}: ${errText}`);
         }
 
-        await append({ role: 'user', content: currentInput }, {
-            body: { context }
-        });
+        const data = await response.json();
+        
+        if (data.error) throw new Error(data.error);
+
+        // 4. Add AI Response
+        const aiMsg = { id: (Date.now() + 1).toString(), role: 'assistant', content: data.content };
+        // @ts-ignore
+        setMessages(prev => [...prev, aiMsg]);
+
+    } catch (err: any) {
+        console.error("Chat Failed:", err);
+        toast.error("Roger is offline: " + (err.message || "Connection failed"));
     }
   };
 
