@@ -194,14 +194,14 @@ export function InventoryTable({ filters, items, searchQuery = "" }: InventoryTa
                     <TableRow key={item.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center overflow-hidden shrink-0">
                             {item.image ? (
                               <Image
                                 src={item.image || "/placeholder.svg"}
                                 alt={item.name}
                                 width={40}
                                 height={40}
-                                className="rounded-lg"
+                              className="w-full h-full object-cover"
                               />
                             ) : (
                               <span className="text-muted-foreground text-xs font-body">IMG</span>
