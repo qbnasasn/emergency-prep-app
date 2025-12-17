@@ -1,17 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect, useCallback } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { User, MapPin, Save, Plus, Trash2, Loader2, Edit } from "lucide-react"
-import { FamilyMembers } from "./family-members"
-import { Pets } from "./pets"
-import AddressAutocomplete, { StructuredAddress } from "../ui/address-autocomplete"
+import { MapPin, Plus, Trash2, Loader2, Edit } from "lucide-react"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Input } from "../ui/input"
+import { Input } from "@/components/ui/input"
 import { useForm, Controller } from "react-hook-form"
-import { useCallback } from "react"
+import AddressAutocomplete, { StructuredAddress } from "../ui/address-autocomplete"
 
 interface NoaaLocation {
   id: string;
@@ -26,7 +23,7 @@ interface NoaaLocation {
   longitude: number | null;
 }
 
-function LocationDialog({ isOpen, onClose, onSave, location }) {
+function LocationDialog({ isOpen, onClose, onSave, location }: { isOpen: boolean, onClose: () => void, onSave: (data: any) => void, location: NoaaLocation | null }) {
   const { register, handleSubmit, control, setValue, formState: { errors } } = useForm({
     defaultValues: location || { name: '', full_address: '' }
   });
@@ -50,13 +47,13 @@ function LocationDialog({ isOpen, onClose, onSave, location }) {
         </DialogHeader>
         <form onSubmit={handleSubmit(onSave)} className="space-y-4">
             <div>
-              <label>Location Name</label>
+              <label className="text-sm font-medium">Location Name</label>
               <Input {...register('name', { required: 'Location name is required' })} placeholder="e.g. Home" />
               {errors.name && <p className="text-sm text-destructive">{errors.name.message as string}</p>}
             </div>
 
             <div>
-                <label>Address</label>
+                <label className="text-sm font-medium">Address</label>
                 <Controller
                   name="full_address"
                   control={control}
@@ -72,23 +69,23 @@ function LocationDialog({ isOpen, onClose, onSave, location }) {
 
             <div className="grid grid-cols-6 gap-4 pt-2">
                 <div className="col-span-2">
-                    <label>Street No.</label>
+                    <label className="text-xs text-muted-foreground">Street No.</label>
                     <Input placeholder="123" {...register('street_number')} />
                 </div>
                 <div className="col-span-4">
-                    <label>Street Name</label>
+                    <label className="text-xs text-muted-foreground">Street Name</label>
                     <Input placeholder="Main St" {...register('street_name')} />
                 </div>
                 <div className="col-span-3">
-                    <label>City</label>
+                    <label className="text-xs text-muted-foreground">City</label>
                     <Input placeholder="Anytown" {...register('city')} />
                 </div>
                 <div className="col-span-1">
-                    <label>State</label>
+                    <label className="text-xs text-muted-foreground">State</label>
                     <Input placeholder="CA" {...register('state')} />
                 </div>
                 <div className="col-span-2">
-                    <label>Zip Code</label>
+                    <label className="text-xs text-muted-foreground">Zip Code</label>
                     <Input placeholder="12345" {...register('zip_code')} />
                 </div>
             </div>
@@ -103,8 +100,7 @@ function LocationDialog({ isOpen, onClose, onSave, location }) {
   );
 }
 
-
-export function UserSettings() {
+export function NoaaAlertLocations() {
   const [locations, setLocations] = useState<NoaaLocation[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -170,27 +166,20 @@ export function UserSettings() {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle className="font-heading text-xl flex items-center">
-            <User className="h-5 w-5 mr-2 text-primary" />
-            User Settings
-          </CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="font-heading text-lg flex items-center">
+              <MapPin className="h-5 w-5 mr-2" />
+              NOAA Alert Locations
+            </CardTitle>
+            <CardDescription>Manage locations for weather alerts.</CardDescription>
+          </div>
+          <Button size="sm" onClick={() => { setSelectedLocation(null); setIsDialogOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Location
+          </Button>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <FamilyMembers />
-          <Pets />
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-body font-semibold text-foreground flex items-center">
-                <MapPin className="h-4 w-4 mr-2" />
-                NOAA Alert Locations
-              </h3>
-              <Button variant="outline" size="sm" onClick={() => { setSelectedLocation(null); setIsDialogOpen(true); }} className="font-body bg-transparent">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Location
-              </Button>
-            </div>
-
+        <CardContent>
             {isFetching ? <Loader2 className="animate-spin mx-auto" /> : (
               <div className="space-y-2">
                 {locations.map((location) => (
@@ -212,11 +201,6 @@ export function UserSettings() {
                 {locations.length === 0 && <p className="text-muted-foreground text-sm text-center py-4">No alert locations added.</p>}
               </div>
             )}
-          </div>
-
-          <div className="space-y-4">
-            {/* Subscription Section remains unchanged */}
-          </div>
         </CardContent>
       </Card>
 
