@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { HardDrive, Trash2, ShieldCheck } from "lucide-react"
+import { HardDrive, Trash2, ShieldCheck, Download } from "lucide-react"
 import { toast } from "sonner"
+import { db } from "@/lib/db/local"
 
 export function StorageManager() {
   const [usage, setUsage] = useState(0)
@@ -82,6 +83,46 @@ export function StorageManager() {
     }
   }
 
+  const exportBackup = async () => {
+    setLoading(true);
+    try {
+      const inventory = await db.inventory.toArray();
+      const kits = await db.kits.toArray();
+      const plans = await db.plans.toArray();
+      const shopping_list = await db.shopping_list.toArray();
+      const user_settings = await db.user_settings.toArray();
+      const knowledge_base = await db.knowledge_base.toArray();
+
+      const backupData = {
+        version: 1,
+        timestamp: new Date().toISOString(),
+        inventory,
+        kits,
+        plans,
+        shopping_list,
+        user_settings,
+        knowledge_base
+      };
+
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `wolfman_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success("Secure backup generated");
+    } catch (error) {
+      console.error("Export backup error:", error);
+      toast.error("Failed to generate backup");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const usagePercent = quota > 0 ? (usage / quota) * 100 : 0
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 Bytes'
@@ -120,6 +161,16 @@ export function StorageManager() {
           >
             <ShieldCheck className="h-4 w-4" />
             {isPersisted ? "Storage Persisted" : "Request Persistent Storage"}
+          </Button>
+
+          <Button
+            variant="default"
+            className="flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white"
+            onClick={exportBackup}
+            disabled={loading}
+          >
+            <Download className="h-4 w-4" />
+            Export Backup
           </Button>
 
           <Button
