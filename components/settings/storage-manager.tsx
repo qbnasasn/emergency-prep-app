@@ -210,7 +210,7 @@ export function StorageManager() {
           <Progress value={usagePercent} />
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input
             type="file"
             ref={fileInputRef}
@@ -221,7 +221,7 @@ export function StorageManager() {
 
           <Button
             variant="outline"
-            className="flex-1 gap-2"
+            className="w-full gap-2"
             onClick={requestPersistence}
             disabled={isPersisted || loading}
           >
@@ -231,7 +231,7 @@ export function StorageManager() {
 
           <Button
             variant="default"
-            className="flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white"
+            className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white"
             onClick={exportBackup}
             disabled={loading}
           >
@@ -241,7 +241,7 @@ export function StorageManager() {
 
           <Button
             variant="outline"
-            className="flex-1 gap-2 border-dashed"
+            className="w-full gap-2 border-dashed"
             onClick={handleImportClick}
             disabled={loading}
           >
@@ -251,7 +251,7 @@ export function StorageManager() {
 
           <Button
             variant="destructive"
-            className="flex-1 gap-2"
+            className="w-full gap-2"
             onClick={clearCache}
             disabled={loading}
           >
