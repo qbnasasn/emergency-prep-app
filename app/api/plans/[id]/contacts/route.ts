@@ -17,9 +17,8 @@ export async function GET(req: Request, { params }: RouteParams) {
   const { householdId } = user;
   const { id: planId } = await params;
 
+  const client = await pool.connect();
   try {
-    const client = await pool.connect();
-
     // Verify the plan belongs to the same household
     const planCheck = await client.query(
       `SELECT u.household_id
@@ -30,7 +29,6 @@ export async function GET(req: Request, { params }: RouteParams) {
     );
 
     if (planCheck.rows.length === 0 || planCheck.rows[0].household_id !== householdId) {
-      client.release();
       return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
     }
 
@@ -42,11 +40,12 @@ export async function GET(req: Request, { params }: RouteParams) {
       [planId]
     );
 
-    client.release();
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Error fetching plan contacts:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } finally {
+    client.release();
   }
 }
 
@@ -77,7 +76,6 @@ export async function PUT(req: Request, { params }: RouteParams) {
     );
 
     if (planCheck.rows.length === 0) {
-      client.release();
       return NextResponse.json({ error: 'Plan not found' }, { status: 404 });
     }
 
@@ -86,7 +84,6 @@ export async function PUT(req: Request, { params }: RouteParams) {
     const isHouseholdMember = householdId && plan.household_id && plan.household_id === householdId;
 
     if (!isOwner && !isHouseholdMember) {
-      client.release();
       return NextResponse.json({ error: 'Access denied' }, { status: 404 });
     }
 
@@ -114,7 +111,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
   } catch (error) {
     if (client) {
-      await client.query('ROLLBACK');
+      await client.query('ROLLBACK').catch(e => console.error("Rollback failed", e));
     }
     console.error('Error updating plan contacts:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

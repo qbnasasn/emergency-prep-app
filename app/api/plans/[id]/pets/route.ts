@@ -16,9 +16,8 @@ export async function GET(req: Request, { params }: RouteParams) {
   const { householdId } = user;
   const { id: planId } = await params;
 
+  const client = await pool.connect();
   try {
-    const client = await pool.connect();
-
     // Verify the user belongs to the same household OR is the owner
     const planCheck = await client.query(
       `SELECT p.user_id, u.household_id
@@ -29,7 +28,6 @@ export async function GET(req: Request, { params }: RouteParams) {
     );
 
     if (planCheck.rows.length === 0) {
-      client.release();
       return NextResponse.json({ error: 'Plan not found' }, { status: 404 });
     }
 
@@ -38,7 +36,6 @@ export async function GET(req: Request, { params }: RouteParams) {
     const isHouseholdMember = householdId && plan.household_id && plan.household_id === householdId;
 
     if (!isOwner && !isHouseholdMember) {
-      client.release();
       return NextResponse.json({ error: 'Access denied' }, { status: 404 });
     }
 
@@ -50,11 +47,12 @@ export async function GET(req: Request, { params }: RouteParams) {
       [planId]
     );
 
-    client.release();
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Error fetching plan pets:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } finally {
+    client.release();
   }
 }
 
