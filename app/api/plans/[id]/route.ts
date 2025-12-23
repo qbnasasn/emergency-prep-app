@@ -3,40 +3,61 @@ import pool from '@/lib/db';
 import { getAuthUser } from "@/lib/auth"
 
 interface RouteParams {
-  params: {
-    id: string;
-  };
+    params: {
+        id: string;
+    };
+}
+
+// Helper for robust auth check
+async function checkPlanAccess(client: any, planId: string, userId: string, householdId?: string | null) {
+    const query = `
+        SELECT p.id, p.user_id, u.household_id
+        FROM plans p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.id = $1
+    `;
+    const res = await client.query(query, [planId]);
+
+    if (res.rows.length === 0) return false;
+
+    const plan = res.rows[0];
+    const isOwner = plan.user_id === userId;
+    const isHouseholdMember = householdId && plan.household_id && plan.household_id === householdId;
+
+    return isOwner || isHouseholdMember;
 }
 
 export async function GET(req: Request, { params }: RouteParams) {
-  const user = await getAuthUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  const { householdId } = user;
-  const { id } = await params;
-
-  try {
-    const client = await pool.connect();
-    // Allow access if the plan belongs to a user in the same household
-    const result = await client.query(
-        `SELECT p.*
-         FROM plans p
-         JOIN users u ON p.user_id = u.id
-         WHERE p.id = $1 AND u.household_id = $2`,
-        [id, householdId]
-    );
-    client.release();
-
-    if (result.rows.length === 0) {
-      return NextResponse.json({ error: 'Plan not found' }, { status: 404 });
+    const user = await getAuthUser();
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const userId = user.id;
+    const householdId = user.householdId;
+    const { id } = await params;
 
-    return NextResponse.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error fetching plan:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
+    try {
+        const client = await pool.connect();
+
+        // Authorization Check
+        const allowed = await checkPlanAccess(client, id, userId, householdId);
+        if (!allowed) {
+            client.release();
+            return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
+        }
+
+        const result = await client.query('SELECT * FROM plans WHERE id = $1', [id]);
+        client.release();
+
+        if (result.rows.length === 0) {
+            return NextResponse.json({ error: 'Plan not found' }, { status: 404 });
+        }
+
+        return NextResponse.json(result.rows[0]);
+    } catch (error) {
+        console.error('Error fetching plan:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
 }
 
 export async function PUT(req: Request, { params }: RouteParams) {
@@ -44,7 +65,8 @@ export async function PUT(req: Request, { params }: RouteParams) {
     if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { householdId } = user;
+    const userId = user.id;
+    const householdId = user.householdId;
     const { id } = await params;
 
     try {
@@ -55,18 +77,11 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
         const client = await pool.connect();
 
-        // 1. Verify Authorization: Plan must belong to the same household
-        const authCheck = await client.query(
-            `SELECT p.id
-             FROM plans p
-             JOIN users u ON p.user_id = u.id
-             WHERE p.id = $1 AND u.household_id = $2`,
-            [id, householdId]
-        );
-
-        if (authCheck.rows.length === 0) {
+        // Authorization Check
+        const allowed = await checkPlanAccess(client, id, userId, householdId);
+        if (!allowed) {
             client.release();
-            return NextResponse.json({ error: 'Plan not found or not authorized to update' }, { status: 404 });
+            return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
         }
 
         // 2. Perform Update
@@ -88,7 +103,8 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { householdId } = user;
+    const userId = user.id;
+    const householdId = user.householdId;
     const { id } = await params;
 
     try {
@@ -100,18 +116,11 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
         const client = await pool.connect();
 
-        // 1. Verify Authorization: Plan must belong to the same household
-        const authCheck = await client.query(
-            `SELECT p.id
-             FROM plans p
-             JOIN users u ON p.user_id = u.id
-             WHERE p.id = $1 AND u.household_id = $2`,
-            [id, householdId]
-        );
-
-        if (authCheck.rows.length === 0) {
+        // Authorization Check
+        const allowed = await checkPlanAccess(client, id, userId, householdId);
+        if (!allowed) {
             client.release();
-            return NextResponse.json({ error: 'Plan not found or not authorized to update' }, { status: 404 });
+            return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
         }
 
         // 2. Perform Update
@@ -133,24 +142,18 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { householdId } = user;
+    const userId = user.id;
+    const householdId = user.householdId;
     const { id } = await params;
 
     try {
         const client = await pool.connect();
 
-        // 1. Verify Authorization: Plan must belong to the same household
-        const authCheck = await client.query(
-            `SELECT p.id
-             FROM plans p
-             JOIN users u ON p.user_id = u.id
-             WHERE p.id = $1 AND u.household_id = $2`,
-            [id, householdId]
-        );
-
-        if (authCheck.rows.length === 0) {
+        // Authorization Check
+        const allowed = await checkPlanAccess(client, id, userId, householdId);
+        if (!allowed) {
             client.release();
-            return NextResponse.json({ error: 'Plan not found or not authorized to delete' }, { status: 404 });
+            return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
         }
 
         // 2. Perform Delete

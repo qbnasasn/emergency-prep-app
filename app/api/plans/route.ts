@@ -6,30 +6,30 @@ import { getAuthUser } from "@/lib/auth"
 const MAX_PLANS_SCOUT = 2;
 
 export async function GET() {
-  const user = await getAuthUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  const { householdId } = user;
+    const user = await getAuthUser();
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const { householdId } = user;
 
-  try {
-    const client = await pool.connect();
-    // Scope by Household
-    // Plans don't have a household_id directly, so we join with users
-    const result = await client.query(
-      `SELECT p.*
+    try {
+        const client = await pool.connect();
+        // Scope by Household
+        // Plans don't have a household_id directly, so we join with users
+        const result = await client.query(
+            `SELECT p.*
        FROM plans p
        JOIN users u ON p.user_id = u.id
        WHERE u.household_id = $1
        ORDER BY p.is_active DESC, p.created_at DESC`,
-      [householdId]
-    );
-    client.release();
-    return NextResponse.json(result.rows);
-  } catch (error) {
-    console.error('Error fetching plans:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
+            [householdId]
+        );
+        client.release();
+        return NextResponse.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching plans:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
 }
 
 export async function POST(req: Request) {
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     const subscriptionPlan = user.subscriptionPlan;
 
     try {
-        const { name, description, hazard_type, is_active } = await req.json();
+        const { id, name, description, hazard_type, is_active, updated_at } = await req.json();
         if (!name || !hazard_type) {
             return NextResponse.json({ error: 'Plan name and hazard type are required' }, { status: 400 });
         }
@@ -50,31 +50,68 @@ export async function POST(req: Request) {
         const client = await pool.connect();
 
         try {
-            // Enforce Scout Plan Limit
+            // Enforce Scout Plan Limit (Only if creating NEW plan)
             if (subscriptionPlan === 'scout') {
                 if (!householdId) {
-                     return NextResponse.json({ error: 'Household context missing' }, { status: 400 });
+                    return NextResponse.json({ error: 'Household context missing' }, { status: 400 });
                 }
 
-                // Count plans for the entire household
-                const countResult = await client.query(
-                    `SELECT COUNT(p.*)
-                     FROM plans p
-                     JOIN users u ON p.user_id = u.id
-                     WHERE u.household_id = $1`,
-                    [householdId]
-                );
-                const count = parseInt(countResult.rows[0].count, 10);
+                // Check if plan exists already (Edit Mode)
+                let existing = null;
+                if (id) {
+                    const check = await client.query('SELECT id FROM plans WHERE id = $1', [id]);
+                    existing = check.rows[0];
+                }
 
-                if (count >= MAX_PLANS_SCOUT) {
-                    return NextResponse.json({ error: 'Scout plan limited to 2 emergency plans.' }, { status: 403 });
+                if (!existing) {
+                    // Count plans for the entire household
+                    const countResult = await client.query(
+                        `SELECT COUNT(p.*)
+                         FROM plans p
+                         JOIN users u ON p.user_id = u.id
+                         WHERE u.household_id = $1`,
+                        [householdId]
+                    );
+                    const count = parseInt(countResult.rows[0].count, 10);
+
+                    if (count >= MAX_PLANS_SCOUT) {
+                        return NextResponse.json({ error: 'Scout plan limited to 2 emergency plans.' }, { status: 403 });
+                    }
                 }
             }
 
-            const result = await client.query(
-                'INSERT INTO plans (user_id, name, description, hazard_type, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-                [userId, name, description, hazard_type, is_active]
-            );
+            // UPSERT Logic
+            // If ID is provided, use it. If not, let DB generate (but we should really use one if we want to be clean).
+            // For Postgres, if ID is omitted, we'd need separate query.
+            // But standardizing on "Client Generated UUID" is best for sync.
+            // If `id` is missing (Web API usage?), we can let Postgres default if column has default, OR we generate one here.
+
+            let query = '';
+            let params = [];
+
+            if (id) {
+                query = `
+                    INSERT INTO plans (id, user_id, name, description, hazard_type, is_active, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    ON CONFLICT (id) DO UPDATE SET
+                        name = EXCLUDED.name,
+                        description = EXCLUDED.description,
+                        hazard_type = EXCLUDED.hazard_type,
+                        is_active = EXCLUDED.is_active,
+                        updated_at = EXCLUDED.updated_at
+                    RETURNING *
+                `;
+                params = [id, userId, name, description, hazard_type, is_active, updated_at || new Date().toISOString()];
+            } else {
+                query = `
+                    INSERT INTO plans (user_id, name, description, hazard_type, is_active, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                    RETURNING *
+                `;
+                params = [userId, name, description, hazard_type, is_active, updated_at || new Date().toISOString()];
+            }
+
+            const result = await client.query(query, params);
             return NextResponse.json(result.rows[0], { status: 201 });
         } finally {
             client.release();

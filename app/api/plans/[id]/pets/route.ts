@@ -19,18 +19,27 @@ export async function GET(req: Request, { params }: RouteParams) {
   try {
     const client = await pool.connect();
 
-    // First, verify the user belongs to the same household
+    // Verify the user belongs to the same household OR is the owner
     const planCheck = await client.query(
-        `SELECT u.household_id
+      `SELECT p.user_id, u.household_id
          FROM plans p
          JOIN users u ON p.user_id = u.id
          WHERE p.id = $1`,
-        [planId]
+      [planId]
     );
 
-    if (planCheck.rows.length === 0 || planCheck.rows[0].household_id !== householdId) {
+    if (planCheck.rows.length === 0) {
       client.release();
-      return NextResponse.json({ error: 'Plan not found or access denied' }, { status: 404 });
+      return NextResponse.json({ error: 'Plan not found' }, { status: 404 });
+    }
+
+    const plan = planCheck.rows[0];
+    const isOwner = plan.user_id === user.id;
+    const isHouseholdMember = householdId && plan.household_id && plan.household_id === householdId;
+
+    if (!isOwner && !isHouseholdMember) {
+      client.release();
+      return NextResponse.json({ error: 'Access denied' }, { status: 404 });
     }
 
     // If verification passes, fetch the pets
@@ -61,18 +70,18 @@ export async function PUT(req: Request, { params }: RouteParams) {
   try {
     const { petIds } = await req.json();
     if (!Array.isArray(petIds)) {
-        return NextResponse.json({ error: 'Invalid input, petIds must be an array' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid input, petIds must be an array' }, { status: 400 });
     }
 
     client = await pool.connect();
 
     // Verify user belongs to the same household
     const planCheck = await client.query(
-        `SELECT u.household_id
+      `SELECT u.household_id
          FROM plans p
          JOIN users u ON p.user_id = u.id
          WHERE p.id = $1`,
-        [planId]
+      [planId]
     );
 
     if (planCheck.rows.length === 0 || planCheck.rows[0].household_id !== householdId) {

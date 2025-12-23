@@ -26,12 +26,12 @@ export async function POST(req: Request) {
     const client = await pool.connect();
     try {
       // Upsert Logic
+      // NOTE: Removed 'description' column as it does not exist in the server schema (per error logs).
       const query = `
-                INSERT INTO plan_locations (id, plan_id, name, description, latitude, longitude, address, is_meeting_point, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+                INSERT INTO plan_locations (id, plan_id, name, latitude, longitude, address, is_meeting_point, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
                 ON CONFLICT (id) DO UPDATE SET
                     name = EXCLUDED.name,
-                    description = EXCLUDED.description,
                     latitude = EXCLUDED.latitude,
                     longitude = EXCLUDED.longitude,
                     address = EXCLUDED.address,
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
                     updated_at = NOW()
                 RETURNING *;
             `;
-      const result = await client.query(query, [id, plan_id, name, description, latitude, longitude, address, is_meeting_point]);
+      const result = await client.query(query, [id, plan_id, name, latitude, longitude, address, is_meeting_point]);
       return NextResponse.json(result.rows[0]);
     } finally {
       client.release();

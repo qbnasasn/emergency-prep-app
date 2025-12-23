@@ -2,12 +2,24 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getAuthUser } from "@/lib/auth"
 
-async function checkPlanOwnership(client: any, planId: string, userId: string) {
-    const result = await client.query('SELECT user_id FROM plans WHERE id = $1', [planId]);
+async function checkPlanOwnership(client: any, planId: string, userId: string, householdId?: string | null) {
+    const result = await client.query(`
+        SELECT p.user_id, u.household_id 
+        FROM plans p
+        LEFT JOIN users u ON p.user_id = u.id
+        WHERE p.id = $1
+    `, [planId]);
+
     if (result.rows.length === 0) {
         return { owned: false, error: new NextResponse(JSON.stringify({ error: 'Plan not found' }), { status: 404 }) };
     }
-    if (result.rows[0].user_id !== userId) {
+
+    const plan = result.rows[0];
+    const isOwner = plan.user_id === userId;
+    // Strict household check: both must have same non-null household_id
+    const isHouseholdMember = householdId && plan.household_id && plan.household_id === householdId;
+
+    if (!isOwner && !isHouseholdMember) {
         return { owned: false, error: new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403 }) };
     }
     return { owned: true, error: null };
@@ -21,10 +33,11 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     const planId = params.id;
     const userId = user.id;
+    const householdId = user.householdId;
     const client = await pool.connect();
 
     try {
-        const { owned, error } = await checkPlanOwnership(client, planId, userId);
+        const { owned, error } = await checkPlanOwnership(client, planId, userId, householdId);
         if (!owned) return error;
 
         const itemsResult = await client.query(`
@@ -63,6 +76,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     const planId = params.id;
     const userId = user.id;
+    const householdId = user.householdId;
 
     try {
         const { selectedItemIds, selectedKitIds } = await req.json();
@@ -71,7 +85,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         try {
             await client.query('BEGIN');
 
-            const { owned, error } = await checkPlanOwnership(client, planId, userId);
+            const { owned, error } = await checkPlanOwnership(client, planId, userId, householdId);
             if (!owned) {
                 await client.query('ROLLBACK');
                 return error;
