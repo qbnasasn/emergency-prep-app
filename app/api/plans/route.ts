@@ -104,7 +104,7 @@ export async function POST(req: Request) {
             } else {
                 query = `
                     INSERT INTO plans (user_id, name, description, hazard_type, is_active)
-                    VALUES ($1, $2, $3, $4, $5, $6)
+                    VALUES ($1, $2, $3, $4, $5)
                     RETURNING *
                 `;
                 params = [userId, name, description, hazard_type, is_active];
