@@ -106,15 +106,15 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
         {routes.map(route => (
           <Card key={route.id} className="bg-muted/30">
             <CardHeader className="flex flex-row items-center justify-between py-3">
-                <Input
-                  value={route.name}
-                  onChange={e => handleRouteNameChange(route.id, e.target.value)}
-                  placeholder="Enter route name"
-                  className="font-semibold text-lg flex-grow bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-                <Button variant="ghost" size="icon" onClick={() => handleDeleteRoute(route.id)}>
-                    <Trash2 className="h-5 w-5 text-destructive" />
-                </Button>
+              <Input
+                value={route.name}
+                onChange={e => handleRouteNameChange(route.id, e.target.value)}
+                placeholder="Enter route name"
+                className="font-semibold text-lg flex-grow bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+              <Button variant="ghost" size="icon" onClick={() => handleDeleteRoute(route.id)}>
+                <Trash2 className="h-5 w-5 text-destructive" />
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -136,25 +136,30 @@ export function RoutesTab({ planId, routes, onRoutesChange, locations }: RoutesT
                     </div>
                   ))}
                   {route.waypoints.length < 2 && (
-                      <p className="text-xs text-muted-foreground text-center">A route needs at least two locations (a start and an end).</p>
+                    <p className="text-xs text-muted-foreground text-center">A route needs at least two locations (a start and an end).</p>
                   )}
-                   <div className="mt-2">
-                      <Select onValueChange={(value) => handleAddWaypoint(route.id, value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Add a location to this route..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {locations.filter(loc => !route.waypoints.includes(loc.id)).map(location => (
-                            <SelectItem key={location.id} value={location.id}>
-                              {location.name}
-                            </SelectItem>
-                          ))}
-                          {locations.filter(loc => !route.waypoints.includes(loc.id)).length === 0 && (
-                              <p className="p-2 text-sm text-muted-foreground">All available locations have been added.</p>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  {route.waypoints.map(id => locations.find(loc => loc.id === id)).some(loc => loc && (loc.latitude == null || loc.longitude == null)) && (
+                    <p className="text-xs text-red-500 text-center font-bold mt-2">
+                      Warning: One or more locations in this route are missing GPS coordinates. Please edit and re-save them in the 'Locations' tab for the route to appear.
+                    </p>
+                  )}
+                  <div className="mt-2">
+                    <Select onValueChange={(value) => handleAddWaypoint(route.id, value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Add a location to this route..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.filter(loc => !route.waypoints.includes(loc.id)).map(location => (
+                          <SelectItem key={location.id} value={location.id}>
+                            {location.name}
+                          </SelectItem>
+                        ))}
+                        {locations.filter(loc => !route.waypoints.includes(loc.id)).length === 0 && (
+                          <p className="p-2 text-sm text-muted-foreground">All available locations have been added.</p>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="h-64 bg-muted rounded-lg">
                   <Map

@@ -41,27 +41,30 @@ export default function PlansPage() {
 
   const handleCreate = async () => {
     try {
-        const planPayload = {
-            name: 'New Untitled Plan',
-            description: 'Describe your plan here.',
-            hazard_type: 'severe-weather', // Default value
-            is_active: false
-        };
-        const planResponse = await fetch('/api/plans', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(planPayload),
-        });
-        if (!planResponse.ok) throw new Error('Failed to create new draft plan.');
-        const newPlan = await planResponse.json();
+      const planPayload = {
+        name: 'New Untitled Plan',
+        description: 'Describe your plan here.',
+        hazard_type: 'severe-weather', // Default value
+        is_active: false
+      };
+      const planResponse = await fetch('/api/plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(planPayload),
+      });
+      if (!planResponse.ok) {
+        const errData = await planResponse.json().catch(() => ({}));
+        throw new Error(errData.error || errData.message || 'Failed to create new draft plan.');
+      }
+      const newPlan = await planResponse.json();
 
-        toast.info("New draft plan created. You can now edit the details.");
-        fetchPlans(); // Refresh list to show the new draft
-        setSelectedPlan(newPlan);
-        setIsNewPlan(true); // Mark this as a new plan
-        setIsModalOpen(true);
+      toast.info("New draft plan created. You can now edit the details.");
+      fetchPlans(); // Refresh list to show the new draft
+      setSelectedPlan(newPlan);
+      setIsNewPlan(true); // Mark this as a new plan
+      setIsModalOpen(true);
     } catch (err: any) {
-        toast.error(err.message);
+      toast.error(err.message);
     }
   }
 
@@ -73,8 +76,8 @@ export default function PlansPage() {
 
   const handleCloseModal = () => {
     if (isNewPlan && selectedPlan) {
-        handleDelete(selectedPlan.id);
-        toast.info("New plan creation cancelled.");
+      handleDelete(selectedPlan.id);
+      toast.info("New plan creation cancelled.");
     }
     setIsModalOpen(false)
     setSelectedPlan(null)
@@ -90,111 +93,111 @@ export default function PlansPage() {
     routes: any[]
   ) => {
     if (!selectedPlan) {
-        toast.error("Cannot save, no plan is selected.");
-        return;
+      toast.error("Cannot save, no plan is selected.");
+      return;
     }
 
     setIsSaving(true);
     try {
-        // Step 1: Update the plan details (must be done first)
-        const planResponse = await fetch(`/api/plans/${selectedPlan.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(planData),
-        });
-        if (!planResponse.ok) throw new Error('Failed to update plan details.');
-        const updatedPlan = await planResponse.json();
+      // Step 1: Update the plan details (must be done first)
+      const planResponse = await fetch(`/api/plans/${selectedPlan.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(planData),
+      });
+      if (!planResponse.ok) throw new Error('Failed to update plan details.');
+      const updatedPlan = await planResponse.json();
 
-        // Step 2: Update related items in parallel
-        const contactsPromise = fetch(`/api/plans/${selectedPlan.id}/contacts`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contactIds }),
-        });
+      // Step 2: Update related items in parallel
+      const contactsPromise = fetch(`/api/plans/${selectedPlan.id}/contacts`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contactIds }),
+      });
 
-        const petsPromise = fetch(`/api/plans/${selectedPlan.id}/pets`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ petIds }),
-        });
+      const petsPromise = fetch(`/api/plans/${selectedPlan.id}/pets`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ petIds }),
+      });
 
-        const inventoryPromise = fetch(`/api/plans/${selectedPlan.id}/inventory`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ selectedItemIds, selectedKitIds }),
-        });
+      const inventoryPromise = fetch(`/api/plans/${selectedPlan.id}/inventory`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selectedItemIds, selectedKitIds }),
+      });
 
-        const routesPromise = fetch(`/api/plans/${selectedPlan.id}/routes`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ routes }),
-        });
+      const routesPromise = fetch(`/api/plans/${selectedPlan.id}/routes`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ routes }),
+      });
 
-        const results = await Promise.all([contactsPromise, petsPromise, inventoryPromise, routesPromise]);
+      const results = await Promise.all([contactsPromise, petsPromise, inventoryPromise, routesPromise]);
 
-        for (const response of results) {
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
-                throw new Error(`Failed to update plan components: ${errorData.message || response.statusText}`);
-            }
+      for (const response of results) {
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
+          throw new Error(`Failed to update plan components: ${errorData.message || response.statusText}`);
         }
+      }
 
-        toast.success(`Plan '${updatedPlan.name}' saved successfully!`);
-        setIsNewPlan(false); // The plan is no longer "new" after a successful save
-        handleCloseModal();
-        fetchPlans();
+      toast.success(`Plan '${updatedPlan.name}' saved successfully!`);
+      setIsNewPlan(false); // The plan is no longer "new" after a successful save
+      handleCloseModal();
+      fetchPlans();
 
     } catch (err: any) {
-        toast.error(err?.message || 'An unknown error occurred while saving the plan.');
+      toast.error(err?.message || 'An unknown error occurred while saving the plan.');
     } finally {
-        setIsSaving(false);
+      setIsSaving(false);
     }
   }
 
   const handleDelete = async (planId: string) => {
     try {
-        const response = await fetch(`/api/plans/${planId}`, { method: 'DELETE' });
-        if (!response.ok) {
-            throw new Error('Failed to delete plan');
-        }
-        toast.success('Plan deleted successfully');
-        fetchPlans(); // Refresh the list
+      const response = await fetch(`/api/plans/${planId}`, { method: 'DELETE' });
+      if (!response.ok) {
+        throw new Error('Failed to delete plan');
+      }
+      toast.success('Plan deleted successfully');
+      fetchPlans(); // Refresh the list
     } catch (err: any) {
-        toast.error(err.message);
+      toast.error(err.message);
     }
   };
 
   const handleActivate = async (planId: string) => {
     try {
-        const response = await fetch(`/api/plans/${planId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ is_active: true }),
-        });
-        if (!response.ok) {
-            throw new Error('Failed to activate plan');
-        }
-        toast.success('Plan activated successfully');
-        fetchPlans(); // Refresh the list
+      const response = await fetch(`/api/plans/${planId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: true }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to activate plan');
+      }
+      toast.success('Plan activated successfully');
+      fetchPlans(); // Refresh the list
     } catch (err: any) {
-        toast.error(err.message);
+      toast.error(err.message);
     }
   };
 
   const handleDeactivate = async (planId: string) => {
     try {
-        const response = await fetch(`/api/plans/${planId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ is_active: false }),
-        });
-        if (!response.ok) {
-            throw new Error('Failed to deactivate plan');
-        }
-        toast.success('Plan deactivated successfully');
-        fetchPlans(); // Refresh the list
+      const response = await fetch(`/api/plans/${planId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: false }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to deactivate plan');
+      }
+      toast.success('Plan deactivated successfully');
+      fetchPlans(); // Refresh the list
     } catch (err: any) {
-        toast.error(err.message);
+      toast.error(err.message);
     }
   };
 

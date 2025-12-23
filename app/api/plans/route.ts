@@ -91,24 +91,23 @@ export async function POST(req: Request) {
 
             if (id) {
                 query = `
-                    INSERT INTO plans (id, user_id, name, description, hazard_type, is_active, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    INSERT INTO plans (id, user_id, name, description, hazard_type, is_active)
+                    VALUES ($1, $2, $3, $4, $5, $6)
                     ON CONFLICT (id) DO UPDATE SET
                         name = EXCLUDED.name,
                         description = EXCLUDED.description,
                         hazard_type = EXCLUDED.hazard_type,
-                        is_active = EXCLUDED.is_active,
-                        updated_at = EXCLUDED.updated_at
+                        is_active = EXCLUDED.is_active
                     RETURNING *
                 `;
-                params = [id, userId, name, description, hazard_type, is_active, updated_at || new Date().toISOString()];
+                params = [id, userId, name, description, hazard_type, is_active];
             } else {
                 query = `
-                    INSERT INTO plans (user_id, name, description, hazard_type, is_active, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6)
+                    INSERT INTO plans (user_id, name, description, hazard_type, is_active)
+                    VALUES ($1, $2, $3, $4, $5)
                     RETURNING *
                 `;
-                params = [userId, name, description, hazard_type, is_active, updated_at || new Date().toISOString()];
+                params = [userId, name, description, hazard_type, is_active];
             }
 
             const result = await client.query(query, params);
