@@ -118,60 +118,59 @@ export default function PlanViewPage() {
           Download PDF
         </Button>
       </header>
-      <main className="p-8">
-        <main className="p-8 space-y-8">
-          {/* Interactive Route Viewer (User Requested) */}
-          {plan.routes && plan.routes.length > 0 && (
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Interactive Route Map</h2>
-                <div className="w-64">
-                  <Select
-                    defaultValue={plan.routes[0]?.id}
-                    onValueChange={(val) => {
-                      // Force re-render of map or update state if needed
-                      const r = plan.routes.find((r: any) => r.id === val);
-                      setSelectedRoute(r);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a route" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {plan.routes.map((r: any) => (
-                        <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="h-96 w-full bg-slate-100 rounded-md overflow-hidden border">
-                {selectedRoute ? (
-                  <Map waypoints={selectedRoute.waypoints} />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-gray-400">Select a route to view</div>
-                )}
-              </div>
-              {selectedRoute && (
-                <div className="mt-4">
-                  <h3 className="font-semibold mb-2">Detailed Waypoints:</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedRoute.waypoints.map((wp: any, idx: number) => (
-                      <span key={idx} className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
-                        {idx + 1}. {wp.name}
-                      </span>
+      <main className="p-8 space-y-8">
+        {/* Interactive Route Viewer (User Requested) */}
+        {plan.routes && plan.routes.length > 0 && (
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Interactive Route Map</h2>
+              <div className="w-64">
+                <Select
+                  defaultValue={plan.routes[0]?.id}
+                  onValueChange={(val) => {
+                    // Force re-render of map or update state if needed
+                    const r = plan.routes.find((r: any) => r.id === val);
+                    setSelectedRoute(r);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a route" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plan.routes.map((r: any) => (
+                      <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                     ))}
-                  </div>
-                </div>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="h-96 w-full bg-slate-100 rounded-md overflow-hidden border">
+              {selectedRoute ? (
+                <Map waypoints={selectedRoute.waypoints} />
+              ) : (
+                <div className="flex h-full items-center justify-center text-gray-400">Select a route to view</div>
               )}
             </div>
-          )}
-
-          <div id="printable-plan-view">
-            <PrintablePlan plan={plan} />
+            {selectedRoute && (
+              <div className="mt-4">
+                <h3 className="font-semibold mb-2">Detailed Waypoints:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedRoute.waypoints.map((wp: any, idx: number) => (
+                    <span key={idx} className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
+                      {idx + 1}. {wp.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        </main>
+        )}
+
+        <div id="printable-plan-view">
+          <PrintablePlan plan={plan} />
+        </div>
+      </main>
     </div>
   )
 }
