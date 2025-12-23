@@ -147,6 +147,12 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits }) => {
   useEffect(() => {
     if (!isMapInitialized || !mapInstance.current) return;
 
+    // DEBUG: Log waypoints to troubleshoot route rendering
+    // console.log('Map Route Effect Triggered. Waypoints:', waypoints);
+    // if (!waypoints || waypoints.length < 2) {
+    //   // console.log('Not enough waypoints to route:', waypoints?.length);
+    // }
+
     mapsLoader.importLibrary('routes').then(async () => {
       const { DirectionsService, DirectionsRenderer } = await google.maps.importLibrary('routes') as google.maps.RoutesLibrary;
 

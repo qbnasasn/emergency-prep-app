@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import AddressAutocomplete from '../ui/address-autocomplete'
+import { geocodeByAddress, getLatLng } from 'react-google-places-autocomplete';
+import { toast } from "sonner"
 
 const formSchema = z.object({
   name: z.string().min(1, 'Location name is required'),
@@ -25,8 +27,8 @@ const formSchema = z.object({
 })
 
 const locationTypes = [
-    "Home", "Work", "School", "Bug-Out Location", "Rally Point", "Evacuation Shelter",
-    "Family/Friend's House", "Hospital/Medical Center", "Emergency Cache"
+  "Home", "Work", "School", "Bug-Out Location", "Rally Point", "Evacuation Shelter",
+  "Family/Friend's House", "Hospital/Medical Center", "Emergency Cache"
 ];
 
 export function LocationForm({ onFormSubmit, initialData }) {
@@ -47,7 +49,27 @@ export function LocationForm({ onFormSubmit, initialData }) {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Fallback Geocoding if lat/lng are missing (e.g. manual entry)
+    if (!values.latitude || !values.longitude) {
+      // Construct a searchable address string
+      const searchStr = values.full_address ||
+        `${values.street_number || ''} ${values.street_name || ''}, ${values.city || ''}, ${values.state || ''} ${values.zip_code || ''}`.trim();
+
+      if (searchStr.length > 5) { // minimal valid length check
+        try {
+          const results = await geocodeByAddress(searchStr);
+          const latLng = await getLatLng(results[0]);
+          values.latitude = latLng.lat;
+          values.longitude = latLng.lng;
+          toast.success("Location coordinates found and updated.");
+        } catch (error) {
+          console.error("Fallback geocoding failed:", error);
+          toast.warning("Could not automatically find GPS coordinates. Routes may not work for this location.");
+        }
+      }
+    }
+
     onFormSubmit(values)
   }
 
@@ -66,41 +88,41 @@ export function LocationForm({ onFormSubmit, initialData }) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location Name</FormLabel>
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Location Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Home Base" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Location Type</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <Input placeholder="e.g., Home Base" {...field} />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a type" />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {locationTypes.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <SelectContent>
+                    {locationTypes.map(type => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <div className="space-y-2">
