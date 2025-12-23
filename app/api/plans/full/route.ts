@@ -51,6 +51,10 @@ export async function GET(req: Request) {
       const itemsResult = await client.query(itemsQuery, [planId]);
       plan.inventory_items = itemsResult.rows;
 
+      const kitsQuery = 'SELECT k.* FROM kits k JOIN plan_kits pk ON k.id = pk.kit_id WHERE pk.plan_id = $1';
+      const kitsResult = await client.query(kitsQuery, [planId]);
+      plan.kits = kitsResult.rows;
+
       // Fetch routes and hydrate waypoints
       const routesQuery = 'SELECT * FROM routes WHERE plan_id = $1';
       const routesResult = await client.query(routesQuery, [planId]);

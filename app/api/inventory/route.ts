@@ -13,7 +13,7 @@ export async function GET() {
   const householdId = user.householdId;
 
   if (!householdId) {
-      return NextResponse.json({ error: 'Household context missing' }, { status: 400 });
+    return NextResponse.json({ error: 'Household context missing' }, { status: 400 });
   }
 
   try {
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
   const subscriptionPlan = user.subscriptionPlan;
 
   if (!householdId) {
-      return NextResponse.json({ error: 'Household context missing' }, { status: 400 });
+    return NextResponse.json({ error: 'Household context missing' }, { status: 400 });
   }
 
   try {
@@ -46,81 +46,103 @@ export async function POST(req: Request) {
     const client = await pool.connect();
 
     try {
-        const itemsToInsert = Array.isArray(body) ? body : [body];
+      const itemsToInsert = Array.isArray(body) ? body : [body];
 
-        // Enforce Plan Limits (Check count once)
-        if (subscriptionPlan === 'scout') {
-            const countResult = await client.query(
-                'SELECT COUNT(*) FROM inventory_items WHERE household_id = $1',
-                [householdId]
-            );
-            const currentCount = parseInt(countResult.rows[0].count, 10);
-            if (currentCount + itemsToInsert.length > MAX_ITEMS_SCOUT) {
-                 return NextResponse.json(
-                    { error: 'Plan limit reached. Upgrade to Prepper Pro for unlimited storage.' },
-                    { status: 403 }
-                );
-            }
+      // Enforce Plan Limits (Check count once)
+      if (subscriptionPlan === 'scout') {
+        const countResult = await client.query(
+          'SELECT COUNT(*) FROM inventory_items WHERE household_id = $1',
+          [householdId]
+        );
+        const currentCount = parseInt(countResult.rows[0].count, 10);
+        if (currentCount + itemsToInsert.length > MAX_ITEMS_SCOUT) {
+          return NextResponse.json(
+            { error: 'Plan limit reached. Upgrade to Prepper Pro for unlimited storage.' },
+            { status: 403 }
+          );
+        }
+      }
+
+      await client.query('BEGIN');
+      const results = [];
+
+      for (const item of itemsToInsert) {
+        let {
+          id, name, description, quantity, expiry_date, category, location,
+          min_stock, cost_per_unit, purchase_date, calories, supplier, upc, image, nutrition_type
+        } = item;
+
+        // Relaxed requirement: Default category if missing
+        category = category || 'Uncategorized';
+
+        if (!name || quantity === undefined) {
+          throw new Error('Missing required fields: name and quantity are required.');
         }
 
-        await client.query('BEGIN');
-        const results = [];
+        // If ID is missing, generate one (though client should send it)
+        if (!id) id = crypto.randomUUID();
 
-        for (const item of itemsToInsert) {
-             const {
-              name, description, quantity, expiry_date, category, location,
-              min_stock, cost_per_unit, purchase_date, calories, supplier, upc, image, nutrition_type
-            } = item;
-
-            if (!name || quantity === undefined || !category) {
-                 throw new Error('Missing required fields: name, quantity, and category are required.');
-            }
-
-            const insertQuery = `
+        const insertQuery = `
               INSERT INTO inventory_items (
                 user_id, household_id, name, description, quantity, expiry_date, category,
-                location, min_stock, cost_per_unit, purchase_date, calories, supplier, upc, image, nutrition_type
+                location, min_stock, cost_per_unit, purchase_date, calories, supplier, upc, image, nutrition_type, id
               )
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+              ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                description = EXCLUDED.description,
+                quantity = EXCLUDED.quantity,
+                expiry_date = EXCLUDED.expiry_date,
+                category = EXCLUDED.category,
+                location = EXCLUDED.location,
+                min_stock = EXCLUDED.min_stock,
+                cost_per_unit = EXCLUDED.cost_per_unit,
+                purchase_date = EXCLUDED.purchase_date,
+                calories = EXCLUDED.calories,
+                supplier = EXCLUDED.supplier,
+                upc = EXCLUDED.upc,
+                image = EXCLUDED.image,
+                nutrition_type = EXCLUDED.nutrition_type
               RETURNING *;
             `;
 
-            const values = [
-              userId,
-              householdId,
-              name,
-              description || null,
-              quantity,
-              expiry_date || null,
-              category,
-              location || null,
-              min_stock || null,
-              cost_per_unit || null,
-              purchase_date || null,
-              calories || null,
-              supplier || null,
-              upc || null,
-              image || null,
-              nutrition_type || null,
-            ].map(val => val === "" ? null : val);
+        const values = [
+          userId,
+          householdId,
+          name,
+          description || null,
+          quantity,
+          expiry_date || null,
+          category,
+          location || null,
+          min_stock || null,
+          cost_per_unit || null,
+          purchase_date || null,
+          calories || null,
+          supplier || null,
+          upc || null,
+          image || null,
+          nutrition_type || null,
+          id // $17
+        ].map(val => val === "" ? null : val);
 
-            const res = await client.query(insertQuery, values);
-            results.push(res.rows[0]);
-        }
+        const res = await client.query(insertQuery, values);
+        results.push(res.rows[0]);
+      }
 
-        await client.query('COMMIT');
+      await client.query('COMMIT');
 
-        if (Array.isArray(body)) {
-            return NextResponse.json(results, { status: 201 });
-        } else {
-            return NextResponse.json(results[0], { status: 201 });
-        }
+      if (Array.isArray(body)) {
+        return NextResponse.json(results, { status: 201 });
+      } else {
+        return NextResponse.json(results[0], { status: 201 });
+      }
 
     } catch (e) {
-        await client.query('ROLLBACK');
-        throw e;
+      await client.query('ROLLBACK');
+      throw e;
     } finally {
-        client.release();
+      client.release();
     }
 
   } catch (error) {
