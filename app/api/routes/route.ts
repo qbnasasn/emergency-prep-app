@@ -50,18 +50,17 @@ export async function POST(req: Request) {
     const client = await pool.connect();
     try {
       // Upsert Logic
+      // NOTE: Removed 'description' and 'color' as they do not exist in the server schema (schema.sql)
       const query = `
-                INSERT INTO routes (id, plan_id, name, description, waypoints, color, updated_at)
-                VALUES ($1, $2, $3, $4, $5::jsonb, $6, NOW())
+                INSERT INTO routes (id, plan_id, name, waypoints, updated_at)
+                VALUES ($1, $2, $3, $4::jsonb, NOW())
                 ON CONFLICT (id) DO UPDATE SET
                     name = EXCLUDED.name,
-                    description = EXCLUDED.description,
                     waypoints = EXCLUDED.waypoints,
-                    color = EXCLUDED.color,
                     updated_at = NOW()
                 RETURNING *;
             `;
-      const result = await client.query(query, [id, plan_id, name, description, JSON.stringify(waypoints), color]);
+      const result = await client.query(query, [id, plan_id, name, JSON.stringify(waypoints)]);
       return NextResponse.json(result.rows[0]);
     } finally {
       client.release();
