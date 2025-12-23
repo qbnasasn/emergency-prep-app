@@ -28,28 +28,26 @@ export async function POST(req: Request) {
 
             if (hasGps) {
                 query = `
-                        INSERT INTO kits (id, user_id, name, description, gps_location, updated_at)
-                        VALUES ($1, $2, $3, $4, POINT($5, $6), $7)
+                        INSERT INTO kits (id, user_id, name, description, gps_location)
+                        VALUES ($1, $2, $3, $4, POINT($5, $6))
                         ON CONFLICT (id) DO UPDATE SET
                             name = EXCLUDED.name,
                             description = EXCLUDED.description,
-                            gps_location = POINT($5, $6),
-                            updated_at = EXCLUDED.updated_at
+                            gps_location = POINT($5, $6)
                         RETURNING *;
                     `;
-                params = [id, userId, name, description, x, y, updated_at || new Date().toISOString()];
+                params = [id, userId, name, description, x, y];
             } else {
                 query = `
-                        INSERT INTO kits (id, user_id, name, description, gps_location, updated_at)
-                        VALUES ($1, $2, $3, $4, NULL, $5)
+                        INSERT INTO kits (id, user_id, name, description, gps_location)
+                        VALUES ($1, $2, $3, $4, NULL)
                         ON CONFLICT (id) DO UPDATE SET
                             name = EXCLUDED.name,
                             description = EXCLUDED.description,
-                            gps_location = NULL,
-                            updated_at = EXCLUDED.updated_at
+                            gps_location = NULL
                         RETURNING *;
                     `;
-                params = [id, userId, name, description, updated_at || new Date().toISOString()];
+                params = [id, userId, name, description];
             }
 
             const result = await client.query(query, params);
