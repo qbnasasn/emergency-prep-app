@@ -78,35 +78,37 @@ export async function POST(request: Request) {
     console.error('Error creating/updating pet:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
-  export async function DELETE(request: Request) {
-    const user = await getAuthUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+}
+
+export async function DELETE(request: Request) {
+  const user = await getAuthUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
     }
 
-    try {
-      const { searchParams } = new URL(request.url)
-      const id = searchParams.get('id')
-
-      if (!id) {
-        return NextResponse.json({ error: 'ID is required' }, { status: 400 })
-      }
-
-      // Verify ownership via household_id (pets link to user_id, user_id links to household)
-      const result = await pool.query(
-        `DELETE FROM pets
+    // Verify ownership via household_id (pets link to user_id, user_id links to household)
+    const result = await pool.query(
+      `DELETE FROM pets
        WHERE id = $1 AND user_id IN (SELECT id FROM users WHERE household_id = $2)
        RETURNING id`,
-        [id, user.householdId]
-      )
+      [id, user.householdId]
+    )
 
-      if (result.rowCount === 0) {
-        return NextResponse.json({ error: 'Pet not found or access denied' }, { status: 404 })
-      }
-
-      return NextResponse.json({ success: true, id })
-    } catch (error) {
-      console.error('Error deleting pet:', error)
-      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    if (result.rowCount === 0) {
+      return NextResponse.json({ error: 'Pet not found or access denied' }, { status: 404 })
     }
+
+    return NextResponse.json({ success: true, id })
+  } catch (error) {
+    console.error('Error deleting pet:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
+}

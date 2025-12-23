@@ -95,35 +95,37 @@ export async function POST(request: Request) {
     console.error('Error creating/updating family member:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
-  export async function DELETE(request: Request) {
-    const user = await getAuthUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+}
+
+export async function DELETE(request: Request) {
+  const user = await getAuthUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
     }
 
-    try {
-      const { searchParams } = new URL(request.url)
-      const id = searchParams.get('id')
-
-      if (!id) {
-        return NextResponse.json({ error: 'ID is required' }, { status: 400 })
-      }
-
-      // Verify ownership via household_id
-      const result = await db.query(
-        `DELETE FROM family_members
+    // Verify ownership via household_id
+    const result = await db.query(
+      `DELETE FROM family_members
        WHERE id = $1 AND user_id IN (SELECT id FROM users WHERE household_id = $2)
        RETURNING id`,
-        [id, user.householdId]
-      )
+      [id, user.householdId]
+    )
 
-      if (result.rowCount === 0) {
-        return NextResponse.json({ error: 'Family member not found or access denied' }, { status: 404 })
-      }
-
-      return NextResponse.json({ success: true, id })
-    } catch (error) {
-      console.error('Error deleting family member:', error)
-      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    if (result.rowCount === 0) {
+      return NextResponse.json({ error: 'Family member not found or access denied' }, { status: 404 })
     }
+
+    return NextResponse.json({ success: true, id })
+  } catch (error) {
+    console.error('Error deleting family member:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
+}
