@@ -61,7 +61,7 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits }) => {
           infoWindowRef.current?.open(mapInstance.current, marker);
         });
         marker.addListener('mouseout', () => {
-           infoWindowRef.current?.close();
+          infoWindowRef.current?.close();
         });
       };
 
@@ -70,7 +70,7 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits }) => {
         locations.forEach(location => {
           const marker = new google.maps.Marker({
             map: mapInstance.current,
-            position: { lat: location.latitude, lng: location.longitude },
+            position: { lat: parseFloat(location.latitude as any), lng: parseFloat(location.longitude as any) },
             title: location.name,
           });
           addHoverListener(marker, location.name);
@@ -87,10 +87,10 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits }) => {
       if (kits) {
         kits.forEach(kit => {
           if (kit.gps_location) {
-             // Based on user report (pins in Antarctica), the backend stores x=Lat, y=Lng.
-             const marker = new google.maps.Marker({
+            // Based on user report (pins in Antarctica), the backend stores x=Lat, y=Lng.
+            const marker = new google.maps.Marker({
               map: mapInstance.current,
-              position: { lat: kit.gps_location.x, lng: kit.gps_location.y },
+              position: { lat: parseFloat(kit.gps_location.x as any), lng: parseFloat(kit.gps_location.y as any) },
               title: `Kit: ${kit.name}`,
               icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png' // Use HTTPS
             });
@@ -118,27 +118,27 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits }) => {
     }
     // If "All Kits" (and possibly locations) are shown and no specific route is selected, fit bounds
     else if (kits && kits.length > 1 && !waypoints) {
-       const bounds = new google.maps.LatLngBounds();
-       let hasPoints = false;
+      const bounds = new google.maps.LatLngBounds();
+      let hasPoints = false;
 
-       kits.forEach(kit => {
-         if (kit.gps_location) {
-           // Note: Backend stores Latitude in X and Longitude in Y for kits
-           bounds.extend({ lat: kit.gps_location.x, lng: kit.gps_location.y });
-           hasPoints = true;
-         }
-       });
+      kits.forEach(kit => {
+        if (kit.gps_location) {
+          // Note: Backend stores Latitude in X and Longitude in Y for kits
+          bounds.extend({ lat: kit.gps_location.x, lng: kit.gps_location.y });
+          hasPoints = true;
+        }
+      });
 
-       if (locations && locations.length > 0) {
-          locations.forEach(loc => {
-             bounds.extend({ lat: loc.latitude, lng: loc.longitude });
-             hasPoints = true;
-          });
-       }
+      if (locations && locations.length > 0) {
+        locations.forEach(loc => {
+          bounds.extend({ lat: loc.latitude, lng: loc.longitude });
+          hasPoints = true;
+        });
+      }
 
-       if (hasPoints) {
-         mapInstance.current.fitBounds(bounds);
-       }
+      if (hasPoints) {
+        mapInstance.current.fitBounds(bounds);
+      }
     }
   }, [kits, isMapInitialized, waypoints, locations]);
 
@@ -152,10 +152,10 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits }) => {
       const directionsRenderer = new DirectionsRenderer();
       directionsRenderer.setMap(mapInstance.current);
 
-      const origin = { lat: waypoints[0].latitude, lng: waypoints[0].longitude };
-      const destination = { lat: waypoints[waypoints.length - 1].latitude, lng: waypoints[waypoints.length - 1].longitude };
+      const origin = { lat: parseFloat(waypoints[0].latitude as any), lng: parseFloat(waypoints[0].longitude as any) };
+      const destination = { lat: parseFloat(waypoints[waypoints.length - 1].latitude as any), lng: parseFloat(waypoints[waypoints.length - 1].longitude as any) };
       const intermediateWaypoints = waypoints.slice(1, -1).map(wp => ({
-        location: { lat: wp.latitude, lng: wp.longitude },
+        location: { lat: parseFloat(wp.latitude as any), lng: parseFloat(wp.longitude as any) },
         stopover: true,
       }));
 
