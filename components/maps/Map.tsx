@@ -142,15 +142,28 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits }) => {
     }
   }, [kits, isMapInitialized, waypoints, locations]);
 
+  const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
+
   useEffect(() => {
-    if (!isMapInitialized || !mapInstance.current || !waypoints || waypoints.length < 2) return;
+    if (!isMapInitialized || !mapInstance.current) return;
 
     mapsLoader.importLibrary('routes').then(async () => {
       const { DirectionsService, DirectionsRenderer } = await google.maps.importLibrary('routes') as google.maps.RoutesLibrary;
 
+      if (!directionsRendererRef.current) {
+        directionsRendererRef.current = new DirectionsRenderer({
+          map: mapInstance.current,
+          suppressMarkers: false, // Let it show A/B markers for now, or true if we want custom ones
+          preserveViewport: true
+        });
+      }
+
+      if (!waypoints || waypoints.length < 2) {
+        directionsRendererRef.current.setDirections({ routes: [] });
+        return;
+      }
+
       const directionsService = new DirectionsService();
-      const directionsRenderer = new DirectionsRenderer();
-      directionsRenderer.setMap(mapInstance.current);
 
       const origin = { lat: parseFloat(waypoints[0].latitude as any), lng: parseFloat(waypoints[0].longitude as any) };
       const destination = { lat: parseFloat(waypoints[waypoints.length - 1].latitude as any), lng: parseFloat(waypoints[waypoints.length - 1].longitude as any) };
@@ -168,7 +181,13 @@ const Map: React.FC<MapProps> = ({ waypoints, locations, kits }) => {
         },
         (result, status) => {
           if (status === google.maps.DirectionsStatus.OK) {
-            directionsRenderer.setDirections(result);
+            directionsRendererRef.current?.setDirections(result);
+
+            // Auto-fit bounds for the route
+            if (result && result.routes[0] && result.routes[0].bounds) {
+              mapInstance.current?.fitBounds(result.routes[0].bounds);
+            }
+
           } else {
             console.error(`Directions request failed due to ${status}`);
           }
