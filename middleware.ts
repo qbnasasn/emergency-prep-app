@@ -21,6 +21,22 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   }
+
+  // 3. CORS handling for all API routes
+  if (isApiRoute(req)) {
+    const response = NextResponse.next();
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    if (req.method === 'OPTIONS') {
+      // Preflight request – respond with 200 and the CORS headers
+      return new Response(null, { status: 200, headers: response.headers });
+    }
+    return response;
+  }
+
+  // Default – continue without modification
+  return NextResponse.next();
 });
 
 export const config = {
