@@ -268,7 +268,7 @@ export function InventoryTable({ filters, items, searchQuery = "" }: InventoryTa
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[900px]">
           <DialogHeader>
             <DialogTitle>Edit Inventory Item</DialogTitle>
             <DialogDescription>
