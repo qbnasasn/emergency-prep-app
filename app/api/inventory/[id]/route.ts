@@ -35,7 +35,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         const fields = [
             'name', 'description', 'quantity', 'expiry_date',
             'category', 'location', 'min_stock', 'cost_per_unit', 'purchase_date',
-            'calories', 'supplier', 'upc', 'image', 'nutrition_type'
+            'calories', 'supplier', 'upc', 'image', 'nutrition_type',
+            'servings', 'calories_per_serving'
         ];
 
         const setClauses: string[] = [];

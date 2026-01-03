@@ -38,6 +38,8 @@ const formSchema = z.object({
   nutrition_type: z.string().optional(),
   upc: z.string().optional(),
   image: z.string().optional(),
+  servings: z.coerce.number().optional(),
+  calories_per_serving: z.coerce.number().int().optional(),
 })
 
 interface ItemFormProps {
@@ -57,6 +59,8 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
     nutrition_type: initialData.nutrition_type || "",
     purchase_date: initialData.purchase_date ? initialData.purchase_date.split('T')[0] : '',
     expiry_date: initialData.expiry_date ? initialData.expiry_date.split('T')[0] : '',
+    servings: initialData.servings || undefined,
+    calories_per_serving: initialData.calories_per_serving || undefined,
   } : undefined;
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -75,6 +79,20 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
       expiry_date: "",
     },
   })
+
+  // Watch fields for automatic calculation
+  const servings = form.watch("servings")
+  const caloriesPerServing = form.watch("calories_per_serving")
+
+  useEffect(() => {
+    if (servings !== undefined && caloriesPerServing !== undefined && servings !== null && caloriesPerServing !== null) {
+      const totalCalories = Math.round(servings * caloriesPerServing)
+      form.setValue("calories", totalCalories, {
+        shouldValidate: true,
+        shouldDirty: true
+      })
+    }
+  }, [servings, caloriesPerServing, form])
 
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image || null)
   const [isScanning, setIsScanning] = useState(false)
@@ -301,78 +319,89 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. Canned Beans" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="col-span-1 md:col-span-3">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Canned Beans" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-1 md:col-span-1">
+              <FormField
+                control={form.control}
+                name="quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantity</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {INVENTORY_CATEGORIES.map(category => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {form.watch("category") === "Food & Nutrition" && (
+            <FormField
+              control={form.control}
+              name="nutrition_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nutrition Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select nutrition type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {NUTRITION_TYPES.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             )}
-          />
-          <FormField
-            control={form.control}
-            name="quantity"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Quantity</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {INVENTORY_CATEGORIES.map(category => (
-                      <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {form.watch("category") === "Food & Nutrition" && (
-          <FormField
-            control={form.control}
-            name="nutrition_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nutrition Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select nutrition type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {NUTRITION_TYPES.map(type => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          )}
+          </div>
+
           <FormField
             control={form.control}
             name="description"
@@ -387,7 +416,7 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
             )}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="location"
@@ -414,9 +443,23 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
                 </FormItem>
               )}
             />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
             <FormField
+              control={form.control}
+              name="min_stock"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Min Stock</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+             <FormField
               control={form.control}
               name="cost_per_unit"
               render={({ field }) => (
@@ -429,22 +472,7 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="min_stock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Minimum Stock Level</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
+             <FormField
               control={form.control}
               name="purchase_date"
               render={({ field }) => (
@@ -472,83 +500,116 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="calories"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Calories (for food items)</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="upc"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>UPC / Barcode</FormLabel>
-                <div className="flex gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+             <FormField
+              control={form.control}
+              name="servings"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Servings</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      onKeyDown={onKeyDown}
-                      placeholder="Scan or enter barcode"
-                    />
+                    <Input type="number" step="0.1" {...field} />
                   </FormControl>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setIsScanning(true)}
-                    title="Scan Barcode"
-                  >
-                    <ScanBarcode className="h-4 w-4" />
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="calories_per_serving"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Calories / Serving</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="calories"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Total Calories</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="image"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Image</FormLabel>
-                <FormControl>
-                  {imagePreview ? (
-                    <div className="relative w-32 h-32 border rounded-md overflow-hidden group">
-                      <Image
-                        src={imagePreview}
-                        alt="Preview"
-                        fill
-                        className="object-cover"
-                      />
-                      <button
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <FormField
+                control={form.control}
+                name="upc"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>UPC / Barcode</FormLabel>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          onKeyDown={onKeyDown}
+                          placeholder="Scan or enter barcode"
+                        />
+                      </FormControl>
+                      <Button
                         type="button"
-                        onClick={removeImage}
-                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setIsScanning(true)}
+                        title="Scan Barcode"
                       >
-                        <X className="h-4 w-4" />
-                      </button>
+                        <ScanBarcode className="h-4 w-4" />
+                      </Button>
                     </div>
-                  ) : (
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                    />
-                  )}
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Image</FormLabel>
+                  <FormControl>
+                    {imagePreview ? (
+                      <div className="relative w-full h-10 border rounded-md overflow-hidden group">
+                        <Image
+                          src={imagePreview}
+                          alt="Preview"
+                          fill
+                          className="object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeImage}
+                          className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                      />
+                    )}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <Button type="submit" className="w-full">{isEditMode ? 'Save Changes' : 'Add Item'}</Button>
         </form>

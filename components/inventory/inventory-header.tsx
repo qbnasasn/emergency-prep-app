@@ -81,7 +81,7 @@ export function InventoryHeader({ fetchItems, onSearch }: InventoryHeaderProps) 
               Add Item
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[900px]">
             <DialogHeader>
               <DialogTitle>Add New Inventory Item</DialogTitle>
               <DialogDescription>
