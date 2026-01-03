@@ -69,7 +69,8 @@ export async function POST(req: Request) {
       for (const item of itemsToInsert) {
         let {
           id, name, description, quantity, expiry_date, category, location,
-          min_stock, cost_per_unit, purchase_date, calories, supplier, upc, image, nutrition_type
+          min_stock, cost_per_unit, purchase_date, calories, supplier, upc, image, nutrition_type,
+          servings, calories_per_serving
         } = item;
 
         // Relaxed requirement: Default category if missing
@@ -85,9 +86,10 @@ export async function POST(req: Request) {
         const insertQuery = `
               INSERT INTO inventory_items (
                 user_id, household_id, name, description, quantity, expiry_date, category,
-                location, min_stock, cost_per_unit, purchase_date, calories, supplier, upc, image, nutrition_type, id
+                location, min_stock, cost_per_unit, purchase_date, calories, supplier, upc, image, nutrition_type, id,
+                servings, calories_per_serving
               )
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
               ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
                 description = EXCLUDED.description,
@@ -102,7 +104,9 @@ export async function POST(req: Request) {
                 supplier = EXCLUDED.supplier,
                 upc = EXCLUDED.upc,
                 image = EXCLUDED.image,
-                nutrition_type = EXCLUDED.nutrition_type
+                nutrition_type = EXCLUDED.nutrition_type,
+                servings = EXCLUDED.servings,
+                calories_per_serving = EXCLUDED.calories_per_serving
               RETURNING *;
             `;
 
@@ -123,7 +127,9 @@ export async function POST(req: Request) {
           upc || null,
           image || null,
           nutrition_type || null,
-          id // $17
+          id, // $17
+          servings || null,
+          calories_per_serving || null
         ].map(val => val === "" ? null : val);
 
         const res = await client.query(insertQuery, values);
