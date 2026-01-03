@@ -38,6 +38,8 @@ const formSchema = z.object({
   nutrition_type: z.string().optional(),
   upc: z.string().optional(),
   image: z.string().optional(),
+  servings: z.coerce.number().optional(),
+  calories_per_serving: z.coerce.number().int().optional(),
 })
 
 interface ItemFormProps {
@@ -57,6 +59,8 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
     nutrition_type: initialData.nutrition_type || "",
     purchase_date: initialData.purchase_date ? initialData.purchase_date.split('T')[0] : '',
     expiry_date: initialData.expiry_date ? initialData.expiry_date.split('T')[0] : '',
+    servings: initialData.servings || undefined,
+    calories_per_serving: initialData.calories_per_serving || undefined,
   } : undefined;
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -75,6 +79,20 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
       expiry_date: "",
     },
   })
+
+  // Watch fields for automatic calculation
+  const servings = form.watch("servings")
+  const caloriesPerServing = form.watch("calories_per_serving")
+
+  useEffect(() => {
+    if (servings !== undefined && caloriesPerServing !== undefined && servings !== null && caloriesPerServing !== null) {
+      const totalCalories = Math.round(servings * caloriesPerServing)
+      form.setValue("calories", totalCalories, {
+        shouldValidate: true,
+        shouldDirty: true
+      })
+    }
+  }, [servings, caloriesPerServing, form])
 
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image || null)
   const [isScanning, setIsScanning] = useState(false)
@@ -472,12 +490,40 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+             <FormField
+              control={form.control}
+              name="servings"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Servings</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="calories_per_serving"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Calories / Serving</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             control={form.control}
             name="calories"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Calories (for food items)</FormLabel>
+                <FormLabel>Total Calories (Auto-calculated or Manual)</FormLabel>
                 <FormControl>
                   <Input type="number" {...field} />
                 </FormControl>

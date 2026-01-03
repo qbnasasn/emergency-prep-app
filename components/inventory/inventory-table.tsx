@@ -28,6 +28,8 @@ export interface InventoryItem {
   supplier: string | null
   upc: string | null
   image: string | null
+  servings: number | null
+  calories_per_serving: number | null
 }
 
 interface InventoryTableProps {
