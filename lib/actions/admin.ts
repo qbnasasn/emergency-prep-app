@@ -1,17 +1,14 @@
 "use server";
 
-import { getAuthUser } from "@/lib/auth";
+import { verifyAdmin as verifyAdminAuth } from "@/lib/actions/admin-auth";
 import pool from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-const ADMIN_EMAIL = "admin@prepsafe.app";
-
 async function verifyAdmin() {
-  const user = await getAuthUser();
-  if (!user || user.email !== ADMIN_EMAIL) {
+  const isAdmin = await verifyAdminAuth();
+  if (!isAdmin) {
     throw new Error("Unauthorized: Admin access required.");
   }
-  return user;
 }
 
 export async function getAnnouncements() {
@@ -40,7 +37,7 @@ export async function createAnnouncement(data: {
       "INSERT INTO admin_announcements (title, content, image_url, target_link) VALUES ($1, $2, $3, $4)",
       [data.title, data.content, data.imageUrl, data.targetLink]
     );
-    revalidatePath("/dashboard/admin");
+    revalidatePath("/admin");
   } finally {
     client.release();
   }
@@ -51,7 +48,7 @@ export async function deleteAnnouncement(id: string) {
   const client = await pool.connect();
   try {
     await client.query("DELETE FROM admin_announcements WHERE id = $1", [id]);
-    revalidatePath("/dashboard/admin");
+    revalidatePath("/admin");
   } finally {
     client.release();
   }
@@ -78,7 +75,7 @@ export async function addVideo(youtubeId: string) {
       "INSERT INTO admin_videos (youtube_id) VALUES ($1)",
       [youtubeId]
     );
-    revalidatePath("/dashboard/admin");
+    revalidatePath("/admin");
   } finally {
     client.release();
   }
@@ -89,7 +86,7 @@ export async function deleteVideo(id: string) {
   const client = await pool.connect();
   try {
     await client.query("DELETE FROM admin_videos WHERE id = $1", [id]);
-    revalidatePath("/dashboard/admin");
+    revalidatePath("/admin");
   } finally {
     client.release();
   }
@@ -122,7 +119,7 @@ export async function updateSocialLink(platform: 'instagram' | 'reddit', url: st
        DO UPDATE SET value = $2, updated_at = NOW()`,
       [key, url]
     );
-    revalidatePath("/dashboard/admin");
+    revalidatePath("/admin");
   } finally {
     client.release();
   }

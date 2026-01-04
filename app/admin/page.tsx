@@ -1,15 +1,13 @@
-import { getAuthUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { verifyAdmin } from "@/lib/actions/admin-auth";
 import { getAnnouncements, getVideos, getSocialLinks } from "@/lib/actions/admin";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
-
-const ADMIN_EMAIL = "admin@prepsafe.app";
+import { AdminLogin } from "@/components/admin/admin-login";
 
 export default async function AdminPage() {
-  const user = await getAuthUser();
+  const isAdmin = await verifyAdmin();
 
-  if (!user || user.email !== ADMIN_EMAIL) {
-    redirect("/");
+  if (!isAdmin) {
+    return <AdminLogin />;
   }
 
   // Parallel data fetching
