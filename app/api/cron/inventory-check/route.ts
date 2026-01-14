@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { checkUserInventory } from '@/lib/inventory-check';
 import { checkPlanReminders } from '@/lib/plan-check';
+import { checkWeatherAlerts } from '@/lib/weather-check';
 
 export async function GET(req: Request) {
   // Check for CRON_SECRET presence
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
   try {
     // Get all users who have enabled ANY alerts
     const settingsRes = await client.query(
-      `SELECT user_id FROM notification_settings WHERE inventory_alerts != 'none' OR plan_reminders != 'none'`
+      `SELECT user_id FROM notification_settings WHERE inventory_alerts != 'none' OR plan_reminders != 'none' OR weather_alerts != 'none'`
     );
     userIds = settingsRes.rows.map(row => row.user_id);
   } catch (error) {
@@ -32,12 +33,24 @@ export async function GET(req: Request) {
     client.release();
   }
 
-  console.log(`Starting daily checks for ${userIds.length} users.`);
+  console.log(`Starting master cron checks for ${userIds.length} users.`);
 
-  for (const userId of userIds) {
-    await checkUserInventory(userId);
-    await checkPlanReminders(userId);
+  // Process users concurrently to avoid timeouts
+  const results = await Promise.allSettled(
+    userIds.map(async (userId) => {
+      // Run checks in parallel for each user
+      await Promise.allSettled([
+        checkUserInventory(userId),
+        checkPlanReminders(userId),
+        checkWeatherAlerts(userId)
+      ]);
+    })
+  );
+
+  const failures = results.filter(r => r.status === 'rejected');
+  if (failures.length > 0) {
+    console.error(`Master cron encountered ${failures.length} errors.`);
   }
 
-  return NextResponse.json({ success: true, message: 'Daily checks complete.' });
+  return NextResponse.json({ success: true, message: 'Master cron checks complete.' });
 }
