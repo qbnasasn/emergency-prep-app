@@ -166,10 +166,24 @@ export function ItemForm({ onFormSubmit, initialData }: ItemFormProps) {
       if (response.ok) {
         onFormSubmit();
       } else {
-        console.error(`Failed to ${isEditMode ? 'update' : 'add'} item`);
+        const errorData = await response.json().catch(() => ({}));
+
+        if (response.status === 403) {
+            toast.error(errorData.error || "Plan limit reached.", {
+                action: {
+                    label: "Upgrade",
+                    onClick: () => window.location.href = "/dashboard/settings"
+                },
+                duration: 8000
+            })
+        } else {
+            console.error(`Failed to ${isEditMode ? 'update' : 'add'} item`, errorData);
+            toast.error(errorData.error || `Failed to ${isEditMode ? 'update' : 'add'} item`);
+        }
       }
     } catch (error) {
       console.error("Error submitting form:", error)
+      toast.error("Network error occurred.");
     }
   }
 
