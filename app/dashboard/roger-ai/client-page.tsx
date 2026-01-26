@@ -255,7 +255,12 @@ Be concise, practical, and focused on preparedness.`;
         }
 
         if (!isPaidPlan) {
-            toast.error("Cloud AI requires a Paid Plan.");
+            toast.error("Cloud AI requires a Paid Plan.", {
+                action: {
+                    label: "Upgrade",
+                    onClick: () => window.location.href = "/dashboard/settings"
+                }
+            });
             return;
         }
 
@@ -368,8 +373,13 @@ Be concise, practical, and focused on preparedness.`;
                                 <Button
                                     variant={mode === 'cloud' ? 'secondary' : 'ghost'}
                                     size="sm"
-                                    disabled={!isPaidPlan}
-                                    onClick={() => isPaidPlan && setMode('cloud')}
+                                    onClick={() => {
+                                        if (isPaidPlan) {
+                                            setMode('cloud');
+                                        } else {
+                                            window.location.href = "/dashboard/settings";
+                                        }
+                                    }}
                                     className="gap-2 text-xs font-medium relative"
                                     title={!isPaidPlan ? "Upgrade to use Cloud AI" : "Switch to Cloud AI"}
                                 >
