@@ -14,8 +14,6 @@ export default async function SettingsPage() {
     <div className="space-y-6">
       <SettingsHeader />
 
-      <SubscriptionManager subscriptionPlan={user?.subscriptionPlan} />
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
           <FamilyMembers />
@@ -27,6 +25,8 @@ export default async function SettingsPage() {
           <StorageManager />
         </div>
       </div>
+
+      <SubscriptionManager subscriptionPlan={user?.subscriptionPlan} />
     </div>
   )
 }
