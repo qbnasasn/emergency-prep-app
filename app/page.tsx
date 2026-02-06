@@ -8,6 +8,7 @@ import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getPublicSocialLinks, getPublicAnnouncements } from "@/lib/actions/public"
 import { NewsSection } from "@/components/landing/news-section"
+import { RedditIcon } from "@/components/icons/reddit-icon"
 import {
   Dialog,
   DialogContent,
@@ -29,7 +30,6 @@ import {
   Instagram,
   Twitter,
   Slack,
-  Link as LinkIcon
 } from "lucide-react"
 
 export default async function LandingPage() {
@@ -81,7 +81,7 @@ export default async function LandingPage() {
               )}
               {socialLinks.social_reddit && (
                 <Link href={socialLinks.social_reddit} target="_blank" className="text-slate-500 hover:text-slate-900 transition-colors">
-                  <LinkIcon className="h-5 w-5" />
+                  <RedditIcon className="h-5 w-5" />
                   <span className="sr-only">Reddit</span>
                 </Link>
               )}
