@@ -6,6 +6,9 @@ import { SignInForm } from "@/components/auth/sign-in-form"
 import { SupportDialog } from "@/components/support/support-dialog"
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
+import { getPublicSocialLinks, getPublicAnnouncements } from "@/lib/actions/public"
+import { NewsSection } from "@/components/landing/news-section"
+import { RedditIcon } from "@/components/icons/reddit-icon"
 import {
   Dialog,
   DialogContent,
@@ -23,7 +26,10 @@ import {
   ArrowRight,
   Radio,
   Users,
-  Check
+  Check,
+  Instagram,
+  Twitter,
+  Slack,
 } from "lucide-react"
 
 export default async function LandingPage() {
@@ -32,6 +38,9 @@ export default async function LandingPage() {
   if (userId) {
     redirect("/dashboard")
   }
+
+  const socialLinks = await getPublicSocialLinks()
+  const announcements = await getPublicAnnouncements()
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-900">
@@ -63,6 +72,32 @@ export default async function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-3 mr-2">
+              {socialLinks.social_instagram && (
+                <Link href={socialLinks.social_instagram} target="_blank" className="text-slate-500 hover:text-slate-900 transition-colors">
+                  <Instagram className="h-5 w-5" />
+                  <span className="sr-only">Instagram</span>
+                </Link>
+              )}
+              {socialLinks.social_reddit && (
+                <Link href={socialLinks.social_reddit} target="_blank" className="text-slate-500 hover:text-slate-900 transition-colors">
+                  <RedditIcon className="h-5 w-5" />
+                  <span className="sr-only">Reddit</span>
+                </Link>
+              )}
+              {socialLinks.social_slack && (
+                <Link href={socialLinks.social_slack} target="_blank" className="text-slate-500 hover:text-slate-900 transition-colors">
+                  <Slack className="h-5 w-5" />
+                  <span className="sr-only">Slack</span>
+                </Link>
+              )}
+              {socialLinks.social_x && (
+                <Link href={socialLinks.social_x} target="_blank" className="text-slate-500 hover:text-slate-900 transition-colors">
+                  <Twitter className="h-5 w-5" />
+                  <span className="sr-only">X (Twitter)</span>
+                </Link>
+              )}
+            </div>
             <Dialog>
               <DialogTrigger asChild>
                 <Button className="font-heading font-semibold bg-slate-900 text-white hover:bg-slate-800">Sign In</Button>
@@ -110,7 +145,7 @@ export default async function LandingPage() {
                   <SignInForm />
                 </DialogContent>
               </Dialog>
-              <DemoButton />
+              <DemoButton href={socialLinks.social_youtube} />
             </div>
           </div>
         </section>
@@ -386,6 +421,9 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* News Section */}
+        <NewsSection announcements={announcements} />
       </main>
 
       <footer className="bg-white border-t border-slate-200 py-12">

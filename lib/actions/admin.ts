@@ -96,7 +96,7 @@ export async function getSocialLinks() {
   await verifyAdmin();
   const client = await pool.connect();
   try {
-    const res = await client.query("SELECT * FROM admin_settings WHERE key IN ('social_instagram', 'social_reddit')");
+    const res = await client.query("SELECT * FROM admin_settings WHERE key IN ('social_instagram', 'social_reddit', 'social_slack', 'social_x', 'social_youtube')");
     const settings = res.rows.reduce((acc, row) => {
       acc[row.key] = row.value;
       return acc;
@@ -107,7 +107,7 @@ export async function getSocialLinks() {
   }
 }
 
-export async function updateSocialLink(platform: 'instagram' | 'reddit', url: string) {
+export async function updateSocialLink(platform: 'instagram' | 'reddit' | 'slack' | 'x' | 'youtube', url: string) {
   await verifyAdmin();
   const client = await pool.connect();
   const key = `social_${platform}`;

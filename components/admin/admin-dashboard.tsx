@@ -15,7 +15,9 @@ import {
   Trash2,
   Youtube,
   Link as LinkIcon,
-  Instagram
+  Instagram,
+  Slack,
+  Twitter
 } from "lucide-react";
 import {
   createAnnouncement,
@@ -38,8 +40,11 @@ export function AdminDashboard({ announcements, videos, socialLinks }: AdminDash
   const [newVideoId, setNewVideoId] = useState("");
   const [socials, setSocials] = useState({
     instagram: socialLinks.social_instagram || "",
-    reddit: socialLinks.social_reddit || ""
+    reddit: socialLinks.social_reddit || "",
+    slack: socialLinks.social_slack || "",
+    x: socialLinks.social_x || ""
   });
+  const [youtubeLink, setYoutubeLink] = useState(socialLinks.social_youtube || "");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateAd = async (e: React.FormEvent) => {
@@ -94,9 +99,24 @@ export function AdminDashboard({ announcements, videos, socialLinks }: AdminDash
     try {
       await updateSocialLink("instagram", socials.instagram);
       await updateSocialLink("reddit", socials.reddit);
+      await updateSocialLink("slack", socials.slack);
+      await updateSocialLink("x", socials.x);
       toast.success("Social links updated");
     } catch (error) {
       toast.error("Failed to update links");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateYoutubeLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      await updateSocialLink("youtube", youtubeLink);
+      toast.success("YouTube link updated");
+    } catch (error) {
+      toast.error("Failed to update YouTube link");
     } finally {
       setIsLoading(false);
     }
@@ -284,6 +304,30 @@ export function AdminDashboard({ announcements, videos, socialLinks }: AdminDash
         <TabsContent value="youtube" className="space-y-4">
           <Card>
             <CardHeader>
+              <CardTitle>YouTube Channel Link</CardTitle>
+              <CardDescription>Link for the "View Demo" button on the landing page.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdateYoutubeLink} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Channel / Video URL</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={youtubeLink}
+                      onChange={(e) => setYoutubeLink(e.target.value)}
+                      placeholder="https://youtube.com/..."
+                    />
+                    <Button type="submit" disabled={isLoading}>
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Add YouTube Video</CardTitle>
               <CardDescription>Enter the YouTube Video ID (e.g., dQw4w9WgXcQ).</CardDescription>
             </CardHeader>
@@ -363,6 +407,26 @@ export function AdminDashboard({ announcements, videos, socialLinks }: AdminDash
                     value={socials.reddit}
                     onChange={(e) => setSocials({...socials, reddit: e.target.value})}
                     placeholder="https://reddit.com/r/..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Slack className="h-4 w-4" /> Slack URL
+                  </Label>
+                  <Input
+                    value={socials.slack}
+                    onChange={(e) => setSocials({...socials, slack: e.target.value})}
+                    placeholder="https://slack.com/..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Twitter className="h-4 w-4" /> X (Twitter) URL
+                  </Label>
+                  <Input
+                    value={socials.x}
+                    onChange={(e) => setSocials({...socials, x: e.target.value})}
+                    placeholder="https://x.com/..."
                   />
                 </div>
                 <Button type="submit" disabled={isLoading}>
