@@ -44,6 +44,11 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-900">
+      {/* Announcement Banner */}
+      <div className="w-full bg-orange-600 text-white px-4 py-3 text-center text-sm font-medium z-[60] relative">
+        Exciting news! PrepSafe is going open source by the end of July. Please ensure you export and remove your data by July 31st.
+      </div>
+
       {/* Navigation Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         <div className="container flex h-16 items-center justify-between px-4 md:px-6 mx-auto max-w-7xl">
