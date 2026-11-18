@@ -60,12 +60,13 @@ export function verifyPassword(password: string, storedHash: string): boolean {
   return timingSafeEqual(expected, actual);
 }
 
-export function getSessionCookieOptions() {
+export function getSessionCookieOptions(isHttps = false) {
+  const forceSecure = process.env.COOKIE_SECURE === 'true';
   return {
     name: SESSION_COOKIE_NAME,
     httpOnly: true,
     sameSite: 'lax' as const,
-    secure: process.env.NODE_ENV === 'production',
+    secure: forceSecure || isHttps,
     path: '/',
     maxAge: SESSION_TTL_SECONDS,
   };

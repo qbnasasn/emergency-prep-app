@@ -69,8 +69,12 @@ export async function POST(req: NextRequest) {
     await client.query('COMMIT');
 
     const token = await createSessionToken({ userId: user.id, email: user.email });
+    const isHttps =
+      req.headers.get('x-forwarded-proto') === 'https' ||
+      req.nextUrl.protocol === 'https:';
+    const cookieOpts = getSessionCookieOptions(isHttps);
     const response = NextResponse.json({ user }, { status: 201 });
-    response.cookies.set(getSessionCookieOptions().name, token, getSessionCookieOptions());
+    response.cookies.set(cookieOpts.name, token, cookieOpts);
     return response;
   } catch (error) {
     await client.query('ROLLBACK');

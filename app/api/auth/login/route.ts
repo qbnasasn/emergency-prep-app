@@ -52,8 +52,12 @@ export async function POST(req: NextRequest) {
 
     const { passwordHash: _ignored, ...user } = row;
     const token = await createSessionToken({ userId: user.id, email: user.email });
+    const isHttps =
+      req.headers.get('x-forwarded-proto') === 'https' ||
+      req.nextUrl.protocol === 'https:';
+    const cookieOpts = getSessionCookieOptions(isHttps);
     const response = NextResponse.json({ user });
-    response.cookies.set(getSessionCookieOptions().name, token, getSessionCookieOptions());
+    response.cookies.set(cookieOpts.name, token, cookieOpts);
     return response;
   } catch (error) {
     console.error('Error in POST /api/auth/login:', error);
