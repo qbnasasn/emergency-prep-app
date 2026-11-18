@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useUser } from "@clerk/nextjs"
+import { useAuthUser } from "@/components/auth/auth-provider"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -40,7 +40,7 @@ interface SupportDialogProps {
 }
 
 export function SupportDialog({ trigger }: SupportDialogProps) {
-  const { isSignedIn, isLoaded } = useUser()
+  const { isSignedIn, isLoaded } = useAuthUser()
   const [open, setOpen] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({

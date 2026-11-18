@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Montserrat, Open_Sans } from "next/font/google"
 import "./globals.css"
-import { ClerkProvider } from "@clerk/nextjs"
+import { AuthProvider } from "@/components/auth/auth-provider"
 import { Toaster } from "sonner"
 
 const montserrat = Montserrat({
@@ -101,17 +101,17 @@ export default function RootLayout({
   }
 
   return (
-    <ClerkProvider>
-      <html lang="en" className={`${montserrat.variable} ${openSans.variable}`}>
-        <body className="font-sans antialiased">
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-          />
+    <html lang="en" className={`${montserrat.variable} ${openSans.variable}`}>
+      <body className="font-sans antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <AuthProvider>
           {children}
-          <Toaster position="bottom-right" />
-        </body>
-      </html>
-    </ClerkProvider>
+        </AuthProvider>
+        <Toaster position="bottom-right" />
+      </body>
+    </html>
   )
 }

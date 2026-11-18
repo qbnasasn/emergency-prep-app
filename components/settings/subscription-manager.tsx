@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useClerk } from "@clerk/nextjs"
 import { Check, Zap, Shield, Users } from "lucide-react"
 
 interface SubscriptionManagerProps {
@@ -10,7 +9,6 @@ interface SubscriptionManagerProps {
 }
 
 export function SubscriptionManager({ subscriptionPlan = "scout" }: SubscriptionManagerProps) {
-  const { openUserProfile } = useClerk()
 
   const plans = [
     {
@@ -87,9 +85,9 @@ export function SubscriptionManager({ subscriptionPlan = "scout" }: Subscription
                          <Button
                             className="w-full"
                             variant={isFree ? "outline" : "default"}
-                            onClick={() => openUserProfile()}
+                            disabled
                          >
-                            {isFree ? "Downgrade" : "Upgrade"}
+                            Self-Hosted
                          </Button>
                     )}
                 </div>
@@ -98,11 +96,8 @@ export function SubscriptionManager({ subscriptionPlan = "scout" }: Subscription
 
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t">
             <p className="text-sm text-muted-foreground text-center sm:text-left">
-                Payments are securely processed by Stripe via Clerk.
+                Running in self-hosted open-source mode. Plan limits can be configured in your local PostgreSQL database.
             </p>
-            <Button variant="outline" onClick={() => openUserProfile()}>
-                Manage Billing Settings
-            </Button>
         </div>
       </CardContent>
     </Card>

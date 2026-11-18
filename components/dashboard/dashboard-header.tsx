@@ -1,11 +1,12 @@
 "use client"
 
-import { Bell, Check, Trash2, HelpCircle, Menu } from "lucide-react"
+import { Bell, Check, Trash2, HelpCircle, Menu, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SupportDialog } from "@/components/support/support-dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -20,7 +21,7 @@ import Image from "next/image"
 import { ModeToggle } from "@/components/ui/mode-toggle"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { UserButton, useUser } from "@clerk/nextjs"
+import { useAuthUser } from "@/components/auth/auth-provider"
 import { navigation } from "@/components/dashboard/dashboard-nav"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -40,7 +41,7 @@ interface NotificationResponse {
 }
 
 export function DashboardHeader() {
-  const { isLoaded, isSignedIn } = useUser()
+  const { user, isSignedIn, signOut } = useAuthUser()
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
@@ -233,7 +234,32 @@ export function DashboardHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <UserButton />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Account menu">
+                <User className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {user?.fullName || "Account"}
+                  </p>
+                  {user?.email && (
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  )}
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sign out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

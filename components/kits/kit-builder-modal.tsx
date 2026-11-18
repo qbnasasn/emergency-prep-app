@@ -14,7 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { InventoryItem } from "@/lib/data/inventory"
-import { useUser } from "@clerk/nextjs"
+import { useAuthUser } from "@/components/auth/auth-provider"
 import { PlusCircle, XCircle, ShoppingCart, Loader2 } from "lucide-react"
 import { suggestedItems } from "@/lib/data/suggested-items"
 import { Kit } from "@/lib/data/kits"
@@ -40,7 +40,7 @@ interface KitBuilderModalProps {
 }
 
 export function KitBuilderModal({ isOpen, onClose, onSave, kit }: KitBuilderModalProps) {
-  const { user } = useUser();
+  const { user } = useAuthUser();
   const [kitName, setKitName] = useState("");
   const [kitDescription, setKitDescription] = useState("");
   const [kitCategory, setKitCategory] = useState<KitCategory | "">("");

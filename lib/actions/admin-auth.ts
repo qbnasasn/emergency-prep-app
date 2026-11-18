@@ -7,7 +7,9 @@ import { SignJWT, jwtVerify } from "jose";
 
 // Ensure a secret key exists; fallback for safety in dev, but strictly required in prod.
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.CLERK_SECRET_KEY || "default_unsafe_secret_for_dev_only_change_in_prod"
+  process.env.AUTH_SECRET ||
+    process.env.JWT_SECRET ||
+    "default_unsafe_secret_for_dev_only_change_in_prod"
 );
 
 export async function adminLogin(formData: FormData) {

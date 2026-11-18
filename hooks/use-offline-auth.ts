@@ -1,17 +1,16 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useAuthUser } from "@/components/auth/auth-provider";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/db/local";
 
 export function useOfflineAuth() {
-  const { user: clerkUser, isLoaded: clerkLoaded } = useUser();
+  const { user: sessionUser, isLoaded: sessionLoaded } = useAuthUser();
   const [offlineUser, setOfflineUser] = useState<any>(null);
   const [isOffline, setIsOffline] = useState(false);
   const [offlineLoaded, setOfflineLoaded] = useState(false);
 
   useEffect(() => {
-    // Initial check
     setIsOffline(!navigator.onLine);
 
     const handleOnline = () => setIsOffline(false);
@@ -26,38 +25,36 @@ export function useOfflineAuth() {
     };
   }, []);
 
-  // Sync Clerk user to Dexie when available
+  // Sync authenticated user to Dexie when available
   useEffect(() => {
-    if (clerkLoaded && clerkUser) {
-      const serializedUser = JSON.parse(JSON.stringify(clerkUser));
-      db.user_settings.put({ key: "profile", value: serializedUser }).catch(console.error);
+    if (sessionLoaded && sessionUser) {
+      db.user_settings.put({ key: "profile", value: sessionUser }).catch(console.error);
     }
-  }, [clerkLoaded, clerkUser]);
+  }, [sessionLoaded, sessionUser]);
 
   // Load from Dexie when offline
   useEffect(() => {
     if (isOffline) {
-      db.user_settings.get("profile").then((record) => {
-        if (record) {
-          setOfflineUser(record.value);
-        }
-        setOfflineLoaded(true);
-      }).catch((e) => {
-        console.error(e);
-        setOfflineLoaded(true);
-      });
+      db.user_settings
+        .get("profile")
+        .then((record) => {
+          if (record) {
+            setOfflineUser(record.value);
+          }
+          setOfflineLoaded(true);
+        })
+        .catch((e) => {
+          console.error(e);
+          setOfflineLoaded(true);
+        });
     } else {
-        setOfflineUser(null);
+      setOfflineUser(null);
     }
   }, [isOffline]);
 
-  const user = (isOffline && !clerkUser) ? offlineUser : clerkUser;
+  const user = isOffline && !sessionUser ? offlineUser : sessionUser;
   const isSignedIn = !!user;
-
-  // If we are online, we rely on clerkLoaded.
-  // If we are offline, we rely on offlineLoaded (Dexie fetch complete).
-  // But if we have a user from either, we are effectively loaded for that context.
-  const isLoaded = isOffline ? offlineLoaded : clerkLoaded;
+  const isLoaded = isOffline ? offlineLoaded : sessionLoaded;
 
   return {
     user,

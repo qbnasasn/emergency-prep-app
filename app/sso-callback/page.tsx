@@ -1,5 +1,5 @@
-import { AuthenticateWithRedirectCallback } from '@clerk/nextjs'
+import { redirect } from 'next/navigation';
 
-export default function SSOCallback() {
-  return <AuthenticateWithRedirectCallback />
+export default function SSOCallbackPage() {
+  redirect('/dashboard');
 }

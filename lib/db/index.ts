@@ -1,37 +1,34 @@
-import { Pool, neon, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
+import { Pool, PoolConfig } from 'pg';
 
-// Set the WebSocket proxy for Drizzle
-// neonConfig.wsProxy = (host) => `${host}:5432/ws-proxy`;
+const connectionString =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL ||
+  'postgres://postgres:postgres@localhost:5432/emergency_prep';
+
+const useSsl =
+  process.env.POSTGRES_SSL === 'true' ||
+  connectionString.includes('sslmode=require');
+
+const poolConfig: PoolConfig = {
+  connectionString,
+  ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+};
+
+declare global {
+  // eslint-disable-next-line no-var
+  var pool: Pool | undefined;
+}
 
 let pool: Pool;
 
-// Ensure the connection string has the required sslmode
-// Fallback to a dummy URL if POSTGRES_URL is not set (e.g. in sandbox) to prevent crash on startup
-const baseUrl = process.env.POSTGRES_URL || 'postgres://dummy:dummy@localhost:5432/dummy';
-let connectionString: string;
-
-try {
-  const url = new URL(baseUrl);
-  url.searchParams.set('sslmode', 'require');
-  connectionString = url.toString();
-} catch (e) {
-  // If baseUrl is invalid, fallback to dummy again with params
-  connectionString = 'postgres://dummy:dummy@localhost:5432/dummy?sslmode=require';
-}
-
 if (process.env.NODE_ENV === 'production') {
-  pool = new Pool({ connectionString });
+  pool = new Pool(poolConfig);
 } else {
-  // In development, use a global variable to preserve the pool across hot-reloads
+  // In development, preserve the pool across hot-reloads
   if (!global.pool) {
-    global.pool = new Pool({ connectionString });
+    global.pool = new Pool(poolConfig);
   }
   pool = global.pool;
 }
 
 export default pool;
-
-// Also export a Drizzle instance if needed elsewhere
-// const db = drizzle(neon(connectionString));
-// export { db };

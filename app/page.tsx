@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { DemoButton } from "@/components/landing/demo-button"
 import { SignInForm } from "@/components/auth/sign-in-form"
 import { SupportDialog } from "@/components/support/support-dialog"
-import { auth } from "@clerk/nextjs/server"
+import { getSessionUserId } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getPublicSocialLinks, getPublicAnnouncements } from "@/lib/actions/public"
 import { NewsSection } from "@/components/landing/news-section"
@@ -33,7 +33,7 @@ import {
 } from "lucide-react"
 
 export default async function LandingPage() {
-  const { userId } = await auth()
+  const userId = await getSessionUserId()
 
   if (userId) {
     redirect("/dashboard")

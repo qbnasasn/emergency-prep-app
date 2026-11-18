@@ -1,7 +1,7 @@
 "use client"
 
 import { Suspense, useState, useEffect } from "react"
-import { useUser } from "@clerk/nextjs"
+import { useAuthUser } from "@/components/auth/auth-provider"
 import { toast } from "sonner"
 import { KitsHeader } from "@/components/kits/kits-header"
 import { KitsOverview } from "@/components/kits/kits-overview"
@@ -11,7 +11,7 @@ import { Kit } from "@/lib/data/kits"
 import { createKit, updateKit } from "@/lib/actions/kits"
 
 export default function KitsPage() {
-  const { user, isLoaded } = useUser()
+  const { user, isLoaded } = useAuthUser()
   const [kits, setKits] = useState<Kit[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
